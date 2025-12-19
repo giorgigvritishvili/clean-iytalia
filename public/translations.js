@@ -47,6 +47,8 @@ const translations = {
       date: "Date",
       time: "Time",
       selectDate: "Select a date first",
+      noSlots: "No available time slots",
+      errorSlots: "Error loading slots",
       name: "Full Name",
       email: "Email",
       phone: "Phone",
@@ -56,7 +58,26 @@ const translations = {
       back: "Back",
       total: "Total:",
       paymentNotice: "Your card will be authorized but not charged until your booking is confirmed by our team.",
-      confirm: "Confirm Booking"
+      confirm: "Confirm Booking",
+      summary: {
+        service: "Service",
+        city: "City",
+        date: "Date",
+        time: "Time",
+        duration: "Duration",
+        hours: "hours",
+        cleaners: "Cleaners",
+        address: "Address",
+      },
+      validation: {
+        selectService: "Please select a service",
+        selectCity: "Please select a city",
+        selectDate: "Please select a date",
+        selectTime: "Please select a time",
+        fillAllFields: "Please fill in all required fields",
+        validEmail: "Please enter a valid email",
+        bookingError: "Error creating booking. Please try again."
+      }
     },
     success: {
       title: "Booking Submitted!",
@@ -91,107 +112,6 @@ const translations = {
       message: "We use cookies to improve your experience. By continuing to use this site, you agree to our use of cookies.",
       accept: "Accept",
       decline: "Decline"
-    },
-    admin: {
-      login: {
-        title: "Admin Dashboard",
-        subtitle: "Clean Italia",
-        username: "Username",
-        password: "Password",
-        loginBtn: "Login",
-        hint: "Contact administrator for credentials"
-      },
-      nav: {
-        overview: "Overview",
-        bookings: "Bookings",
-        cities: "Cities",
-        services: "Services",
-        backToSite: "Back to Site",
-        logout: "Logout"
-      },
-      overview: {
-        title: "Overview",
-        totalBookings: "Total Bookings",
-        pending: "Pending",
-        confirmed: "Confirmed",
-        revenue: "Total Revenue",
-        recentBookings: "Recent Bookings"
-      },
-      bookings: {
-        title: "All Bookings",
-        filterAll: "All Status",
-        pending: "Pending",
-        confirmed: "Confirmed",
-        cancelled: "Cancelled",
-        completed: "Completed",
-        id: "ID",
-        customer: "Customer",
-        contact: "Contact",
-        service: "Service",
-        city: "City",
-        dateTime: "Date & Time",
-        duration: "Duration",
-        amount: "Amount",
-        payment: "Payment",
-        status: "Status",
-        actions: "Actions",
-        noBookings: "No bookings found",
-        details: "Booking Details",
-        bookingId: "Booking ID",
-        customerName: "Customer Name",
-        email: "Email",
-        phone: "Phone",
-        address: "Address",
-        date: "Date",
-        time: "Time",
-        hours: "Duration",
-        cleaners: "Cleaners",
-        totalAmount: "Total Amount",
-        paymentStatus: "Payment Status",
-        paymentIntentId: "Payment Intent ID",
-        specialInstructions: "Special Instructions",
-        reject: "Reject",
-        confirmCharge: "Confirm & Charge",
-        email: "Email",
-        call: "Call",
-        whatsapp: "WhatsApp"
-      },
-      cities: {
-        title: "Manage Cities",
-        addCity: "Add City",
-        nameEn: "City Name (English)",
-        nameIt: "City Name (Italian)",
-        workingHoursStart: "Working Hours Start",
-        workingHoursEnd: "Working Hours End",
-        workingDays: "Working Days",
-        mon: "Mon",
-        tue: "Tue",
-        wed: "Wed",
-        thu: "Thu",
-        fri: "Fri",
-        sat: "Sat",
-        sun: "Sun",
-        cancel: "Cancel",
-        add: "Add City"
-      },
-      services: {
-        title: "Manage Services",
-        nameIt: "IT:",
-        perHour: "/hour"
-      },
-      alerts: {
-        invalidCredentials: "Invalid credentials",
-        loginFailed: "Login failed. Please try again.",
-        confirmBooking: "Confirm this booking and charge the customer?",
-        bookingConfirmed: "Booking confirmed successfully!",
-        confirmFailed: "Failed to confirm booking. Please try again.",
-        rejectBooking: "Reject this booking? The payment authorization will be released.",
-        bookingRejected: "Booking rejected. Payment released.",
-        rejectFailed: "Failed to reject booking. Please try again.",
-        fillRequired: "Please fill in all required fields",
-        addCityFailed: "Failed to add city. Please try again.",
-        updateFailed: "Failed to update. Please try again."
-      }
     }
   },
   it: {
@@ -212,18 +132,6 @@ const translations = {
     services: {
       title: "I Nostri Servizi",
       subtitle: "Scegli il servizio di pulizia perfetto per le tue esigenze",
-      regular: "Pulizia Regolare",
-      regularDesc: "Pulizia settimanale o bisettimanale per case",
-      onetime: "Pulizia Una Tantum",
-      onetimeDesc: "Una pulizia approfondita per qualsiasi occasione",
-      deep: "Pulizia Profonda",
-      deepDesc: "Pulizia accurata incluse le aree difficili",
-      move: "Trasloco",
-      moveDesc: "Pulizia completa per traslochi",
-      lastminute: "Pulizia Last Minute",
-      lastminuteDesc: "Servizio urgente entro 24 ore",
-      business: "Pulizia Uffici",
-      businessDesc: "Pulizia professionale per uffici e aziende",
       perHour: "/ora"
     },
     booking: {
@@ -242,6 +150,8 @@ const translations = {
       date: "Data",
       time: "Ora",
       selectDate: "Seleziona prima una data",
+      noSlots: "Nessun orario disponibile",
+      errorSlots: "Errore nel caricamento degli orari",
       name: "Nome Completo",
       email: "Email",
       phone: "Telefono",
@@ -251,13 +161,32 @@ const translations = {
       back: "Indietro",
       total: "Totale:",
       paymentNotice: "La tua carta sarà autorizzata ma non addebitata fino alla conferma della prenotazione.",
-      confirm: "Conferma Prenotazione"
+      confirm: "Conferma Prenotazione",
+      summary: {
+        service: "Servizio",
+        city: "Città",
+        date: "Data",
+        time: "Ora",
+        duration: "Durata",
+        hours: "ore",
+        cleaners: "Addetti",
+        address: "Indirizzo"
+      },
+      validation: {
+        selectService: "Seleziona un servizio",
+        selectCity: "Seleziona una città",
+        selectDate: "Seleziona una data",
+        selectTime: "Seleziona un orario",
+        fillAllFields: "Compila tutti i campi richiesti",
+        validEmail: "Inserisci un indirizzo email valido",
+        bookingError: "Errore durante la prenotazione. Riprova."
+      }
     },
     success: {
       title: "Prenotazione Inviata!",
       message: "La tua prenotazione è in attesa di conferma. Ti avviseremo via email.",
       payment: "Il pagamento è stato autorizzato e verrà addebitato solo dopo la conferma.",
-      newBooking: "Nuova Prenotazione"
+      newBooking: "Fai un'altra Prenotazione"
     },
     faq: {
       title: "Domande Frequenti",
@@ -286,107 +215,6 @@ const translations = {
       message: "Utilizziamo i cookie per migliorare la tua esperienza. Continuando a usare il sito, accetti l'uso dei cookie.",
       accept: "Accetta",
       decline: "Rifiuta"
-    },
-    admin: {
-      login: {
-        title: "Pannello di Amministrazione",
-        subtitle: "Clean Italia",
-        username: "Nome utente",
-        password: "Password",
-        loginBtn: "Accedi",
-        hint: "Contatta l'amministratore per le credenziali"
-      },
-      nav: {
-        overview: "Panoramica",
-        bookings: "Prenotazioni",
-        cities: "Città",
-        services: "Servizi",
-        backToSite: "Torna al Sito",
-        logout: "Esci"
-      },
-      overview: {
-        title: "Panoramica",
-        totalBookings: "Prenotazioni Totali",
-        pending: "In Attesa",
-        confirmed: "Confermate",
-        revenue: "Ricavi Totali",
-        recentBookings: "Prenotazioni Recenti"
-      },
-      bookings: {
-        title: "Tutte le Prenotazioni",
-        filterAll: "Tutti gli Stati",
-        pending: "In Attesa",
-        confirmed: "Confermate",
-        cancelled: "Cancellate",
-        completed: "Completate",
-        id: "ID",
-        customer: "Cliente",
-        contact: "Contatto",
-        service: "Servizio",
-        city: "Città",
-        dateTime: "Data e Ora",
-        duration: "Durata",
-        amount: "Importo",
-        payment: "Pagamento",
-        status: "Stato",
-        actions: "Azioni",
-        noBookings: "Nessuna prenotazione trovata",
-        details: "Dettagli Prenotazione",
-        bookingId: "ID Prenotazione",
-        customerName: "Nome Cliente",
-        email: "Email",
-        phone: "Telefono",
-        address: "Indirizzo",
-        date: "Data",
-        time: "Ora",
-        hours: "Durata",
-        cleaners: "Addetti",
-        totalAmount: "Importo Totale",
-        paymentStatus: "Stato Pagamento",
-        paymentIntentId: "ID Intento Pagamento",
-        specialInstructions: "Istruzioni Speciali",
-        reject: "Rifiuta",
-        confirmCharge: "Conferma e Addebita",
-        email: "Email",
-        call: "Chiama",
-        whatsapp: "WhatsApp"
-      },
-      cities: {
-        title: "Gestisci Città",
-        addCity: "Aggiungi Città",
-        nameEn: "Nome Città (Inglese)",
-        nameIt: "Nome Città (Italiano)",
-        workingHoursStart: "Orario Inizio Lavoro",
-        workingHoursEnd: "Orario Fine Lavoro",
-        workingDays: "Giorni Lavorativi",
-        mon: "Lun",
-        tue: "Mar",
-        wed: "Mer",
-        thu: "Gio",
-        fri: "Ven",
-        sat: "Sab",
-        sun: "Dom",
-        cancel: "Annulla",
-        add: "Aggiungi Città"
-      },
-      services: {
-        title: "Gestisci Servizi",
-        nameIt: "IT:",
-        perHour: "/ora"
-      },
-      alerts: {
-        invalidCredentials: "Credenziali non valide",
-        loginFailed: "Accesso fallito. Riprova.",
-        confirmBooking: "Confermare questa prenotazione e addebitare il cliente?",
-        bookingConfirmed: "Prenotazione confermata con successo!",
-        confirmFailed: "Impossibile confermare la prenotazione. Riprova.",
-        rejectBooking: "Rifiutare questa prenotazione? L'autorizzazione di pagamento sarà rilasciata.",
-        bookingRejected: "Prenotazione rifiutata. Pagamento rilasciato.",
-        rejectFailed: "Impossibile rifiutare la prenotazione. Riprova.",
-        fillRequired: "Compila tutti i campi obbligatori",
-        addCityFailed: "Impossibile aggiungere la città. Riprova.",
-        updateFailed: "Aggiornamento fallito. Riprova."
-      }
     }
   }
 };
@@ -396,37 +224,62 @@ let currentLanguage = localStorage.getItem('language') || 'en';
 function setLanguage(lang) {
   currentLanguage = lang;
   localStorage.setItem('language', lang);
-  
-  // Update language switcher buttons
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === lang);
-  });
+
+  const langSwitcher = document.getElementById('current-lang');
+  if (langSwitcher) {
+    langSwitcher.textContent = lang.toUpperCase();
+  }
   
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
     const keys = key.split('.');
     let value = translations[lang];
     
-    for (const k of keys) {
-      if (value && value[k]) {
+    try {
+      for (const k of keys) {
         value = value[k];
-      } else {
-        value = null;
-        break;
       }
-    }
-    
-    if (value) {
-      element.textContent = value;
+      
+      if (typeof value === 'string') {
+        // Use textContent for most elements
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+          element.placeholder = value;
+        } else {
+          element.textContent = value;
+        }
+      }
+    } catch (error) {
+      // If a key is not found, do nothing, leave the default text
     }
   });
 }
 
-function toggleLanguage() {
+function toggleLanguage(callback) {
   const newLang = currentLanguage === 'en' ? 'it' : 'en';
   setLanguage(newLang);
+  if (typeof callback === 'function') {
+    callback();
+  }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initTranslations(callback) {
+  const langSwitchBtn = document.getElementById('lang-switch-btn');
+  if (langSwitchBtn) {
+    langSwitchBtn.addEventListener('click', () => toggleLanguage(callback));
+  }
   setLanguage(currentLanguage);
-});
+}
+
+// Helper function to get a translated string
+function i18n(key) {
+  const keys = key.split('.');
+  let value = translations[currentLanguage];
+  try {
+    for (const k of keys) {
+      value = value[k];
+    }
+    return typeof value === 'string' ? value : key;
+  } catch (error) {
+    return key;
+  }
+}

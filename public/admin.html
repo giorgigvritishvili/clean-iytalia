@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Clean Italia</title>
+  <title data-i18n="admin.login.title">Admin Dashboard - Clean Italia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,22 +16,22 @@
       <div class="login-header">
         <i class="fas fa-sparkles"></i>
         <h1>Clean Italia</h1>
-        <p>Admin Dashboard</p>
+        <p data-i18n="admin.login.subtitle">Admin Dashboard</p>
       </div>
       <form id="login-form" class="login-form">
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="username" required placeholder="Enter username">
+          <label data-i18n="admin.login.username">Username</label>
+          <input type="text" id="username" required data-i18n-placeholder="admin.login.usernamePlaceholder">
         </div>
         <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="password" required placeholder="Enter password">
+          <label data-i18n="admin.login.password">Password</label>
+          <input type="password" id="password" required data-i18n-placeholder="admin.login.passwordPlaceholder">
         </div>
         <button type="submit" class="btn btn-primary btn-block">
           <i class="fas fa-sign-in-alt"></i>
-          Login
+          <span data-i18n="admin.login.loginBtn">Login</span>
         </button>
-        <p class="login-hint">Contact administrator for credentials</p>
+        <p class="login-hint" data-i18n="admin.login.hint">Contact administrator for credentials</p>
       </form>
     </div>
   </div>
@@ -45,39 +45,39 @@
       <ul class="sidebar-menu">
         <li class="active" data-tab="overview">
           <i class="fas fa-chart-line"></i>
-          <span>Overview</span>
+          <span data-i18n="admin.nav.overview">Overview</span>
         </li>
         <li data-tab="bookings">
           <i class="fas fa-calendar-alt"></i>
-          <span>Bookings</span>
+          <span data-i18n="admin.nav.bookings">Bookings</span>
         </li>
         <li data-tab="cities">
           <i class="fas fa-map-marker-alt"></i>
-          <span>Cities</span>
+          <span data-i18n="admin.nav.cities">Cities</span>
         </li>
         <li data-tab="services">
           <i class="fas fa-broom"></i>
-          <span>Services</span>
+          <span data-i18n="admin.nav.services">Services</span>
         </li>
       </ul>
       <div class="sidebar-footer">
         <a href="/" class="back-link">
           <i class="fas fa-arrow-left"></i>
-          Back to Site
+          <span data-i18n="admin.nav.backToSite">Back to Site</span>
         </a>
-        <button onclick="logout()" class="logout-btn">
+        <button id="logout-btn" type="button" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i>
-          Logout
+          <span data-i18n="admin.nav.logout">Logout</span>
         </button>
       </div>
     </nav>
 
     <main class="main-content">
       <header class="topbar">
-        <button class="mobile-sidebar-toggle" onclick="toggleSidebar()">
+        <button id="mobile-sidebar-toggle" type="button" class="mobile-sidebar-toggle">
           <i class="fas fa-bars"></i>
         </button>
-        <h2 id="page-title">Overview</h2>
+        <h2 id="page-title" data-i18n="admin.overview.title">Overview</h2>
         <div class="topbar-actions">
           <span id="admin-name">Admin</span>
         </div>
@@ -87,60 +87,51 @@
         <section id="overview-tab" class="tab-content active">
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon blue">
-                <i class="fas fa-calendar-check"></i>
-              </div>
+              <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
               <div class="stat-info">
                 <h3 id="stat-total">0</h3>
-                <p>Total Bookings</p>
+                <p data-i18n="admin.overview.totalBookings">Total Bookings</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon orange">
-                <i class="fas fa-clock"></i>
-              </div>
+              <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
               <div class="stat-info">
                 <h3 id="stat-pending">0</h3>
-                <p>Pending</p>
+                <p data-i18n="admin.overview.pending">Pending</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon green">
-                <i class="fas fa-check-circle"></i>
-              </div>
+              <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
               <div class="stat-info">
                 <h3 id="stat-confirmed">0</h3>
-                <p>Confirmed</p>
+                <p data-i18n="admin.overview.confirmed">Confirmed</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon purple">
-                <i class="fas fa-euro-sign"></i>
-              </div>
+              <div class="stat-icon purple"><i class="fas fa-euro-sign"></i></div>
               <div class="stat-info">
                 <h3 id="stat-revenue">€0</h3>
-                <p>Total Revenue</p>
+                <p data-i18n="admin.overview.revenue">Total Revenue</p>
               </div>
             </div>
           </div>
 
           <div class="recent-section">
-            <h3>Recent Bookings</h3>
+            <h3 data-i18n="admin.overview.recentBookings">Recent Bookings</h3>
             <div class="table-container">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>City</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Amount</th>
+                    <th data-i18n="admin.bookings.id">ID</th>
+                    <th data-i18n="admin.bookings.customer">Customer</th>
+                    <th data-i18n="admin.bookings.service">Service</th>
+                    <th data-i18n="admin.bookings.city">City</th>
+                    <th data-i18n="admin.bookings.date">Date</th>
+                    <th data-i18n="admin.bookings.status">Status</th>
+                    <th data-i18n="admin.bookings.amount">Amount</th>
                   </tr>
                 </thead>
-                <tbody id="recent-bookings">
-                </tbody>
+                <tbody id="recent-bookings"></tbody>
               </table>
             </div>
           </div>
@@ -148,14 +139,14 @@
 
         <section id="bookings-tab" class="tab-content">
           <div class="section-header">
-            <h3>All Bookings</h3>
+            <h3 data-i18n="admin.bookings.title">All Bookings</h3>
             <div class="filter-group">
-              <select id="status-filter" onchange="filterBookings()">
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
+              <select id="status-filter">
+                <option value="" data-i18n="admin.bookings.filterAll">All Status</option>
+                <option value="pending" data-i18n="admin.bookings.pending">Pending</option>
+                <option value="confirmed" data-i18n="admin.bookings.confirmed">Confirmed</option>
+                <option value="cancelled" data-i18n="admin.bookings.cancelled">Cancelled</option>
+                <option value="completed" data-i18n="admin.bookings.completed">Completed</option>
               </select>
             </div>
           </div>
@@ -163,43 +154,37 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Service</th>
-                  <th>City</th>
-                  <th>Date & Time</th>
-                  <th>Duration</th>
-                  <th>Amount</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th data-i18n="admin.bookings.id">ID</th>
+                  <th data-i18n="admin.bookings.customer">Customer</th>
+                  <th data-i18n="admin.bookings.contact">Contact</th>
+                  <th data-i18n="admin.bookings.service">Service</th>
+                  <th data-i18n="admin.bookings.city">City</th>
+                  <th data-i18n="admin.bookings.dateTime">Date & Time</th>
+                  <th data-i18n="admin.bookings.duration">Duration</th>
+                  <th data-i18n="admin.bookings.amount">Amount</th>
+                  <th data-i18n="admin.bookings.payment">Payment</th>
+                  <th data-i18n="admin.bookings.status">Status</th>
+                  <th data-i18n="admin.bookings.actions">Actions</th>
                 </tr>
               </thead>
-              <tbody id="all-bookings">
-              </tbody>
+              <tbody id="all-bookings"></tbody>
             </table>
           </div>
         </section>
 
         <section id="cities-tab" class="tab-content">
           <div class="section-header">
-            <h3>Manage Cities</h3>
-            <button class="btn btn-primary" onclick="showAddCityModal()">
-              <i class="fas fa-plus"></i>
-              Add City
+            <h3 data-i18n="admin.cities.title">Manage Cities</h3>
+            <button type="button" id="add-city-btn" class="btn btn-primary">
+              <i class="fas fa-plus"></i> <span data-i18n="admin.cities.addCity">Add City</span>
             </button>
           </div>
-          <div class="cards-grid" id="cities-grid">
-          </div>
+          <div class="cards-grid" id="cities-grid"></div>
         </section>
 
         <section id="services-tab" class="tab-content">
-          <div class="section-header">
-            <h3>Manage Services</h3>
-          </div>
-          <div class="cards-grid" id="services-grid">
-          </div>
+          <div class="section-header"><h3 data-i18n="admin.services.title">Manage Services</h3></div>
+          <div class="cards-grid" id="services-grid-admin"></div>
         </section>
       </div>
     </main>
@@ -208,61 +193,60 @@
   <div class="modal" id="booking-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Booking Details</h3>
-        <button class="modal-close" onclick="closeModal('booking-modal')">&times;</button>
+        <h3 data-i18n="admin.bookings.details">Booking Details</h3>
+        <button type="button" class="modal-close" data-modal-id="booking-modal">&times;</button>
       </div>
-      <div class="modal-body" id="booking-details">
-      </div>
-      <div class="modal-footer" id="booking-actions">
-      </div>
+      <div class="modal-body" id="booking-details"></div>
+      <div class="modal-footer" id="booking-actions"></div>
     </div>
   </div>
 
   <div class="modal" id="city-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Add New City</h3>
-        <button class="modal-close" onclick="closeModal('city-modal')">&times;</button>
+        <h3 data-i18n="admin.cities.addCity">Add New City</h3>
+        <button type="button" class="modal-close" data-modal-id="city-modal">&times;</button>
       </div>
       <form id="city-form" class="modal-body">
         <div class="form-group">
-          <label>City Name (English)</label>
-          <input type="text" id="city-name" required placeholder="e.g., Florence">
+          <label data-i18n="admin.cities.nameEn">City Name (English)</label>
+          <input type="text" id="city-name" required>
         </div>
         <div class="form-group">
-          <label>City Name (Italian)</label>
-          <input type="text" id="city-name-it" required placeholder="e.g., Firenze">
+          <label data-i18n="admin.cities.nameIt">City Name (Italian)</label>
+          <input type="text" id="city-name-it" required>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Working Hours Start</label>
+            <label data-i18n="admin.cities.workingHoursStart">Working Hours Start</label>
             <input type="time" id="city-start" value="08:00">
           </div>
           <div class="form-group">
-            <label>Working Hours End</label>
+            <label data-i18n="admin.cities.workingHoursEnd">Working Hours End</label>
             <input type="time" id="city-end" value="18:00">
           </div>
         </div>
         <div class="form-group">
-          <label>Working Days</label>
+          <label data-i18n="admin.cities.workingDays">Working Days</label>
           <div class="checkbox-group">
-            <label><input type="checkbox" value="1" checked> Mon</label>
-            <label><input type="checkbox" value="2" checked> Tue</label>
-            <label><input type="checkbox" value="3" checked> Wed</label>
-            <label><input type="checkbox" value="4" checked> Thu</label>
-            <label><input type="checkbox" value="5" checked> Fri</label>
-            <label><input type="checkbox" value="6"> Sat</label>
-            <label><input type="checkbox" value="7"> Sun</label>
+            <label><input type="checkbox" value="1" checked> <span data-i18n="admin.cities.mon">Mon</span></label>
+            <label><input type="checkbox" value="2" checked> <span data-i18n="admin.cities.tue">Tue</span></label>
+            <label><input type="checkbox" value="3" checked> <span data-i18n="admin.cities.wed">Wed</span></label>
+            <label><input type="checkbox" value="4" checked> <span data-i18n="admin.cities.thu">Thu</span></label>
+            <label><input type="checkbox" value="5" checked> <span data-i18n="admin.cities.fri">Fri</span></label>
+            <label><input type="checkbox" value="6"> <span data-i18n="admin.cities.sat">Sat</span></label>
+            <label><input type="checkbox" value="0"> <span data-i18n="admin.cities.sun">Sun</span></label>
           </div>
         </div>
       </form>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('city-modal')">Cancel</button>
-        <button class="btn btn-primary" onclick="addCity()">Add City</button>
+        <button type="button" class="btn btn-secondary modal-close" data-modal-id="city-modal" data-i18n="admin.cities.cancel">Cancel</button>
+        <button type="button" id="save-city-btn" class="btn btn-primary" data-i18n="admin.cities.add">Add City</button>
       </div>
     </div>
   </div>
 
+  <script src="translations.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

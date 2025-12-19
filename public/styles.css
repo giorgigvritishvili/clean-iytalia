@@ -140,10 +140,15 @@ body {
   padding: 20px;
   box-shadow: var(--shadow);
   z-index: 999;
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: all 0.3s ease;
 }
 
 .mobile-menu.active {
   display: block;
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .mobile-menu a {
@@ -776,6 +781,180 @@ body {
   .footer-links {
     flex-direction: column;
     gap: 15px;
+  }
+}
+
+/* Tablet responsiveness */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .nav-links {
+    gap: 20px;
+  }
+  
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+  
+  .services-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-form-container {
+    max-width: 100%;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Small mobile responsiveness */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 10px;
+  }
+  
+  .navbar .container {
+    padding: 10px 0;
+  }
+  
+  .nav-brand {
+    font-size: 1.3rem;
+  }
+  
+  .nav-brand i {
+    font-size: 1.5rem;
+  }
+  
+  .hero {
+    padding: 80px 0 60px;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.8rem;
+  }
+  
+  .hero-content p {
+    font-size: 0.95rem;
+  }
+  
+  .hero-features {
+    gap: 10px;
+  }
+  
+  .feature-item {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .section-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .service-card {
+    padding: 20px;
+  }
+  
+  .service-card h3 {
+    font-size: 1.2rem;
+  }
+  
+  .service-card p {
+    font-size: 0.9rem;
+  }
+  
+  .faq-grid {
+    gap: 15px;
+  }
+  
+  .faq-item {
+    padding: 15px;
+  }
+  
+  .faq-question {
+    font-size: 1rem;
+  }
+  
+  .faq-answer {
+    font-size: 0.9rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .booking-form {
+    padding: 20px;
+  }
+  
+  .step-title {
+    font-size: 1.1rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.9rem;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .btn-lg {
+    padding: 14px 24px;
+    font-size: 1rem;
+  }
+  
+  .footer {
+    padding: 30px 0 20px;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .footer-section h3 {
+    font-size: 1.1rem;
+  }
+  
+  .footer-links {
+    gap: 10px;
+  }
+  
+  .footer-links a {
+    font-size: 0.9rem;
+  }
+  
+  .mobile-menu {
+    padding: 15px;
+  }
+  
+  .mobile-menu a {
+    font-size: 1rem;
+    padding: 12px 0;
   }
 }
 
