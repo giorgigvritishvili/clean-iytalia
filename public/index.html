@@ -25,25 +25,25 @@
         <a href="#contact" data-i18n="nav.contact">Contact</a>
       </div>
       <div class="nav-actions">
-        <button class="lang-switch" onclick="toggleLanguage()">
+        <button class="lang-switch" id="lang-switch-btn" aria-label="Toggle language">
           <i class="fas fa-globe"></i>
           <span id="current-lang">EN</span>
         </button>
-        <a href="admin.html" class="admin-link">
+        <a href="admin.html" class="admin-link" aria-label="Admin Login">
           <i class="fas fa-user-shield"></i>
         </a>
       </div>
-      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open mobile menu">
         <i class="fas fa-bars"></i>
       </button>
     </div>
   </nav>
 
   <div class="mobile-menu" id="mobile-menu">
-    <a href="#services" data-i18n="nav.services" onclick="toggleMobileMenu()">Services</a>
-    <a href="#booking" data-i18n="nav.book" onclick="toggleMobileMenu()">Book Now</a>
-    <a href="#faq" data-i18n="nav.faq" onclick="toggleMobileMenu()">FAQ</a>
-    <a href="#contact" data-i18n="nav.contact" onclick="toggleMobileMenu()">Contact</a>
+    <a href="#services" data-i18n="nav.services">Services</a>
+    <a href="#booking" data-i18n="nav.book">Book Now</a>
+    <a href="#faq" data-i18n="nav.faq">FAQ</a>
+    <a href="#contact" data-i18n="nav.contact">Contact</a>
   </div>
 
   <section class="hero">
@@ -131,7 +131,7 @@
               </div>
             </div>
             
-            <button type="button" class="btn btn-primary" onclick="nextStep(2)" data-i18n="booking.next">Next</button>
+            <button type="button" class="btn btn-primary" data-step-target="2" data-i18n="booking.next">Next</button>
           </div>
           
           <div class="form-step" id="step-2">
@@ -153,8 +153,8 @@
             </div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" onclick="prevStep(1)" data-i18n="booking.back">Back</button>
-              <button type="button" class="btn btn-primary" onclick="nextStep(3)" data-i18n="booking.next">Next</button>
+              <button type="button" class="btn btn-secondary" data-step-target="1" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" data-step-target="3" data-i18n="booking.next">Next</button>
             </div>
           </div>
           
@@ -190,8 +190,8 @@
             </div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" onclick="prevStep(2)" data-i18n="booking.back">Back</button>
-              <button type="button" class="btn btn-primary" onclick="nextStep(4)" data-i18n="booking.next">Next</button>
+              <button type="button" class="btn btn-secondary" data-step-target="2" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" data-step-target="4" data-i18n="booking.next">Next</button>
             </div>
           </div>
           
@@ -218,7 +218,7 @@
             <div id="card-errors" class="card-errors"></div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" onclick="prevStep(3)" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-secondary" data-step-target="3" data-i18n="booking.back">Back</button>
               <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
                 <i class="fas fa-lock"></i>
                 <span data-i18n="booking.confirm">Confirm Booking</span>
@@ -234,7 +234,7 @@
           <h3 data-i18n="success.title">Booking Submitted!</h3>
           <p data-i18n="success.message">Your booking is pending confirmation. We will notify you via email once it's confirmed.</p>
           <p data-i18n="success.payment">Your payment has been authorized and will only be charged upon confirmation.</p>
-          <button class="btn btn-primary" onclick="resetBooking()" data-i18n="success.newBooking">Make Another Booking</button>
+          <button class="btn btn-primary" id="new-booking-btn" data-i18n="success.newBooking">Make Another Booking</button>
         </div>
       </div>
     </div>
@@ -246,7 +246,7 @@
       
       <div class="faq-list">
         <div class="faq-item">
-          <button class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question">
             <span data-i18n="faq.q1">How does the booking process work?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -256,7 +256,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question">
             <span data-i18n="faq.q2">What areas do you serve?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -266,7 +266,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question">
             <span data-i18n="faq.q3">What payment methods do you accept?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -276,7 +276,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question">
             <span data-i18n="faq.q4">Can I cancel my booking?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -306,7 +306,7 @@
           <p>+39 123 456 789</p>
         </a>
         
-        <a href="https://wa.me/39123456789" class="contact-card" target="_blank">
+        <a href="https://wa.me/39123456789" class="contact-card" target="_blank" rel="noopener noreferrer">
           <i class="fab fa-whatsapp"></i>
           <h4>WhatsApp</h4>
           <p data-i18n="contact.whatsapp">Chat with us</p>
@@ -336,13 +336,13 @@
     <div class="cookie-content">
       <p data-i18n="cookies.message">We use cookies to improve your experience. By continuing to use this site, you agree to our use of cookies.</p>
       <div class="cookie-actions">
-        <button class="btn btn-secondary btn-sm" onclick="declineCookies()" data-i18n="cookies.decline">Decline</button>
-        <button class="btn btn-primary btn-sm" onclick="acceptCookies()" data-i18n="cookies.accept">Accept</button>
+        <button class="btn btn-secondary btn-sm" id="decline-cookies-btn" data-i18n="cookies.decline">Decline</button>
+        <button class="btn btn-primary btn-sm" id="accept-cookies-btn" data-i18n="cookies.accept">Accept</button>
       </div>
     </div>
   </div>
 
-  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" title="Chat on WhatsApp">
+  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 

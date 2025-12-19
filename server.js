@@ -16,8 +16,8 @@ let mockBookings = [];
 let mockBlockedSlots = [];
 let mockAdmins = [{ id: 1, username: 'admin', password: 'admin123' }]; // Plain password for mock
 let mockCities = [
-  { id: 1, name: 'Rome', name_it: 'Roma', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '08:00', working_hours_end: '18:00' },
-  { id: 2, name: 'Milan', name_it: 'Milano', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '08:00', working_hours_end: '18:00' }
+  { id: 1, name: 'Rome', name_it: 'Roma', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '09:00', working_hours_end: '17:30' },
+  { id: 2, name: 'Milan', name_it: 'Milano', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '09:00', working_hours_end: '17:30' }
 ];
 let mockServices = [
   { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', price_per_hour: 25.00, enabled: true },
