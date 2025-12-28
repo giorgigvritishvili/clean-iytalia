@@ -47,8 +47,6 @@ const translations = {
       date: "Date",
       time: "Time",
       selectDate: "Select a date first",
-      noSlots: "No available time slots",
-      errorSlots: "Error loading slots",
       name: "Full Name",
       email: "Email",
       phone: "Phone",
@@ -58,26 +56,7 @@ const translations = {
       back: "Back",
       total: "Total:",
       paymentNotice: "Your card will be authorized but not charged until your booking is confirmed by our team.",
-      confirm: "Confirm Booking",
-      summary: {
-        service: "Service",
-        city: "City",
-        date: "Date",
-        time: "Time",
-        duration: "Duration",
-        hours: "hours",
-        cleaners: "Cleaners",
-        address: "Address",
-      },
-      validation: {
-        selectService: "Please select a service",
-        selectCity: "Please select a city",
-        selectDate: "Please select a date",
-        selectTime: "Please select a time",
-        fillAllFields: "Please fill in all required fields",
-        validEmail: "Please enter a valid email",
-        bookingError: "Error creating booking. Please try again."
-      }
+      confirm: "Confirm Booking"
     },
     success: {
       title: "Booking Submitted!",
@@ -132,6 +111,18 @@ const translations = {
     services: {
       title: "I Nostri Servizi",
       subtitle: "Scegli il servizio di pulizia perfetto per le tue esigenze",
+      regular: "Pulizia Regolare",
+      regularDesc: "Pulizia settimanale o bisettimanale per case",
+      onetime: "Pulizia Una Tantum",
+      onetimeDesc: "Una pulizia approfondita per qualsiasi occasione",
+      deep: "Pulizia Profonda",
+      deepDesc: "Pulizia accurata incluse le aree difficili",
+      move: "Trasloco",
+      moveDesc: "Pulizia completa per traslochi",
+      lastminute: "Pulizia Last Minute",
+      lastminuteDesc: "Servizio urgente entro 24 ore",
+      business: "Pulizia Uffici",
+      businessDesc: "Pulizia professionale per uffici e aziende",
       perHour: "/ora"
     },
     booking: {
@@ -150,8 +141,6 @@ const translations = {
       date: "Data",
       time: "Ora",
       selectDate: "Seleziona prima una data",
-      noSlots: "Nessun orario disponibile",
-      errorSlots: "Errore nel caricamento degli orari",
       name: "Nome Completo",
       email: "Email",
       phone: "Telefono",
@@ -161,32 +150,13 @@ const translations = {
       back: "Indietro",
       total: "Totale:",
       paymentNotice: "La tua carta sarà autorizzata ma non addebitata fino alla conferma della prenotazione.",
-      confirm: "Conferma Prenotazione",
-      summary: {
-        service: "Servizio",
-        city: "Città",
-        date: "Data",
-        time: "Ora",
-        duration: "Durata",
-        hours: "ore",
-        cleaners: "Addetti",
-        address: "Indirizzo"
-      },
-      validation: {
-        selectService: "Seleziona un servizio",
-        selectCity: "Seleziona una città",
-        selectDate: "Seleziona una data",
-        selectTime: "Seleziona un orario",
-        fillAllFields: "Compila tutti i campi richiesti",
-        validEmail: "Inserisci un indirizzo email valido",
-        bookingError: "Errore durante la prenotazione. Riprova."
-      }
+      confirm: "Conferma Prenotazione"
     },
     success: {
       title: "Prenotazione Inviata!",
       message: "La tua prenotazione è in attesa di conferma. Ti avviseremo via email.",
       payment: "Il pagamento è stato autorizzato e verrà addebitato solo dopo la conferma.",
-      newBooking: "Fai un'altra Prenotazione"
+      newBooking: "Nuova Prenotazione"
     },
     faq: {
       title: "Domande Frequenti",
@@ -224,62 +194,33 @@ let currentLanguage = localStorage.getItem('language') || 'en';
 function setLanguage(lang) {
   currentLanguage = lang;
   localStorage.setItem('language', lang);
-
-  const langSwitcher = document.getElementById('current-lang');
-  if (langSwitcher) {
-    langSwitcher.textContent = lang.toUpperCase();
-  }
+  document.getElementById('current-lang').textContent = lang.toUpperCase();
   
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
     const keys = key.split('.');
     let value = translations[lang];
     
-    try {
-      for (const k of keys) {
+    for (const k of keys) {
+      if (value && value[k]) {
         value = value[k];
+      } else {
+        value = null;
+        break;
       }
-      
-      if (typeof value === 'string') {
-        // Use textContent for most elements
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-          element.placeholder = value;
-        } else {
-          element.textContent = value;
-        }
-      }
-    } catch (error) {
-      // If a key is not found, do nothing, leave the default text
+    }
+    
+    if (value) {
+      element.textContent = value;
     }
   });
 }
 
-function toggleLanguage(callback) {
+function toggleLanguage() {
   const newLang = currentLanguage === 'en' ? 'it' : 'en';
   setLanguage(newLang);
-  if (typeof callback === 'function') {
-    callback();
-  }
 }
 
-function initTranslations(callback) {
-  const langSwitchBtn = document.getElementById('lang-switch-btn');
-  if (langSwitchBtn) {
-    langSwitchBtn.addEventListener('click', () => toggleLanguage(callback));
-  }
+document.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLanguage);
-}
-
-// Helper function to get a translated string
-function i18n(key) {
-  const keys = key.split('.');
-  let value = translations[currentLanguage];
-  try {
-    for (const k of keys) {
-      value = value[k];
-    }
-    return typeof value === 'string' ? value : key;
-  } catch (error) {
-    return key;
-  }
-}
+});

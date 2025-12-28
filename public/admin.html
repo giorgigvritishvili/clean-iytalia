@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="admin.login.title">Admin Dashboard - Clean Italia</title>
+  <title>Admin Dashboard - Clean Italia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,22 +16,22 @@
       <div class="login-header">
         <i class="fas fa-sparkles"></i>
         <h1>Clean Italia</h1>
-        <p data-i18n="admin.login.subtitle">Admin Dashboard</p>
+        <p>Admin Dashboard</p>
       </div>
       <form id="login-form" class="login-form">
         <div class="form-group">
-          <label data-i18n="admin.login.username">Username</label>
-          <input type="text" id="username" required data-i18n-placeholder="admin.login.usernamePlaceholder">
+          <label>Username</label>
+          <input type="text" id="username" required placeholder="Enter username">
         </div>
         <div class="form-group">
-          <label data-i18n="admin.login.password">Password</label>
-          <input type="password" id="password" required data-i18n-placeholder="admin.login.passwordPlaceholder">
+          <label>Password</label>
+          <input type="password" id="password" required placeholder="Enter password">
         </div>
         <button type="submit" class="btn btn-primary btn-block">
           <i class="fas fa-sign-in-alt"></i>
-          <span data-i18n="admin.login.loginBtn">Login</span>
+          Login
         </button>
-        <p class="login-hint" data-i18n="admin.login.hint">Contact administrator for credentials</p>
+        <p class="login-hint">Contact administrator for credentials</p>
       </form>
     </div>
   </div>
@@ -45,39 +45,96 @@
       <ul class="sidebar-menu">
         <li class="active" data-tab="overview">
           <i class="fas fa-chart-line"></i>
-          <span data-i18n="admin.nav.overview">Overview</span>
+          <span>Overview</span>
         </li>
-        <li data-tab="bookings">
+        <li class="dropdown-toggle" data-dropdown="projects">
+          <i class="fas fa-project-diagram"></i>
+          <span>Projects</span>
+          <i class="fas fa-chevron-down dropdown-icon"></i>
+        </li>
+        <ul class="dropdown-menu" id="projects-dropdown">
+          <li data-tab="available-projects">
+            <i class="fas fa-list"></i>
+            <span>Available Projects</span>
+          </li>
+          <li data-tab="my-projects">
+            <i class="fas fa-folder"></i>
+            <span>My Projects</span>
+          </li>
+        </ul>
+        <li class="dropdown-toggle" data-dropdown="appointments">
           <i class="fas fa-calendar-alt"></i>
-          <span data-i18n="admin.nav.bookings">Bookings</span>
+          <span>Appointments</span>
+          <i class="fas fa-chevron-down dropdown-icon"></i>
+        </li>
+        <ul class="dropdown-menu" id="appointments-dropdown">
+          <li data-tab="appointment-calendar">
+            <i class="fas fa-calendar-week"></i>
+            <span>Appointment Calendar</span>
+          </li>
+          <li data-tab="my-appointments">
+            <i class="fas fa-clock"></i>
+            <span>My Appointments</span>
+          </li>
+        </ul>
+        <li data-tab="bookings">
+          <i class="fas fa-calendar-check"></i>
+          <span>All Bookings</span>
+        </li>
+        <li class="dropdown-toggle" data-dropdown="financial">
+          <i class="fas fa-euro-sign"></i>
+          <span>Financial</span>
+          <i class="fas fa-chevron-down dropdown-icon"></i>
+        </li>
+        <ul class="dropdown-menu" id="financial-dropdown">
+          <li data-tab="earnings">
+            <i class="fas fa-chart-bar"></i>
+            <span>Earnings</span>
+          </li>
+          <li data-tab="payout">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Payout</span>
+          </li>
+          <li data-tab="commission-invoices">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Commission Invoices</span>
+          </li>
+          <li data-tab="billing-commissions">
+            <i class="fas fa-receipt"></i>
+            <span>Billing & Commissions</span>
+          </li>
+        </ul>
+        <li data-tab="workers">
+          <i class="fas fa-users"></i>
+          <span>Workers</span>
         </li>
         <li data-tab="cities">
           <i class="fas fa-map-marker-alt"></i>
-          <span data-i18n="admin.nav.cities">Cities</span>
+          <span>Cities</span>
         </li>
         <li data-tab="services">
           <i class="fas fa-broom"></i>
-          <span data-i18n="admin.nav.services">Services</span>
+          <span>Services</span>
         </li>
       </ul>
       <div class="sidebar-footer">
         <a href="/" class="back-link">
           <i class="fas fa-arrow-left"></i>
-          <span data-i18n="admin.nav.backToSite">Back to Site</span>
+          Back to Site
         </a>
-        <button id="logout-btn" type="button" class="logout-btn">
+        <button onclick="logout()" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i>
-          <span data-i18n="admin.nav.logout">Logout</span>
+          Logout
         </button>
       </div>
     </nav>
 
     <main class="main-content">
       <header class="topbar">
-        <button id="mobile-sidebar-toggle" type="button" class="mobile-sidebar-toggle">
+        <button class="mobile-sidebar-toggle" onclick="toggleSidebar()">
           <i class="fas fa-bars"></i>
         </button>
-        <h2 id="page-title" data-i18n="admin.overview.title">Overview</h2>
+        <h2 id="page-title">Overview</h2>
         <div class="topbar-actions">
           <span id="admin-name">Admin</span>
         </div>
@@ -87,51 +144,60 @@
         <section id="overview-tab" class="tab-content active">
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
+              <div class="stat-icon blue">
+                <i class="fas fa-calendar-check"></i>
+              </div>
               <div class="stat-info">
                 <h3 id="stat-total">0</h3>
-                <p data-i18n="admin.overview.totalBookings">Total Bookings</p>
+                <p>Total Bookings</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+              <div class="stat-icon orange">
+                <i class="fas fa-clock"></i>
+              </div>
               <div class="stat-info">
                 <h3 id="stat-pending">0</h3>
-                <p data-i18n="admin.overview.pending">Pending</p>
+                <p>Pending</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+              <div class="stat-icon green">
+                <i class="fas fa-check-circle"></i>
+              </div>
               <div class="stat-info">
                 <h3 id="stat-confirmed">0</h3>
-                <p data-i18n="admin.overview.confirmed">Confirmed</p>
+                <p>Confirmed</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon purple"><i class="fas fa-euro-sign"></i></div>
+              <div class="stat-icon purple">
+                <i class="fas fa-euro-sign"></i>
+              </div>
               <div class="stat-info">
                 <h3 id="stat-revenue">€0</h3>
-                <p data-i18n="admin.overview.revenue">Total Revenue</p>
+                <p>Total Revenue</p>
               </div>
             </div>
           </div>
 
           <div class="recent-section">
-            <h3 data-i18n="admin.overview.recentBookings">Recent Bookings</h3>
+            <h3>Recent Bookings</h3>
             <div class="table-container">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th data-i18n="admin.bookings.id">ID</th>
-                    <th data-i18n="admin.bookings.customer">Customer</th>
-                    <th data-i18n="admin.bookings.service">Service</th>
-                    <th data-i18n="admin.bookings.city">City</th>
-                    <th data-i18n="admin.bookings.date">Date</th>
-                    <th data-i18n="admin.bookings.status">Status</th>
-                    <th data-i18n="admin.bookings.amount">Amount</th>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>City</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Amount</th>
                   </tr>
                 </thead>
-                <tbody id="recent-bookings"></tbody>
+                <tbody id="recent-bookings">
+                </tbody>
               </table>
             </div>
           </div>
@@ -139,14 +205,14 @@
 
         <section id="bookings-tab" class="tab-content">
           <div class="section-header">
-            <h3 data-i18n="admin.bookings.title">All Bookings</h3>
+            <h3>All Bookings</h3>
             <div class="filter-group">
-              <select id="status-filter">
-                <option value="" data-i18n="admin.bookings.filterAll">All Status</option>
-                <option value="pending" data-i18n="admin.bookings.pending">Pending</option>
-                <option value="confirmed" data-i18n="admin.bookings.confirmed">Confirmed</option>
-                <option value="cancelled" data-i18n="admin.bookings.cancelled">Cancelled</option>
-                <option value="completed" data-i18n="admin.bookings.completed">Completed</option>
+              <select id="status-filter" onchange="filterBookings()">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
           </div>
@@ -154,37 +220,315 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th data-i18n="admin.bookings.id">ID</th>
-                  <th data-i18n="admin.bookings.customer">Customer</th>
-                  <th data-i18n="admin.bookings.contact">Contact</th>
-                  <th data-i18n="admin.bookings.service">Service</th>
-                  <th data-i18n="admin.bookings.city">City</th>
-                  <th data-i18n="admin.bookings.dateTime">Date & Time</th>
-                  <th data-i18n="admin.bookings.duration">Duration</th>
-                  <th data-i18n="admin.bookings.amount">Amount</th>
-                  <th data-i18n="admin.bookings.payment">Payment</th>
-                  <th data-i18n="admin.bookings.status">Status</th>
-                  <th data-i18n="admin.bookings.actions">Actions</th>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Service</th>
+                  <th>City</th>
+                  <th>Date & Time</th>
+                  <th>Duration</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="all-bookings"></tbody>
+              <tbody id="all-bookings">
+              </tbody>
             </table>
           </div>
         </section>
 
         <section id="cities-tab" class="tab-content">
           <div class="section-header">
-            <h3 data-i18n="admin.cities.title">Manage Cities</h3>
-            <button type="button" id="add-city-btn" class="btn btn-primary">
-              <i class="fas fa-plus"></i> <span data-i18n="admin.cities.addCity">Add City</span>
+            <h3>Manage Cities</h3>
+            <button class="btn btn-primary" onclick="showAddCityModal()">
+              <i class="fas fa-plus"></i>
+              Add City
             </button>
           </div>
-          <div class="cards-grid" id="cities-grid"></div>
+          <div class="cards-grid" id="cities-grid">
+          </div>
         </section>
 
         <section id="services-tab" class="tab-content">
-          <div class="section-header"><h3 data-i18n="admin.services.title">Manage Services</h3></div>
-          <div class="cards-grid" id="services-grid-admin"></div>
+          <div class="section-header">
+            <h3>Manage Services</h3>
+          </div>
+          <div class="cards-grid" id="services-grid">
+          </div>
+        </section>
+
+        <!-- Projects Sections -->
+        <section id="available-projects-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Available Projects</h3>
+            <button class="btn btn-primary" onclick="showAddProjectModal()">
+              <i class="fas fa-plus"></i>
+              Add Project
+            </button>
+          </div>
+          <div class="cards-grid" id="available-projects-grid">
+          </div>
+        </section>
+
+        <section id="my-projects-tab" class="tab-content">
+          <div class="section-header">
+            <h3>My Projects</h3>
+            <div class="filter-group">
+              <select id="project-status-filter" onchange="filterMyProjects()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="on-hold">On Hold</option>
+              </select>
+            </div>
+          </div>
+          <div class="cards-grid" id="my-projects-grid">
+          </div>
+        </section>
+
+        <!-- Appointments Sections -->
+        <section id="appointment-calendar-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Appointment Calendar</h3>
+            <div class="filter-group">
+              <input type="date" id="calendar-date" onchange="loadAppointmentCalendar()">
+              <select id="calendar-view" onchange="changeCalendarView()">
+                <option value="month">Month</option>
+                <option value="week">Week</option>
+                <option value="day">Day</option>
+              </select>
+            </div>
+          </div>
+          <div class="calendar-container" id="appointment-calendar">
+          </div>
+        </section>
+
+        <section id="my-appointments-tab" class="tab-content">
+          <div class="section-header">
+            <h3>My Appointments</h3>
+            <div class="filter-group">
+              <select id="appointment-status-filter" onchange="filterMyAppointments()">
+                <option value="">All Status</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Date & Time</th>
+                  <th>Duration</th>
+                  <th>Client</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="my-appointments-table">
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Financial Sections -->
+        <section id="earnings-tab" class="tab-content">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <i class="fas fa-euro-sign"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="total-earnings">€0</h3>
+                <p>Total Earnings</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <i class="fas fa-calendar-alt"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="monthly-earnings">€0</h3>
+                <p>This Month</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon purple">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="pending-earnings">€0</h3>
+                <p>Pending</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="commission-rate">0%</h3>
+                <p>Commission Rate</p>
+              </div>
+            </div>
+          </div>
+          <div class="recent-section">
+            <h3>Earnings History</h3>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Project</th>
+                    <th>Amount</th>
+                    <th>Commission</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="earnings-history">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="payout-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Payout Requests</h3>
+            <button class="btn btn-primary" onclick="requestPayout()">
+              <i class="fas fa-plus"></i>
+              Request Payout
+            </button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Amount</th>
+                  <th>Requested Date</th>
+                  <th>Status</th>
+                  <th>Processed Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="payout-requests">
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="commission-invoices-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Commission Invoices</h3>
+            <div class="filter-group">
+              <select id="invoice-status-filter" onchange="filterCommissionInvoices()">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Period</th>
+                  <th>Amount</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="commission-invoices">
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="billing-commissions-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Billing & Commissions</h3>
+            <button class="btn btn-primary" onclick="generateCommissionReport()">
+              <i class="fas fa-file-pdf"></i>
+              Generate Report
+            </button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <i class="fas fa-file-invoice"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="total-invoices">0</h3>
+                <p>Total Invoices</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="paid-invoices">0</h3>
+                <p>Paid Invoices</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="pending-invoices">0</h3>
+                <p>Pending Invoices</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="overdue-invoices">0</h3>
+                <p>Overdue</p>
+              </div>
+            </div>
+          </div>
+          <div class="recent-section">
+            <h3>Recent Commission Activity</h3>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="commission-activity">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Workers Section -->
+        <section id="workers-tab" class="tab-content">
+          <div class="section-header">
+            <h3>Manage Workers</h3>
+            <button class="btn btn-primary" onclick="showAddWorkerModal()">
+              <i class="fas fa-plus"></i>
+              Add Worker
+            </button>
+          </div>
+          <div class="cards-grid" id="workers-grid">
+          </div>
         </section>
       </div>
     </main>
@@ -193,60 +537,61 @@
   <div class="modal" id="booking-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 data-i18n="admin.bookings.details">Booking Details</h3>
-        <button type="button" class="modal-close" data-modal-id="booking-modal">&times;</button>
+        <h3>Booking Details</h3>
+        <button class="modal-close" onclick="closeModal('booking-modal')">&times;</button>
       </div>
-      <div class="modal-body" id="booking-details"></div>
-      <div class="modal-footer" id="booking-actions"></div>
+      <div class="modal-body" id="booking-details">
+      </div>
+      <div class="modal-footer" id="booking-actions">
+      </div>
     </div>
   </div>
 
   <div class="modal" id="city-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 data-i18n="admin.cities.addCity">Add New City</h3>
-        <button type="button" class="modal-close" data-modal-id="city-modal">&times;</button>
+        <h3>Add New City</h3>
+        <button class="modal-close" onclick="closeModal('city-modal')">&times;</button>
       </div>
       <form id="city-form" class="modal-body">
         <div class="form-group">
-          <label data-i18n="admin.cities.nameEn">City Name (English)</label>
-          <input type="text" id="city-name" required>
+          <label>City Name (English)</label>
+          <input type="text" id="city-name" required placeholder="e.g., Florence">
         </div>
         <div class="form-group">
-          <label data-i18n="admin.cities.nameIt">City Name (Italian)</label>
-          <input type="text" id="city-name-it" required>
+          <label>City Name (Italian)</label>
+          <input type="text" id="city-name-it" required placeholder="e.g., Firenze">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label data-i18n="admin.cities.workingHoursStart">Working Hours Start</label>
+            <label>Working Hours Start</label>
             <input type="time" id="city-start" value="08:00">
           </div>
           <div class="form-group">
-            <label data-i18n="admin.cities.workingHoursEnd">Working Hours End</label>
+            <label>Working Hours End</label>
             <input type="time" id="city-end" value="18:00">
           </div>
         </div>
         <div class="form-group">
-          <label data-i18n="admin.cities.workingDays">Working Days</label>
+          <label>Working Days</label>
           <div class="checkbox-group">
-            <label><input type="checkbox" value="1" checked> <span data-i18n="admin.cities.mon">Mon</span></label>
-            <label><input type="checkbox" value="2" checked> <span data-i18n="admin.cities.tue">Tue</span></label>
-            <label><input type="checkbox" value="3" checked> <span data-i18n="admin.cities.wed">Wed</span></label>
-            <label><input type="checkbox" value="4" checked> <span data-i18n="admin.cities.thu">Thu</span></label>
-            <label><input type="checkbox" value="5" checked> <span data-i18n="admin.cities.fri">Fri</span></label>
-            <label><input type="checkbox" value="6"> <span data-i18n="admin.cities.sat">Sat</span></label>
-            <label><input type="checkbox" value="0"> <span data-i18n="admin.cities.sun">Sun</span></label>
+            <label><input type="checkbox" value="1" checked> Mon</label>
+            <label><input type="checkbox" value="2" checked> Tue</label>
+            <label><input type="checkbox" value="3" checked> Wed</label>
+            <label><input type="checkbox" value="4" checked> Thu</label>
+            <label><input type="checkbox" value="5" checked> Fri</label>
+            <label><input type="checkbox" value="6"> Sat</label>
+            <label><input type="checkbox" value="7"> Sun</label>
           </div>
         </div>
       </form>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary modal-close" data-modal-id="city-modal" data-i18n="admin.cities.cancel">Cancel</button>
-        <button type="button" id="save-city-btn" class="btn btn-primary" data-i18n="admin.cities.add">Add City</button>
+        <button class="btn btn-secondary" onclick="closeModal('city-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="addCity()">Add City</button>
       </div>
     </div>
   </div>
 
-  <script src="translations.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

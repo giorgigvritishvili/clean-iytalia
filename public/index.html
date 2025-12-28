@@ -16,7 +16,7 @@
     <div class="container">
       <div class="nav-brand">
         <i class="fas fa-sparkles"></i>
-        <span>Clean Italia</span>
+        <span class="brand-name">Clean Italia</span>
       </div>
       <div class="nav-links">
         <a href="#services" data-i18n="nav.services">Services</a>
@@ -25,28 +25,33 @@
         <a href="#contact" data-i18n="nav.contact">Contact</a>
       </div>
       <div class="nav-actions">
-        <button class="lang-switch" id="lang-switch-btn" aria-label="Toggle language">
+        <button class="lang-switch" onclick="toggleLanguage()">
           <i class="fas fa-globe"></i>
           <span id="current-lang">EN</span>
         </button>
-        <a href="admin.html" class="admin-link" aria-label="Admin Login">
+        <a href="/admin" class="admin-link">
           <i class="fas fa-user-shield"></i>
         </a>
       </div>
-      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open mobile menu">
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
         <i class="fas fa-bars"></i>
       </button>
     </div>
   </nav>
 
   <div class="mobile-menu" id="mobile-menu">
-    <a href="#services" data-i18n="nav.services">Services</a>
-    <a href="#booking" data-i18n="nav.book">Book Now</a>
-    <a href="#faq" data-i18n="nav.faq">FAQ</a>
-    <a href="#contact" data-i18n="nav.contact">Contact</a>
+    <a href="#services" data-i18n="nav.services" onclick="toggleMobileMenu()">Services</a>
+    <a href="#booking" data-i18n="nav.book" onclick="toggleMobileMenu()">Book Now</a>
+    <a href="#faq" data-i18n="nav.faq" onclick="toggleMobileMenu()">FAQ</a>
+    <a href="#contact" data-i18n="nav.contact" onclick="toggleMobileMenu()">Contact</a>
+    <a href="/admin" onclick="toggleMobileMenu()">
+      <i class="fas fa-user-shield"></i>
+      Admin
+    </a>
   </div>
 
   <section class="hero">
+    <img src="clear.png" alt="Cleaning Services" style="width: 100%; height: auto; display: block;">
     <div class="container">
       <div class="hero-content">
         <h1 data-i18n="hero.title">Professional Cleaning Services in Italy</h1>
@@ -131,7 +136,7 @@
               </div>
             </div>
             
-            <button type="button" class="btn btn-primary" data-step-target="2" data-i18n="booking.next">Next</button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)" data-i18n="booking.next">Next</button>
           </div>
           
           <div class="form-step" id="step-2">
@@ -153,8 +158,8 @@
             </div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" data-step-target="1" data-i18n="booking.back">Back</button>
-              <button type="button" class="btn btn-primary" data-step-target="3" data-i18n="booking.next">Next</button>
+              <button type="button" class="btn btn-secondary" onclick="prevStep(1)" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(3)" data-i18n="booking.next">Next</button>
             </div>
           </div>
           
@@ -179,19 +184,121 @@
               <input type="tel" id="phone-input" required placeholder="+39 123 456 7890">
             </div>
             
-            <div class="form-group">
-              <label data-i18n="booking.address">Address</label>
-              <textarea id="address-input" required placeholder="Via Roma 123, 00100 Roma RM"></textarea>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Street Name</label>
+                <input type="text" id="street-name-input" required placeholder="Via Roma">
+              </div>
+              <div class="form-group">
+                <label>House Number</label>
+                <input type="text" id="house-number-input" required placeholder="123">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Property Size (sqm)</label>
+                <input type="number" id="property-size-input" required placeholder="100" min="1">
+              </div>
+              <div class="form-group">
+                <label>Name on Doorbell</label>
+                <input type="text" id="doorbell-name-input" placeholder="Doe Family">
+              </div>
             </div>
             
+            <div class="form-group">
+              <label>Additional Services (Optional)</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="fridge-cleaning">
+                  <span>Fridge Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="limescale-removal">
+                  <span>Limescale Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="dishwashing">
+                  <span>Dishwashing</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="ironing">
+                  <span>Ironing</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="balcony-cleaning">
+                  <span>Balcony / Patio Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="window-cleaning">
+                  <span>Window Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="laundry-service">
+                  <span>Laundry Service</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="gardening">
+                  <span>Gardening</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="carpet-cleaning">
+                  <span>Carpet Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="oven-cleaning">
+                  <span>Oven Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="mold-removal">
+                  <span>Mold Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="steam-cleaning">
+                  <span>Steam Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="wall-stain-removal">
+                  <span>Wall Stain Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="sofa-cleaning">
+                  <span>Sofa Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="mattress-cleaning">
+                  <span>Mattress Cleaning</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Supplies Provided by Cleaning Team</label>
+              <p class="form-note">Cleaning solvents, mop, and a vacuum cleaner are required to perform the cleaning service. If you don't have them at home and would like to have them provided by the cleaning team, please check the boxes below.</p>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-solvents">
+                  <span>Cleaning Solvents</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-mop">
+                  <span>Mop</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-vacuum">
+                  <span>Vacuum Cleaner</span>
+                </label>
+              </div>
+            </div>
+
             <div class="form-group">
               <label data-i18n="booking.notes">Special Instructions (Optional)</label>
               <textarea id="notes-input" placeholder="Any special requests or access instructions"></textarea>
             </div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" data-step-target="2" data-i18n="booking.back">Back</button>
-              <button type="button" class="btn btn-primary" data-step-target="4" data-i18n="booking.next">Next</button>
+              <button type="button" class="btn btn-secondary" onclick="prevStep(2)" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(4)" data-i18n="booking.next">Next</button>
             </div>
           </div>
           
@@ -218,7 +325,7 @@
             <div id="card-errors" class="card-errors"></div>
             
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" data-step-target="3" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-secondary" onclick="prevStep(3)" data-i18n="booking.back">Back</button>
               <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
                 <i class="fas fa-lock"></i>
                 <span data-i18n="booking.confirm">Confirm Booking</span>
@@ -234,7 +341,7 @@
           <h3 data-i18n="success.title">Booking Submitted!</h3>
           <p data-i18n="success.message">Your booking is pending confirmation. We will notify you via email once it's confirmed.</p>
           <p data-i18n="success.payment">Your payment has been authorized and will only be charged upon confirmation.</p>
-          <button class="btn btn-primary" id="new-booking-btn" data-i18n="success.newBooking">Make Another Booking</button>
+          <button class="btn btn-primary" onclick="resetBooking()" data-i18n="success.newBooking">Make Another Booking</button>
         </div>
       </div>
     </div>
@@ -246,7 +353,7 @@
       
       <div class="faq-list">
         <div class="faq-item">
-          <button class="faq-question">
+          <button class="faq-question" onclick="toggleFaq(this)">
             <span data-i18n="faq.q1">How does the booking process work?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -256,7 +363,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question">
+          <button class="faq-question" onclick="toggleFaq(this)">
             <span data-i18n="faq.q2">What areas do you serve?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -266,7 +373,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question">
+          <button class="faq-question" onclick="toggleFaq(this)">
             <span data-i18n="faq.q3">What payment methods do you accept?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -276,7 +383,7 @@
         </div>
         
         <div class="faq-item">
-          <button class="faq-question">
+          <button class="faq-question" onclick="toggleFaq(this)">
             <span data-i18n="faq.q4">Can I cancel my booking?</span>
             <i class="fas fa-chevron-down"></i>
           </button>
@@ -297,7 +404,7 @@
         <a href="mailto:info@cleanitalia.com" class="contact-card">
           <i class="fas fa-envelope"></i>
           <h4 data-i18n="contact.email">Email</h4>
-          <p>info@cleanitalia.com</p>
+          <p>Vacanzeromane2024@libero.it</p>
         </a>
         
         <a href="tel:+39123456789" class="contact-card">
@@ -306,7 +413,7 @@
           <p>+39 123 456 789</p>
         </a>
         
-        <a href="https://wa.me/39123456789" class="contact-card" target="_blank" rel="noopener noreferrer">
+        <a href="https://wa.me/39123456789" class="contact-card" target="_blank">
           <i class="fab fa-whatsapp"></i>
           <h4>WhatsApp</h4>
           <p data-i18n="contact.whatsapp">Chat with us</p>
@@ -336,13 +443,13 @@
     <div class="cookie-content">
       <p data-i18n="cookies.message">We use cookies to improve your experience. By continuing to use this site, you agree to our use of cookies.</p>
       <div class="cookie-actions">
-        <button class="btn btn-secondary btn-sm" id="decline-cookies-btn" data-i18n="cookies.decline">Decline</button>
-        <button class="btn btn-primary btn-sm" id="accept-cookies-btn" data-i18n="cookies.accept">Accept</button>
+        <button class="btn btn-secondary btn-sm" onclick="declineCookies()" data-i18n="cookies.decline">Decline</button>
+        <button class="btn btn-primary btn-sm" onclick="acceptCookies()" data-i18n="cookies.accept">Accept</button>
       </div>
     </div>
   </div>
 
-  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" title="Chat on WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 

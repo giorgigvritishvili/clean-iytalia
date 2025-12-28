@@ -10,15 +10,26 @@ const path = require('path');
 const app = express();
 const PORT = 5000;
 
-// In-memory storage for localhost
-let cities = [];
-let services = [];
-let bookings = [];
-let admins = [];
-let blockedSlots = [];
-let nextId = { cities: 1, services: 1, bookings: 1, admins: 1, blockedSlots: 1 };
-
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// In-memory data
+let services = [
+  { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', price_per_hour: 18.90, enabled: true },
+  { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', price_per_hour: 21.90, enabled: true },
+  { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', price_per_hour: 25.90, enabled: true },
+  { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', price_per_hour: 25.90, enabled: true },
+  { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', price_per_hour: 31.90, enabled: true },
+  { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', price_per_hour: 35.00, enabled: true }
+];
+
+let cities = [
+  { id: 1, name: 'Rome', name_it: 'Roma', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+  { id: 2, name: 'Milan', name_it: 'Milano', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+];
+
+let bookings = [];
+let admins = [{ id: 1, username: 'admin', password_hash: '$2a$10$hashedpassword' }];
+let blockedSlots = [];
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -47,45 +58,15 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/api/config', (req, res) => {
-  res.json({
-    stripePublicKey: process.env.STRIPE_PUBLISHABLE_KEY || null
-  });
-});
-
-async function initDB() {
-  if (cities.length === 0) {
-    cities = [
-      { id: nextId.cities++, name: 'Rome', name_it: 'Roma', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '08:00', working_hours_end: '18:00', created_at: new Date() },
-      { id: nextId.cities++, name: 'Milan', name_it: 'Milano', enabled: true, working_days: '1,2,3,4,5,6', working_hours_start: '08:00', working_hours_end: '18:00', created_at: new Date() }
-    ];
-  }
-
-  if (services.length === 0) {
-    services = [
-      { id: nextId.services++, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', price_per_hour: 25.00, enabled: true, created_at: new Date() },
-      { id: nextId.services++, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', price_per_hour: 30.00, enabled: true, created_at: new Date() },
-      { id: nextId.services++, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', price_per_hour: 35.00, enabled: true, created_at: new Date() },
-      { id: nextId.services++, name: 'Move-in/Move-out', name_it: 'Trasloco', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', price_per_hour: 40.00, enabled: true, created_at: new Date() },
-      { id: nextId.services++, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', price_per_hour: 45.00, enabled: true, created_at: new Date() },
-      { id: nextId.services++, name: 'Business Cleaning', name_it: 'Pulizia Uffici', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', price_per_hour: 35.00, enabled: true, created_at: new Date() }
-    ];
-  }
-
-  if (admins.length === 0) {
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    admins.push({ id: nextId.admins++, username: adminUsername, password_hash: hashedPassword, created_at: new Date() });
-    console.log('Default admin created. Please change password via environment variables.');
-  }
-
-  console.log('Database initialized successfully');
-}
+// Initialize admin password hash
+(async () => {
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  admins[0].password_hash = await bcrypt.hash(adminPassword, 10);
+})();
 
 app.get('/api/cities', (req, res) => {
   try {
-    const enabledCities = cities.filter(c => c.enabled).sort((a, b) => a.name.localeCompare(b.name));
+    const enabledCities = cities.filter(city => city.enabled).sort((a, b) => a.name.localeCompare(b.name));
     res.json(enabledCities);
   } catch (error) {
     console.error('Error fetching cities:', error);
@@ -95,7 +76,7 @@ app.get('/api/cities', (req, res) => {
 
 app.get('/api/services', (req, res) => {
   try {
-    const enabledServices = services.filter(s => s.enabled).sort((a, b) => a.name.localeCompare(b.name));
+    const enabledServices = services.filter(service => service.enabled).sort((a, b) => a.name.localeCompare(b.name));
     res.json(enabledServices);
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -120,8 +101,8 @@ app.get('/api/available-slots', (req, res) => {
     }
 
     const blockedTimes = blockedSlots
-      .filter(bs => bs.city_id == cityId && bs.blocked_date === date)
-      .map(bs => bs.blocked_time);
+      .filter(slot => slot.city_id == cityId && slot.blocked_date === date)
+      .map(slot => slot.blocked_time);
 
     const startHour = parseInt(city.working_hours_start.split(':')[0]);
     const endHour = parseInt(city.working_hours_end.split(':')[0]);
@@ -169,29 +150,35 @@ app.post('/api/bookings', async (req, res) => {
   try {
     const {
       serviceId, cityId, customerName, customerEmail, customerPhone,
-      customerAddress, bookingDate, bookingTime, hours, cleaners,
-      totalAmount, paymentIntentId, notes
+      streetName, houseNumber, propertySize, doorbellName,
+      bookingDate, bookingTime, hours, cleaners,
+      totalAmount, paymentIntentId, notes, additionalServices, supplies
     } = req.body;
 
+    const newId = bookings.length > 0 ? Math.max(...bookings.map(b => b.id)) + 1 : 1;
     const newBooking = {
-      id: nextId.bookings++,
+      id: newId,
       service_id: serviceId,
       city_id: cityId,
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
-      customer_address: customerAddress,
+      street_name: streetName,
+      house_number: houseNumber,
+      property_size: propertySize,
+      doorbell_name: doorbellName,
       booking_date: bookingDate,
       booking_time: bookingTime,
-      hours: hours,
-      cleaners: cleaners || 1,
+      hours,
+      cleaners,
       total_amount: totalAmount,
       payment_intent_id: paymentIntentId,
-      notes: notes,
+      notes,
+      additional_services: additionalServices || [],
+      supplies: supplies || [],
       status: 'pending',
       stripe_status: 'authorized',
-      created_at: new Date(),
-      updated_at: new Date()
+      created_at: new Date().toISOString()
     };
 
     bookings.push(newBooking);
@@ -256,37 +243,6 @@ app.post('/api/admin/logout', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/admin/admins', requireAdmin, async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    const existingAdmin = admins.find(a => a.username === username);
-    if (existingAdmin) {
-      return res.status(409).json({ error: 'Username already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newAdmin = {
-      id: nextId.admins++,
-      username: username,
-      password_hash: hashedPassword,
-      created_at: new Date()
-    };
-
-    admins.push(newAdmin);
-
-    res.status(201).json({ id: newAdmin.id, username: newAdmin.username, created_at: newAdmin.created_at });
-  } catch (error) {
-    console.error('Error creating admin:', error);
-    res.status(500).json({ error: 'Failed to create admin' });
-  }
-});
-
 function requireAdmin(req, res, next) {
   if (!req.session.adminId) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -297,18 +253,16 @@ function requireAdmin(req, res, next) {
 app.get('/api/admin/bookings', requireAdmin, (req, res) => {
   try {
     const bookingsWithDetails = bookings.map(booking => {
-      const service = services.find(s => s.id == booking.service_id);
-      const city = cities.find(c => c.id == booking.city_id);
-
+      const service = services.find(s => s.id === booking.service_id);
+      const city = cities.find(c => c.id === booking.city_id);
       return {
         ...booking,
-        service_name: service ? service.name : null,
-        service_name_it: service ? service.name_it : null,
-        city_name: city ? city.name : null,
-        city_name_it: city ? city.name_it : null
+        service_name: service ? service.name : '',
+        service_name_it: service ? service.name_it : '',
+        city_name: city ? city.name : '',
+        city_name_it: city ? city.name_it : ''
       };
-    }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+    });
     res.json(bookingsWithDetails);
   } catch (error) {
     console.error('Error fetching bookings:', error);
@@ -319,8 +273,8 @@ app.get('/api/admin/bookings', requireAdmin, (req, res) => {
 app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-
     const bookingIndex = bookings.findIndex(b => b.id == id);
+
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
     }
@@ -337,9 +291,16 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
 
     bookings[bookingIndex].status = 'confirmed';
     bookings[bookingIndex].stripe_status = 'captured';
-    bookings[bookingIndex].updated_at = new Date();
+    bookings[bookingIndex].updated_at = new Date().toISOString();
 
     try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
@@ -353,7 +314,10 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
             <li>Date: ${booking.booking_date}</li>
             <li>Time: ${booking.booking_time}</li>
             <li>Duration: ${booking.hours} hours</li>
-            <li>Address: ${booking.customer_address}</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
             <li>Total: €${booking.total_amount}</li>
           </ul>
           <p>Your payment has been processed.</p>
@@ -374,8 +338,8 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
 app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-
     const bookingIndex = bookings.findIndex(b => b.id == id);
+
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
     }
@@ -392,9 +356,16 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
 
     bookings[bookingIndex].status = 'cancelled';
     bookings[bookingIndex].stripe_status = 'released';
-    bookings[bookingIndex].updated_at = new Date();
+    bookings[bookingIndex].updated_at = new Date().toISOString();
 
     try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
@@ -403,6 +374,17 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
           <h2>Booking Update</h2>
           <p>Dear ${booking.customer_name},</p>
           <p>Unfortunately, we were unable to confirm your booking for ${booking.booking_date}.</p>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+          </ul>
           <p>The authorized payment has been released and will be returned to your card.</p>
           <p>Please feel free to book another time that works for you.</p>
           <p>Best regards,<br>Clean Italia Team</p>
@@ -421,8 +403,7 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/cities', requireAdmin, (req, res) => {
   try {
-    const sortedCities = cities.sort((a, b) => a.name.localeCompare(b.name));
-    res.json(sortedCities);
+    res.json(cities);
   } catch (error) {
     console.error('Error fetching cities:', error);
     res.status(500).json({ error: 'Failed to fetch cities' });
@@ -451,17 +432,23 @@ app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/cities', requireAdmin, async (req, res) => {
+app.post('/api/admin/cities', requireAdmin, (req, res) => {
   try {
     const { name, name_it, working_days, working_hours_start, working_hours_end } = req.body;
-    
-    const result = await pool.query(
-      `INSERT INTO cities (name, name_it, working_days, working_hours_start, working_hours_end) 
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name, name_it, working_days || '1,2,3,4,5', working_hours_start || '08:00', working_hours_end || '18:00']
-    );
-    
-    res.json(result.rows[0]);
+
+    const newId = Math.max(...cities.map(c => c.id)) + 1;
+    const newCity = {
+      id: newId,
+      name,
+      name_it,
+      enabled: true,
+      working_days: working_days || '1,2,3,4,5',
+      working_hours_start: working_hours_start || '08:00',
+      working_hours_end: working_hours_end || '18:00'
+    };
+
+    cities.push(newCity);
+    res.json(newCity);
   } catch (error) {
     console.error('Error adding city:', error);
     res.status(500).json({ error: 'Failed to add city' });
@@ -470,8 +457,7 @@ app.post('/api/admin/cities', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/services', requireAdmin, (req, res) => {
   try {
-    const sortedServices = services.sort((a, b) => a.name.localeCompare(b.name));
-    res.json(sortedServices);
+    res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
     res.status(500).json({ error: 'Failed to fetch services' });
@@ -498,26 +484,35 @@ app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/blocked-slots', requireAdmin, async (req, res) => {
+app.post('/api/admin/blocked-slots', requireAdmin, (req, res) => {
   try {
     const { cityId, blockedDate, blockedTime, reason } = req.body;
-    
-    const result = await pool.query(
-      `INSERT INTO blocked_slots (city_id, blocked_date, blocked_time, reason) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [cityId, blockedDate, blockedTime, reason]
-    );
-    
-    res.json(result.rows[0]);
+
+    const newId = blockedSlots.length > 0 ? Math.max(...blockedSlots.map(s => s.id)) + 1 : 1;
+    const newSlot = {
+      id: newId,
+      city_id: cityId,
+      blocked_date: blockedDate,
+      blocked_time: blockedTime,
+      reason: reason
+    };
+
+    blockedSlots.push(newSlot);
+    res.json(newSlot);
   } catch (error) {
     console.error('Error blocking slot:', error);
     res.status(500).json({ error: 'Failed to block slot' });
   }
 });
 
-app.delete('/api/admin/blocked-slots/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/blocked-slots/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM blocked_slots WHERE id = $1', [id]);
+    const slotIndex = blockedSlots.findIndex(s => s.id == id);
+    if (slotIndex === -1) {
+      return res.status(404).json({ error: 'Blocked slot not found' });
+    }
+    blockedSlots.splice(slotIndex, 1);
     res.json({ success: true });
   } catch (error) {
     console.error('Error unblocking slot:', error);
@@ -525,18 +520,20 @@ app.delete('/api/admin/blocked-slots/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
   try {
-    const totalBookings = await pool.query('SELECT COUNT(*) FROM bookings');
-    const pendingBookings = await pool.query("SELECT COUNT(*) FROM bookings WHERE status = 'pending'");
-    const confirmedBookings = await pool.query("SELECT COUNT(*) FROM bookings WHERE status = 'confirmed'");
-    const totalRevenue = await pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM bookings WHERE status = 'confirmed'");
-    
+    const totalBookings = bookings.length;
+    const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+    const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
+    const totalRevenue = bookings
+      .filter(b => b.status === 'confirmed')
+      .reduce((sum, b) => sum + parseFloat(b.total_amount), 0);
+
     res.json({
-      totalBookings: parseInt(totalBookings.rows[0].count),
-      pendingBookings: parseInt(pendingBookings.rows[0].count),
-      confirmedBookings: parseInt(confirmedBookings.rows[0].count),
-      totalRevenue: parseFloat(totalRevenue.rows[0].total)
+      totalBookings,
+      pendingBookings,
+      confirmedBookings,
+      totalRevenue
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
@@ -560,11 +557,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-initDB().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
-}).catch(err => {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
+app.listen(PORT, 'localhost', () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
