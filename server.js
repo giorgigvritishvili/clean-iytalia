@@ -28,7 +28,7 @@ let cities = [
 ];
 
 let bookings = [];
-let admins = [{ id: 1, username: 'admin', password_hash: '$2a$10$hashedpassword' }];
+let admins = [{ id: 1, username: 'CasaClean', password_hash: '$2a$10$hashedpassword' }];
 let blockedSlots = [];
 
 const transporter = nodemailer.createTransport({
@@ -187,7 +187,7 @@ app.post('/api/bookings', async (req, res) => {
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: customerEmail,
-        subject: 'Booking Pending Confirmation - Clean Italia',
+        subject: 'Booking Pending Confirmation - CasaClean',
         html: `
           <h2>Thank you for your booking!</h2>
           <p>Dear ${customerName},</p>
@@ -200,7 +200,7 @@ app.post('/api/bookings', async (req, res) => {
             <li>Total: €${totalAmount}</li>
           </ul>
           <p>Your payment has been authorized and will only be charged upon confirmation.</p>
-          <p>Best regards,<br>Clean Italia Team</p>
+          <p>Best regards,<br>CasaClean Team</p>
         `
       });
     } catch (emailError) {
@@ -304,7 +304,7 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
-        subject: 'Booking Confirmed - Clean Italia',
+        subject: 'Booking Confirmed - CasaClean',
         html: `
           <h2>Your booking is confirmed!</h2>
           <p>Dear ${booking.customer_name},</p>
@@ -321,7 +321,7 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
             <li>Total: €${booking.total_amount}</li>
           </ul>
           <p>Your payment has been processed.</p>
-          <p>Best regards,<br>Clean Italia Team</p>
+          <p>Best regards,<br>CasaClean Team</p>
         `
       });
     } catch (emailError) {
@@ -369,7 +369,7 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
-        subject: 'Booking Not Confirmed - Clean Italia',
+        subject: 'Booking Rejected - CasaClean',
         html: `
           <h2>Booking Update</h2>
           <p>Dear ${booking.customer_name},</p>
@@ -387,7 +387,7 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
           </ul>
           <p>The authorized payment has been released and will be returned to your card.</p>
           <p>Please feel free to book another time that works for you.</p>
-          <p>Best regards,<br>Clean Italia Team</p>
+          <p>Best regards,<br>CasaClean Team</p>
         `
       });
     } catch (emailError) {
@@ -557,6 +557,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.listen(PORT, 'localhost', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
