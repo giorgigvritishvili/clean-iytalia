@@ -467,20 +467,63 @@ app.get('/api/admin/services', requireAdmin, (req, res) => {
 app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const { enabled, price_per_hour } = req.body;
+    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
 
     const serviceIndex = services.findIndex(s => s.id == id);
     if (serviceIndex === -1) {
       return res.status(404).json({ error: 'Service not found' });
     }
 
-    services[serviceIndex].enabled = enabled;
+    services[serviceIndex].name = name;
+    services[serviceIndex].name_it = name_it;
+    services[serviceIndex].description = description;
+    services[serviceIndex].description_it = description_it;
     services[serviceIndex].price_per_hour = price_per_hour;
+    services[serviceIndex].enabled = enabled;
 
     res.json({ success: true });
   } catch (error) {
     console.error('Error updating service:', error);
     res.status(500).json({ error: 'Failed to update service' });
+  }
+});
+
+app.post('/api/admin/services', requireAdmin, (req, res) => {
+  try {
+    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
+
+    const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
+    const newService = {
+      id: newId,
+      name,
+      name_it,
+      description,
+      description_it,
+      price_per_hour: parseFloat(price_per_hour),
+      enabled: enabled !== undefined ? enabled : true
+    };
+
+    services.push(newService);
+    res.json(newService);
+  } catch (error) {
+    console.error('Error adding service:', error);
+    res.status(500).json({ error: 'Failed to add service' });
+  }
+});
+
+app.delete('/api/admin/services/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const serviceIndex = services.findIndex(s => s.id == id);
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    services.splice(serviceIndex, 1);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ error: 'Failed to delete service' });
   }
 });
 

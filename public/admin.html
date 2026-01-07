@@ -254,6 +254,10 @@
         <section id="services-tab" class="tab-content">
           <div class="section-header">
             <h3>Manage Services</h3>
+            <button class="btn btn-primary" onclick="showAddServiceModal()">
+              <i class="fas fa-plus"></i>
+              Add Service
+            </button>
           </div>
           <div class="cards-grid" id="services-grid">
           </div>
@@ -588,6 +592,50 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('city-modal')">Cancel</button>
         <button class="btn btn-primary" onclick="addCity()">Add City</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="service-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="service-modal-title">Add New Service</h3>
+        <button class="modal-close" onclick="closeModal('service-modal')">&times;</button>
+      </div>
+      <form id="service-form" class="modal-body">
+        <div class="form-group">
+          <label>Service Name (English)</label>
+          <input type="text" id="service-name" required placeholder="e.g., Regular Cleaning">
+        </div>
+        <div class="form-group">
+          <label>Service Name (Italian)</label>
+          <input type="text" id="service-name-it" required placeholder="e.g., Pulizia Regolare">
+        </div>
+        <div class="form-group">
+          <label>Description (English)</label>
+          <textarea id="service-description" required placeholder="Describe the service in English"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Description (Italian)</label>
+          <textarea id="service-description-it" required placeholder="Descrivi il servizio in italiano"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price per Hour (€)</label>
+            <input type="number" id="service-price" required min="0" step="0.01" placeholder="25.00">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="service-enabled">
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('service-modal')">Cancel</button>
+        <button class="btn btn-primary" id="service-submit-btn" onclick="saveService()">Add Service</button>
       </div>
     </div>
   </div>

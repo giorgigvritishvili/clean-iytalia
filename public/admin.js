@@ -445,15 +445,23 @@ async function loadServices() {
 
 function renderServices() {
   const grid = document.getElementById('services-grid');
-  
+
   grid.innerHTML = services.map(service => `
     <div class="admin-card">
       <h4>
         ${service.name}
-        <label class="toggle-switch">
-          <input type="checkbox" ${service.enabled ? 'checked' : ''} onchange="toggleService(${service.id}, this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="card-actions">
+          <button class="btn btn-sm btn-secondary" onclick="showEditServiceModal(${service.id})" title="Edit">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+          <label class="toggle-switch">
+            <input type="checkbox" ${service.enabled ? 'checked' : ''} onchange="toggleService(${service.id}, this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </h4>
       <div class="card-details">
         <p><i class="fas fa-globe"></i> IT: ${service.name_it}</p>
@@ -478,6 +486,91 @@ async function toggleService(id, enabled) {
   } catch (error) {
     console.error('Failed to update service:', error);
     loadServices();
+  }
+}
+
+function showAddServiceModal() {
+  document.getElementById('service-modal-title').textContent = 'Add New Service';
+  document.getElementById('service-form').reset();
+  document.getElementById('service-submit-btn').textContent = 'Add Service';
+  document.getElementById('service-submit-btn').onclick = saveService;
+  document.getElementById('service-modal').classList.add('active');
+}
+
+function showEditServiceModal(id) {
+  const service = services.find(s => s.id === id);
+  if (!service) return;
+
+  document.getElementById('service-modal-title').textContent = 'Edit Service';
+  document.getElementById('service-name').value = service.name;
+  document.getElementById('service-name-it').value = service.name_it;
+  document.getElementById('service-description').value = service.description;
+  document.getElementById('service-description-it').value = service.description_it;
+  document.getElementById('service-price').value = service.price_per_hour;
+  document.getElementById('service-enabled').value = service.enabled.toString();
+
+  document.getElementById('service-submit-btn').textContent = 'Update Service';
+  document.getElementById('service-submit-btn').onclick = () => saveService(id);
+  document.getElementById('service-modal').classList.add('active');
+}
+
+async function saveService(id = null) {
+  const name = document.getElementById('service-name').value;
+  const nameIt = document.getElementById('service-name-it').value;
+  const description = document.getElementById('service-description').value;
+  const descriptionIt = document.getElementById('service-description-it').value;
+  const price = parseFloat(document.getElementById('service-price').value);
+  const enabled = document.getElementById('service-enabled').value === 'true';
+
+  if (!name || !nameIt || !description || !descriptionIt || isNaN(price)) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/admin/services/${id}` : '/api/admin/services';
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        name_it: nameIt,
+        description,
+        description_it: descriptionIt,
+        price_per_hour: price,
+        enabled,
+      }),
+    });
+
+    if (response.ok) {
+      closeModal('service-modal');
+      loadServices();
+    } else {
+      throw new Error('Failed to save service');
+    }
+  } catch (error) {
+    console.error('Failed to save service:', error);
+    alert('Failed to save service. Please try again.');
+  }
+}
+
+async function deleteService(id) {
+  if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) return;
+
+  try {
+    const response = await fetch(`/api/admin/services/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      loadServices();
+    } else {
+      throw new Error('Failed to delete service');
+    }
+  } catch (error) {
+    console.error('Failed to delete service:', error);
+    alert('Failed to delete service. Please try again.');
   }
 }
 
