@@ -2,23 +2,13 @@ let bookings = [];
 let cities = [];
 let services = [];
 
-// Force admin panel to Italian only (apply translations without permanently changing user's stored language)
-(function forceAdminItalian(){
-  try {
-    const prevLang = localStorage.getItem('language');
-    if (typeof setLanguage === 'function') {
-      setLanguage('it');
-      // restore previous stored preference so site-wide setting does not change
-      if (prevLang !== null) localStorage.setItem('language', prevLang); else localStorage.removeItem('language');
-    } else if (typeof currentLanguage !== 'undefined') {
-      currentLanguage = 'it';
-      if (typeof window.onLanguageChange === 'function') {
-        window.onLanguageChange('it');
-      }
-    }
-    try { document.documentElement.lang = 'it'; } catch(e) {}
-  } catch (e) { console.error('forceAdminItalian error', e); }
-})();
+// Admin language override: always use Italian translations for the admin UI
+const ADMIN_LANG = 'it';
+function getAdminTranslations() {
+  return (typeof translations !== 'undefined' && translations[ADMIN_LANG] && translations[ADMIN_LANG].admin) ? translations[ADMIN_LANG].admin : {};
+}
+// Ensure admin page is marked as Italian
+try { document.documentElement.lang = 'it'; } catch (e) {}
 
 // Re-render dynamic admin content when translations change
 window.onLanguageChange = function(lang) {
@@ -30,7 +20,7 @@ window.onLanguageChange = function(lang) {
     // update modal button texts if modal present
     const submitBtn = document.getElementById('service-submit-btn');
     if (submitBtn) {
-      const A = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions) || {};
+      const A = getAdminTranslations().actions || {};
       submitBtn.textContent = submitBtn.textContent.includes((A.updateService || 'Update Service')) ? (A.updateService || 'Update Service') : (A.addService || 'Add Service');
     }
   } catch (e) { console.error('onLanguageChange admin hook error', e); }
@@ -92,11 +82,11 @@ async function handleLogin(e) {
     if (response.ok) {
       showDashboard();
     } else {
-      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.invalidCredentials) || 'Invalid credentials');
+      alert((getAdminTranslations().messages && getAdminTranslations().messages.invalidCredentials) || 'Invalid credentials');
     }
   } catch (error) {
     console.error('Login failed:', error);
-      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.loginFailedTry) || 'Login failed. Please try again.');
+      alert((getAdminTranslations().messages && getAdminTranslations().messages.loginFailedTry) || 'Login failed. Please try again.');
   }
 }
 
@@ -159,8 +149,8 @@ function renderRecentBookings() {
     <tr onclick="showBookingDetails(${booking.id})" style="cursor: pointer;">
       <td>#${booking.id}</td>
       <td>${booking.customer_name}</td>
-      <td>${booking.service_name}</td>
-      <td>${booking.city_name}</td>
+      <td>${booking.service_name_it || booking.service_name}</td>
+      <td>${booking.city_name_it || booking.city_name}</td>
       <td>${formatDate(booking.booking_date)}</td>
       <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
       <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
@@ -168,7 +158,7 @@ function renderRecentBookings() {
   `).join('');
   
   if (recent.length === 0) {
-    const msg = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.noBookingsYet) || 'No bookings yet';
+    const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsYet) || 'No bookings yet';
     tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
   }
 }
@@ -190,8 +180,8 @@ function renderAllBookings() {
         <div style="font-size: 0.85rem;">${booking.customer_email}</div>
         <div style="font-size: 0.8rem; color: var(--text-light);">${booking.customer_phone}</div>
       </td>
-      <td>${booking.service_name}</td>
-      <td>${booking.city_name}</td>
+      <td>${booking.service_name_it || booking.service_name}</td>
+      <td>${booking.city_name_it || booking.city_name}</td>
       <td>
         <div>${formatDate(booking.booking_date)}</div>
         <div style="font-size: 0.85rem; color: var(--text-light);">${booking.booking_time}</div>
@@ -219,7 +209,7 @@ function renderAllBookings() {
   `).join('');
   
   if (filtered.length === 0) {
-    const msg = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.noBookingsFound) || 'No bookings found';
+    const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsFound) || 'No bookings found';
     tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
   }
 }
@@ -233,10 +223,10 @@ function showBookingDetails(id) {
   if (!booking) return;
   
   const details = document.getElementById('booking-details');
-  const Ladmin = (translations[currentLanguage] && translations[currentLanguage].admin) || {};
+  const Ladmin = getAdminTranslations();
   const Ltable = Ladmin.table || {};
-  const Lbooking = (translations[currentLanguage] && translations[currentLanguage].booking) || {};
-  const Lcontact = (translations[currentLanguage] && translations[currentLanguage].contact) || {};
+  const Lbooking = (translations[ADMIN_LANG] && translations[ADMIN_LANG].booking) || {};
+  const Lcontact = (translations[ADMIN_LANG] && translations[ADMIN_LANG].contact) || {};
 
   details.innerHTML = `
     <div class="detail-grid">
@@ -262,7 +252,7 @@ function showBookingDetails(id) {
       </div>
       <div class="detail-item">
         <label>${Ltable.service || 'Service'}</label>
-        <span>${booking.service_name}</span>
+        <span>${booking.service_name_it || booking.service_name}</span>
       </div>
       <div class="detail-item full-width">
         <label>${'Address'}</label>
@@ -309,7 +299,7 @@ function showBookingDetails(id) {
   
   const actions = document.getElementById('booking-actions');
   if (booking.status === 'pending') {
-    const A = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions) || {};
+    const A = getAdminTranslations().actions || {};
     actions.innerHTML = `
       <button class="btn btn-danger" onclick="rejectBooking(${booking.id}); closeModal('booking-modal');">
         <i class="fas fa-times"></i> ${A.reject || 'Reject'}
@@ -336,7 +326,7 @@ function showBookingDetails(id) {
 }
 
 async function confirmBooking(id) {
-  if (!confirm((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
+  if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
   
   try {
     const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
@@ -344,10 +334,10 @@ async function confirmBooking(id) {
     });
     
     if (response.ok) {
-      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmBookingSuccess) || 'Booking confirmed successfully!');
+      alert((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingSuccess) || 'Booking confirmed successfully!');
       loadDashboardData();
     } else {
-      throw new Error((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmBookingFailed) || 'Failed to confirm booking');
+      throw new Error((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingFailed) || 'Failed to confirm booking');
     }
   } catch (error) {
     console.error('Error confirming booking:', error);
@@ -356,7 +346,7 @@ async function confirmBooking(id) {
 }
 
 async function rejectBooking(id) {
-  if (!confirm((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
+  if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
   
   try {
     const response = await fetch(`/api/admin/bookings/${id}/reject`, {
@@ -364,10 +354,10 @@ async function rejectBooking(id) {
     });
     
     if (response.ok) {
-      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.rejectBookingSuccess) || 'Booking rejected. Payment released.');
+      alert((getAdminTranslations().messages && getAdminTranslations().messages.rejectBookingSuccess) || 'Booking rejected. Payment released.');
       loadDashboardData();
     } else {
-      throw new Error((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.rejectBookingFailed) || 'Failed to reject booking');
+      throw new Error((getAdminTranslations().messages && getAdminTranslations().messages.rejectBookingFailed) || 'Failed to reject booking');
     }
   } catch (error) {
     console.error('Error rejecting booking:', error);
@@ -391,7 +381,7 @@ function renderCities() {
   grid.innerHTML = cities.map(city => `
     <div class="admin-card">
       <h4>
-        ${city.name} / ${city.name_it}
+        ${city.name_it || city.name}
         <label class="toggle-switch">
           <input type="checkbox" ${city.enabled ? 'checked' : ''} onchange="toggleCity(${city.id}, this.checked)">
           <span class="toggle-slider"></span>
@@ -399,14 +389,14 @@ function renderCities() {
       </h4>
       <div class="card-details">
         <p><i class="fas fa-clock"></i> ${city.working_hours_start} - ${city.working_hours_end}</p>
-        <p><i class="fas fa-calendar"></i> Working days: ${formatWorkingDays(city.working_days)}</p>
+        <p><i class="fas fa-calendar"></i> Giorni lavorativi: ${formatWorkingDays(city.working_days)}</p>
       </div>
     </div>
   `).join('');
 }
 
 function formatWorkingDays(days) {
-  const dayNames = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNames = ['', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
   return days.split(',').map(d => dayNames[parseInt(d)]).join(', ');
 }
 
@@ -446,7 +436,7 @@ async function addCity() {
   });
   
   if (!name || !nameIt) {
-    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.pleaseFillFields) || 'Please fill in all required fields');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.pleaseFillFields) || 'Please fill in all required fields');
     return;
   }
   
@@ -471,7 +461,7 @@ async function addCity() {
     }
   } catch (error) {
     console.error('Failed to add city:', error);
-    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedAddCity) || 'Failed to add city. Please try again.');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.failedAddCity) || 'Failed to add city. Please try again.');
   }
 }
 
@@ -489,18 +479,19 @@ function renderServices() {
   const grid = document.getElementById('services-grid');
 
   grid.innerHTML = services.map(service => {
-    const localizedName = (service[`name_${currentLanguage}`] && service[`name_${currentLanguage}`].trim()) || service.name || service.name_it || '';
-    const localizedDesc = (service[`description_${currentLanguage}`] && service[`description_${currentLanguage}`].trim()) || service.description || service.description_it || '';
+    const localizedName = (service.name_it && service.name_it.trim()) || service.name || '';
+    const localizedDesc = (service.description_it && service.description_it.trim()) || service.description || '';
+    const actions = getAdminTranslations().actions || {};
 
     return `
     <div class="admin-card">
       <h4>
         ${localizedName}
         <div class="card-actions">
-          <button class="btn btn-sm btn-secondary" onclick="showEditServiceModal(${service.id})" title="${(translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.editService) || 'Edit Service'}">
+          <button class="btn btn-sm btn-secondary" onclick="showEditServiceModal(${service.id})" title="${actions.editService || 'Edit Service'}">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})" title="${(translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.deleteService) || 'Delete'}">
+          <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})" title="${actions.deleteService || 'Delete'}">
             <i class="fas fa-trash"></i>
           </button>
           <label class="toggle-switch">
@@ -510,10 +501,10 @@ function renderServices() {
         </div>
       </h4>
       <div class="card-details">
-        <p><i class="fas fa-globe"></i> ${((currentLanguage === 'it') ? ((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.menu && translations[currentLanguage].admin.menu.services) || 'IT') : (service.name_it || 'IT'))}</p>
+        <p><i class="fas fa-globe"></i> ${getAdminTranslations().menu && getAdminTranslations().menu.services ? getAdminTranslations().menu.services : 'Servizi'}</p>
         <p>${localizedDesc}</p>
       </div>
-      <div class="card-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-light);">/hour</span></div>
+      <div class="card-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-light);">/ora</span></div>
     </div>
   `;
   }).join('');
@@ -537,9 +528,9 @@ async function toggleService(id, enabled) {
 }
 
 function showAddServiceModal() {
-  document.getElementById('service-modal-title').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.addServiceTitle) || 'Add New Service';
+  document.getElementById('service-modal-title').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.addServiceTitle) || 'Add New Service';
   document.getElementById('service-form').reset();
-  document.getElementById('service-submit-btn').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.addService) || 'Add Service';
+  document.getElementById('service-submit-btn').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.addService) || 'Add Service';
   document.getElementById('service-submit-btn').onclick = saveService;
   document.getElementById('service-modal').classList.add('active');
 }
@@ -548,7 +539,7 @@ function showEditServiceModal(id) {
   const service = services.find(s => s.id === id);
   if (!service) return;
 
-  document.getElementById('service-modal-title').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.editService) || 'Edit Service';
+  document.getElementById('service-modal-title').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.editService) || 'Edit Service';
   document.getElementById('service-name').value = service.name;
   document.getElementById('service-name-it').value = service.name_it;
   document.getElementById('service-description').value = service.description;
@@ -556,7 +547,7 @@ function showEditServiceModal(id) {
   document.getElementById('service-price').value = service.price_per_hour;
   document.getElementById('service-enabled').value = service.enabled.toString();
 
-  document.getElementById('service-submit-btn').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.updateService) || 'Update Service';
+  document.getElementById('service-submit-btn').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.updateService) || 'Update Service';
   document.getElementById('service-submit-btn').onclick = () => saveService(id);
   document.getElementById('service-modal').classList.add('active');
 }
@@ -570,7 +561,7 @@ async function saveService(id = null) {
   const enabled = document.getElementById('service-enabled').value === 'true';
 
   if (!name || !nameIt || !description || !descriptionIt || isNaN(price)) {
-    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.pleaseFillFields) || 'Please fill in all required fields');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.pleaseFillFields) || 'Please fill in all required fields');
     return;
   }
 
@@ -596,9 +587,9 @@ async function saveService(id = null) {
     } else {
       throw new Error('Failed to save service');
     }
-  } catch (error) {
+    } catch (error) {
     console.error('Failed to save service:', error);
-    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedSaveService) || 'Failed to save service. Please try again.');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.failedSaveService) || 'Failed to save service. Please try again.');
   }
 }
 
@@ -617,7 +608,7 @@ async function deleteService(id) {
     }
   } catch (error) {
     console.error('Failed to delete service:', error);
-    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedDeleteService) || 'Failed to delete service. Please try again.');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.failedDeleteService) || 'Failed to delete service. Please try again.');
   }
 }
 
@@ -686,8 +677,8 @@ function switchTab(tab) {
   let translatedTitle = null;
   try {
     const key = titleKeyMap[tab];
-    if (key && translations && translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.menu && translations[currentLanguage].admin.menu[key]) {
-      translatedTitle = translations[currentLanguage].admin.menu[key];
+    if (key && translations && translations[ADMIN_LANG] && translations[ADMIN_LANG].admin && translations[ADMIN_LANG].admin.menu && translations[ADMIN_LANG].admin.menu[key]) {
+      translatedTitle = translations[ADMIN_LANG].admin.menu[key];
     }
   } catch (e) {}
 
@@ -816,7 +807,7 @@ function loadPayoutRequests() {
 
 function requestPayout() {
   // TODO: Show payout request modal
-  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.payoutPlaceholder) || 'Payout request functionality will be implemented here.');
+  alert((getAdminTranslations().messages && getAdminTranslations().messages.payoutPlaceholder) || 'La funzionalità di richiesta pagamento sarà implementata qui.');
 }
 
 function loadCommissionInvoices() {
@@ -845,7 +836,7 @@ function loadBillingCommissions() {
 
 function generateCommissionReport() {
   // TODO: Generate commission report
-  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.commissionReportPlaceholder) || 'Commission report generation will be implemented here.');
+  alert((getAdminTranslations().messages && getAdminTranslations().messages.commissionReportPlaceholder) || 'La generazione del rapporto delle commissioni sarà implementata qui.');
 }
 
 function loadWorkers() {
@@ -856,10 +847,10 @@ function loadWorkers() {
 
 function showAddProjectModal() {
   // TODO: Show add project modal
-  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.addProjectPlaceholder) || 'Add project modal will be implemented here.');
+  alert((getAdminTranslations().messages && getAdminTranslations().messages.addProjectPlaceholder) || 'La finestra per aggiungere un progetto sarà implementata qui.');
 }
 
 function showAddWorkerModal() {
   // TODO: Show add worker modal
-  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.addWorkerPlaceholder) || 'Add worker modal will be implemented here.');
+  alert((getAdminTranslations().messages && getAdminTranslations().messages.addWorkerPlaceholder) || 'La finestra per aggiungere un operatore sarà implementata qui.');
 }

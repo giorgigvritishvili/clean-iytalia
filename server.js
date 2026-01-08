@@ -14,17 +14,17 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 
 // In-memory data
 let services = [
-  { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', price_per_hour: 18.90, enabled: true },
-  { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', price_per_hour: 21.90, enabled: true },
-  { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', price_per_hour: 25.90, enabled: true },
-  { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', price_per_hour: 25.90, enabled: true },
-  { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', price_per_hour: 31.90, enabled: true },
-  { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', price_per_hour: 35.00, enabled: true }
+  { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
+  { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
+  { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
+  { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
+  { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
+  { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
 ];
 
 let cities = [
-  { id: 1, name: 'Rome', name_it: 'Roma', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
-  { id: 2, name: 'Milan', name_it: 'Milano', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+  { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+  { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
 ];
 
 let bookings = [];
