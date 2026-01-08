@@ -122,26 +122,26 @@
               <div class="form-group">
                 <label data-i18n="booking.hours">Hours</label>
                 <select id="hours-select" required>
-                  <option value="2">2 hours</option>
-                  <option value="3">3 hours</option>
-                  <option value="4" selected>4 hours</option>
-                  <option value="5">5 hours</option>
-                  <option value="6">6 hours</option>
-                  <option value="8">8 hours</option>
+                  <option value="2" data-i18n="booking.hoursOptions.2">2 hours</option>
+                  <option value="3" data-i18n="booking.hoursOptions.3">3 hours</option>
+                  <option value="4" selected data-i18n="booking.hoursOptions.4">4 hours</option>
+                  <option value="5" data-i18n="booking.hoursOptions.5">5 hours</option>
+                  <option value="6" data-i18n="booking.hoursOptions.6">6 hours</option>
+                  <option value="8" data-i18n="booking.hoursOptions.8">8 hours</option>
                 </select>
               </div>
               <div class="form-group">
                 <label data-i18n="booking.cleaners">Cleaners</label>
                 <select id="cleaners-select" required>
-                  <option value="1">1 cleaner</option>
-                  <option value="2">2 cleaners</option>
-                  <option value="3">3 cleaners</option>
-                  <option value="1">4cleaner</option>
-                  <option value="2">5cleaners</option>
-                  <option value="3">6cleaners</option>
-                  <option value="1">7cleaner</option>
-                  <option value="2">8cleaners</option>
-                  <option value="3">9cleaners</option>
+                  <option value="1" data-i18n="booking.cleanersOptions.1">1 cleaner</option>
+                  <option value="2" data-i18n="booking.cleanersOptions.2">2 cleaners</option>
+                  <option value="3" data-i18n="booking.cleanersOptions.3">3 cleaners</option>
+                  <option value="4" data-i18n="booking.cleanersOptions.4">4 cleaners</option>
+                  <option value="5" data-i18n="booking.cleanersOptions.5">5 cleaners</option>
+                  <option value="6" data-i18n="booking.cleanersOptions.6">6 cleaners</option>
+                  <option value="7" data-i18n="booking.cleanersOptions.7">7 cleaners</option>
+                  <option value="8" data-i18n="booking.cleanersOptions.8">8 cleaners</option>
+                  <option value="9" data-i18n="booking.cleanersOptions.9">9 cleaners</option>
                 </select>
               </div>
             </div>
@@ -181,38 +181,38 @@
             
             <div class="form-group">
               <label data-i18n="booking.name">Full Name</label>
-              <input type="text" id="name-input" required placeholder="John Doe">
+              <input type="text" id="name-input" required data-i18n-placeholder="booking.placeholders.name" placeholder="John Doe">
             </div>
             
             <div class="form-group">
               <label data-i18n="booking.email">Email</label>
-              <input type="email" id="email-input" required placeholder="john@example.com">
+              <input type="email" id="email-input" required data-i18n-placeholder="booking.placeholders.email" placeholder="john@example.com">
             </div>
             
             <div class="form-group">
               <label data-i18n="booking.phone">Phone</label>
-              <input type="tel" id="phone-input" required placeholder="+39 123 456 7890">
+              <input type="tel" id="phone-input" required data-i18n-placeholder="booking.placeholders.phone" placeholder="+39 123 456 7890">
             </div>
             
             <div class="form-row">
               <div class="form-group">
-                <label>Street Name</label>
-                <input type="text" id="street-name-input" required placeholder="Via Roma">
+                <label data-i18n="booking.placeholders.street">Street Name</label>
+                <input type="text" id="street-name-input" required data-i18n-placeholder="booking.placeholders.street" placeholder="Via Roma">
               </div>
               <div class="form-group">
-                <label>House Number</label>
-                <input type="text" id="house-number-input" required placeholder="123">
+                <label data-i18n="booking.placeholders.houseNumber">House Number</label>
+                <input type="text" id="house-number-input" required data-i18n-placeholder="booking.placeholders.houseNumber" placeholder="123">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Property Size (sqm)</label>
-                <input type="number" id="property-size-input" required placeholder="100" min="1">
+                <label data-i18n="booking.propertySize">Property Size (sqm)</label>
+                <input type="number" id="property-size-input" required data-i18n-placeholder="booking.placeholders.propertySize" placeholder="100" min="1">
               </div>
               <div class="form-group">
-                <label>Name on Doorbell</label>
-                <input type="text" id="doorbell-name-input" placeholder="Doe Family">
+                <label data-i18n="booking.doorbell">Name on Doorbell</label>
+                <input type="text" id="doorbell-name-input" data-i18n-placeholder="booking.placeholders.doorbell" placeholder="Doe Family">
               </div>
             </div>
             
@@ -221,63 +221,63 @@
               <div class="checkbox-group">
                 <label class="checkbox-label">
                   <input type="checkbox" id="fridge-cleaning">
-                  <span>Fridge Cleaning</span>
+                  <span data-i18n="booking.addons.fridge">Fridge Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="limescale-removal">
-                  <span>Limescale Removal</span>
+                  <span data-i18n="booking.addons.limescale">Limescale Removal</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="dishwashing">
-                  <span>Dishwashing</span>
+                  <span data-i18n="booking.addons.dishwashing">Dishwashing</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="ironing">
-                  <span>Ironing</span>
+                  <span data-i18n="booking.addons.ironing">Ironing</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="balcony-cleaning">
-                  <span>Balcony / Patio Cleaning</span>
+                  <span data-i18n="booking.addons.balcony">Balcony / Patio Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="window-cleaning">
-                  <span>Window Cleaning</span>
+                  <span data-i18n="booking.addons.window">Window Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="laundry-service">
-                  <span>Laundry Service</span>
+                  <span data-i18n="booking.addons.laundry">Laundry Service</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="gardening">
-                  <span>Gardening</span>
+                  <span data-i18n="booking.addons.gardening">Gardening</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="carpet-cleaning">
-                  <span>Carpet Cleaning</span>
+                  <span data-i18n="booking.addons.carpet">Carpet Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="oven-cleaning">
-                  <span>Oven Cleaning</span>
+                  <span data-i18n="booking.addons.oven">Oven Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="mold-removal">
-                  <span>Mold Removal</span>
+                  <span data-i18n="booking.addons.mold">Mold Removal</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="steam-cleaning">
-                  <span>Steam Cleaning</span>
+                  <span data-i18n="booking.addons.steam">Steam Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="wall-stain-removal">
-                  <span>Wall Stain Removal</span>
+                  <span data-i18n="booking.addons.wall">Wall Stain Removal</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="sofa-cleaning">
-                  <span>Sofa Cleaning</span>
+                  <span data-i18n="booking.addons.sofa">Sofa Cleaning</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="mattress-cleaning">
-                  <span>Mattress Cleaning</span>
+                  <span data-i18n="booking.addons.mattress">Mattress Cleaning</span>
                 </label>
               </div>
             </div>
@@ -288,22 +288,22 @@
               <div class="checkbox-group">
                 <label class="checkbox-label">
                   <input type="checkbox" id="provide-solvents">
-                  <span>Cleaning Solvents</span>
+                  <span data-i18n="booking.supplies.solvents">Cleaning Solvents</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="provide-mop">
-                  <span>Mop</span>
+                  <span data-i18n="booking.supplies.mop">Mop</span>
                 </label>
                 <label class="checkbox-label">
                   <input type="checkbox" id="provide-vacuum">
-                  <span>Vacuum Cleaner</span>
+                  <span data-i18n="booking.supplies.vacuum">Vacuum Cleaner</span>
                 </label>
               </div>
             </div>
 
             <div class="form-group">
               <label data-i18n="booking.notes">Special Instructions (Optional)</label>
-              <textarea id="notes-input" placeholder="Any special requests or access instructions"></textarea>
+              <textarea id="notes-input" data-i18n-placeholder="booking.placeholders.notes" placeholder="Any special requests or access instructions"></textarea>
             </div>
             
             <div class="form-actions">
@@ -423,9 +423,9 @@
           <p>+39 123 456 789</p>
         </a>
         
-        <a href="https://wa.me/39123456789" class="contact-card" target="_blank">
+        <a href="https://wa.me/39123456789" class="contact-card" target="_blank" data-i18n-title="contact.whatsapp">
           <i class="fab fa-whatsapp"></i>
-          <h4>WhatsApp</h4>
+          <h4 data-i18n="contact.whatsapp">WhatsApp</h4>
           <p data-i18n="contact.whatsapp">Chat with us</p>
         </a>
       </div>
@@ -459,7 +459,7 @@
     </div>
   </div>
 
-  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" title="Chat on WhatsApp">
+  <a href="https://wa.me/39123456789" class="whatsapp-float" target="_blank" data-i18n-title="contact.whatsapp">
     <i class="fab fa-whatsapp"></i>
   </a>
 

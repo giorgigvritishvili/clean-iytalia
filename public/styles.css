@@ -1,18 +1,25 @@
 :root {
-  --primary: #4F46E5;
-  --primary-dark: #4338CA;
-  --primary-light: #818CF8;
-  --secondary: #10B981;
-  --background: #E8F5E8;
-  --surface: #FFFFFF;
-  --text: #10B981;
-  --text-light: #64748B;
-  --border: #E2E8F0;
+  /* Palette applied: Soft Cream, Sage Green, Dusty Blue, Warm Grey, Natural Linen */
+  --soft-cream: #FBFAF8;
+  --sage-green: #8FA89F;
+  --dusty-blue: #7A8C99;
+  --warm-grey: #5F6368;
+  --natural-linen: #D8D2C8;
+
+  --primary: var(--sage-green);
+  --primary-dark: var(--dusty-blue);
+  --primary-light: var(--natural-linen);
+  --secondary: var(--dusty-blue);
+  --background: var(--soft-cream);
+  --surface: var(--natural-linen);
+  --text: var(--warm-grey);
+  --text-light: var(--dusty-blue);
+  --border: #E6E0D8;
   --error: #EF4444;
-  --success: #22C55E;
+  --success: var(--sage-green);
   --warning: #F59E0B;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
   --radius: 12px;
   --radius-sm: 8px;
 }
@@ -327,13 +334,13 @@ body {
 
 .service-card.selected {
   border-color: var(--primary);
-  background: rgba(79, 70, 229, 0.05);
+  background: rgba(143, 168, 159, 0.06); /* subtle sage tint */
 }
 
 .service-icon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  background: linear-gradient(135deg, var(--dusty-blue), var(--sage-green));
   border-radius: 50%;
   display: flex;
   align-items: center;

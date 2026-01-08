@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,22 +16,22 @@
       <div class="login-header">
         <i class="fas fa-sparkles"></i>
         <h1>CasaClean</h1>
-        <p>Admin Dashboard</p>
+        <p data-i18n="admin.title">Admin Dashboard</p>
       </div>
-      <form id="login-form" class="login-form">
+          <form id="login-form" class="login-form">
         <div class="form-group">
-          <label>Username</label>
-          <input type="text" id="username" required placeholder="Enter username">
+          <label data-i18n="admin.username">Username</label>
+          <input type="text" id="username" required placeholder="Inserisci nome utente">
         </div>
         <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="password" required placeholder="Enter password">
+          <label data-i18n="admin.password">Password</label>
+          <input type="password" id="password" required placeholder="Inserisci password">
         </div>
         <button type="submit" class="btn btn-primary btn-block">
           <i class="fas fa-sign-in-alt"></i>
-          Login
+          <span data-i18n="admin.login">Login</span>
         </button>
-        <p class="login-hint">Contact administrator for credentials</p>
+        <p class="login-hint" data-i18n="admin.loginHint">Contatta l'amministratore per le credenziali</p>
       </form>
     </div>
   </div>
@@ -45,45 +45,45 @@
       <ul class="sidebar-menu">
         <li class="active" data-tab="overview">
           <i class="fas fa-chart-line"></i>
-          <span>Overview</span>
+          <span data-i18n="admin.menu.overview">Overview</span>
         </li>
         <li class="dropdown-toggle" data-dropdown="projects">
           <i class="fas fa-project-diagram"></i>
-          <span>Projects</span>
+          <span data-i18n="admin.menu.projects">Projects</span>
           <i class="fas fa-chevron-down dropdown-icon"></i>
         </li>
         <ul class="dropdown-menu" id="projects-dropdown">
           <li data-tab="available-projects">
             <i class="fas fa-list"></i>
-            <span>Available Projects</span>
+            <span data-i18n="admin.menu.availableProjects">Available Projects</span>
           </li>
           <li data-tab="my-projects">
             <i class="fas fa-folder"></i>
-            <span>My Projects</span>
+            <span data-i18n="admin.menu.myProjects">My Projects</span>
           </li>
         </ul>
         <li class="dropdown-toggle" data-dropdown="appointments">
           <i class="fas fa-calendar-alt"></i>
-          <span>Appointments</span>
+          <span data-i18n="admin.menu.appointments">Appuntamenti</span>
           <i class="fas fa-chevron-down dropdown-icon"></i>
         </li>
         <ul class="dropdown-menu" id="appointments-dropdown">
           <li data-tab="appointment-calendar">
             <i class="fas fa-calendar-week"></i>
-            <span>Appointment Calendar</span>
+            <span data-i18n="admin.menu.appointmentCalendar">Calendario Appuntamenti</span>
           </li>
           <li data-tab="my-appointments">
             <i class="fas fa-clock"></i>
-            <span>My Appointments</span>
+            <span data-i18n="admin.menu.myAppointments">I miei appuntamenti</span>
           </li>
         </ul>
         <li data-tab="bookings">
           <i class="fas fa-calendar-check"></i>
-          <span>All Bookings</span>
+          <span data-i18n="admin.menu.bookings">All Bookings</span>
         </li>
         <li class="dropdown-toggle" data-dropdown="financial">
           <i class="fas fa-euro-sign"></i>
-          <span>Financial</span>
+          <span data-i18n="admin.menu.financial">Financial</span>
           <i class="fas fa-chevron-down dropdown-icon"></i>
         </li>
         <ul class="dropdown-menu" id="financial-dropdown">
@@ -106,25 +106,25 @@
         </ul>
         <li data-tab="workers">
           <i class="fas fa-users"></i>
-          <span>Workers</span>
+          <span data-i18n="admin.menu.workers">Workers</span>
         </li>
         <li data-tab="cities">
           <i class="fas fa-map-marker-alt"></i>
-          <span>Cities</span>
+          <span data-i18n="admin.menu.cities">Cities</span>
         </li>
         <li data-tab="services">
           <i class="fas fa-broom"></i>
-          <span>Services</span>
+          <span data-i18n="admin.menu.services">Services</span>
         </li>
       </ul>
       <div class="sidebar-footer">
         <a href="/" class="back-link">
           <i class="fas fa-arrow-left"></i>
-          Back to Site
+          <span data-i18n="admin.common.backToSite">Back to Site</span>
         </a>
         <button onclick="logout()" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i>
-          Logout
+          <span data-i18n="admin.common.logout">Logout</span>
         </button>
       </div>
     </nav>
@@ -134,7 +134,7 @@
         <button class="mobile-sidebar-toggle" onclick="toggleSidebar()">
           <i class="fas fa-bars"></i>
         </button>
-        <h2 id="page-title">Overview</h2>
+        <h2 id="page-title" data-i18n="admin.menu.overview">Overview</h2>
         <div class="topbar-actions">
           <span id="admin-name">Admin</span>
         </div>
@@ -182,18 +182,18 @@
           </div>
 
           <div class="recent-section">
-            <h3>Recent Bookings</h3>
+            <h3>Prenotazioni Recenti</h3>
             <div class="table-container">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th>City</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Amount</th>
+                      <th data-i18n="admin.table.id">ID</th>
+                      <th data-i18n="admin.table.customer">Customer</th>
+                      <th data-i18n="admin.table.service">Service</th>
+                      <th data-i18n="admin.table.city">City</th>
+                      <th data-i18n="admin.table.date">Date</th>
+                      <th data-i18n="admin.table.status">Status</th>
+                      <th data-i18n="admin.table.amount">Amount</th>
                   </tr>
                 </thead>
                 <tbody id="recent-bookings">
@@ -205,14 +205,14 @@
 
         <section id="bookings-tab" class="tab-content">
           <div class="section-header">
-            <h3>All Bookings</h3>
+            <h3>Tutte le Prenotazioni</h3>
             <div class="filter-group">
               <select id="status-filter" onchange="filterBookings()">
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
+                <option value="">Tutti gli stati</option>
+                <option value="pending">In sospeso</option>
+                <option value="confirmed">Confermato</option>
+                <option value="cancelled">Annullato</option>
+                <option value="completed">Completato</option>
               </select>
             </div>
           </div>
@@ -220,17 +220,17 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Service</th>
-                  <th>City</th>
-                  <th>Date & Time</th>
-                  <th>Duration</th>
-                  <th>Amount</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th data-i18n="admin.table.id">ID</th>
+                  <th data-i18n="admin.table.customer">Customer</th>
+                  <th data-i18n="admin.table.contact">Contact</th>
+                  <th data-i18n="admin.table.service">Service</th>
+                  <th data-i18n="admin.table.city">City</th>
+                  <th data-i18n="admin.table.dateTime">Date & Time</th>
+                  <th data-i18n="admin.table.duration">Duration</th>
+                  <th data-i18n="admin.table.amount">Amount</th>
+                  <th data-i18n="admin.table.payment">Payment</th>
+                  <th data-i18n="admin.table.status">Status</th>
+                  <th data-i18n="admin.table.actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="all-bookings">
@@ -241,10 +241,10 @@
 
         <section id="cities-tab" class="tab-content">
           <div class="section-header">
-            <h3>Manage Cities</h3>
+            <h3 data-i18n="admin.menu.cities">Manage Cities</h3>
             <button class="btn btn-primary" onclick="showAddCityModal()">
               <i class="fas fa-plus"></i>
-              Add City
+              <span data-i18n="admin.actions.addCity">Aggiungi città</span>
             </button>
           </div>
           <div class="cards-grid" id="cities-grid">
@@ -253,10 +253,10 @@
 
         <section id="services-tab" class="tab-content">
           <div class="section-header">
-            <h3>Manage Services</h3>
+            <h3 data-i18n="admin.menu.services">Manage Services</h3>
             <button class="btn btn-primary" onclick="showAddServiceModal()">
               <i class="fas fa-plus"></i>
-              Add Service
+              <span data-i18n="admin.actions.addService">Aggiungi servizio</span>
             </button>
           </div>
           <div class="cards-grid" id="services-grid">
@@ -266,8 +266,8 @@
         <!-- Projects Sections -->
         <section id="available-projects-tab" class="tab-content">
           <div class="section-header">
-            <h3>Available Projects</h3>
-            <button class="btn btn-primary" onclick="showAddProjectModal()">
+            <h3 data-i18n="admin.menu.availableProjects">Available Projects</h3>
+            <button class="btn btn-primary" onclick="showAddProjectModal()" data-i18n="admin.actions.addProject">
               <i class="fas fa-plus"></i>
               Add Project
             </button>
@@ -278,7 +278,7 @@
 
         <section id="my-projects-tab" class="tab-content">
           <div class="section-header">
-            <h3>My Projects</h3>
+            <h3 data-i18n="admin.menu.myProjects">My Projects</h3>
             <div class="filter-group">
               <select id="project-status-filter" onchange="filterMyProjects()">
                 <option value="">All Status</option>
@@ -295,7 +295,7 @@
         <!-- Appointments Sections -->
         <section id="appointment-calendar-tab" class="tab-content">
           <div class="section-header">
-            <h3>Appointment Calendar</h3>
+            <h3 data-i18n="admin.menu.appointmentCalendar">Appointment Calendar</h3>
             <div class="filter-group">
               <input type="date" id="calendar-date" onchange="loadAppointmentCalendar()">
               <select id="calendar-view" onchange="changeCalendarView()">
@@ -311,7 +311,7 @@
 
         <section id="my-appointments-tab" class="tab-content">
           <div class="section-header">
-            <h3>My Appointments</h3>
+            <h3 data-i18n="admin.menu.myAppointments">My Appointments</h3>
             <div class="filter-group">
               <select id="appointment-status-filter" onchange="filterMyAppointments()">
                 <option value="">All Status</option>
@@ -381,7 +381,7 @@
             </div>
           </div>
           <div class="recent-section">
-            <h3>Earnings History</h3>
+            <h3 data-i18n="admin.menu.earnings">Earnings History</h3>
             <div class="table-container">
               <table class="data-table">
                 <thead>
@@ -402,8 +402,8 @@
 
         <section id="payout-tab" class="tab-content">
           <div class="section-header">
-            <h3>Payout Requests</h3>
-            <button class="btn btn-primary" onclick="requestPayout()">
+            <h3 data-i18n="admin.menu.payout">Payout Requests</h3>
+            <button class="btn btn-primary" onclick="requestPayout()" data-i18n="admin.actions.requestPayout">
               <i class="fas fa-plus"></i>
               Request Payout
             </button>
@@ -428,7 +428,7 @@
 
         <section id="commission-invoices-tab" class="tab-content">
           <div class="section-header">
-            <h3>Commission Invoices</h3>
+            <h3 data-i18n="admin.menu.commissionInvoices">Commission Invoices</h3>
             <div class="filter-group">
               <select id="invoice-status-filter" onchange="filterCommissionInvoices()">
                 <option value="">All Status</option>
@@ -458,7 +458,7 @@
 
         <section id="billing-commissions-tab" class="tab-content">
           <div class="section-header">
-            <h3>Billing & Commissions</h3>
+            <h3 data-i18n="admin.menu.billingCommissions">Billing & Commissions</h3>
             <button class="btn btn-primary" onclick="generateCommissionReport()">
               <i class="fas fa-file-pdf"></i>
               Generate Report
@@ -503,7 +503,7 @@
             </div>
           </div>
           <div class="recent-section">
-            <h3>Recent Commission Activity</h3>
+            <h3 data-i18n="admin.messages.commissionReportPlaceholder">Recent Commission Activity</h3>
             <div class="table-container">
               <table class="data-table">
                 <thead>
@@ -525,8 +525,8 @@
         <!-- Workers Section -->
         <section id="workers-tab" class="tab-content">
           <div class="section-header">
-            <h3>Manage Workers</h3>
-            <button class="btn btn-primary" onclick="showAddWorkerModal()">
+            <h3 data-i18n="admin.menu.workers">Manage Workers</h3>
+            <button class="btn btn-primary" onclick="showAddWorkerModal()" data-i18n="admin.actions.addWorker">
               <i class="fas fa-plus"></i>
               Add Worker
             </button>
@@ -541,7 +541,7 @@
   <div class="modal" id="booking-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Booking Details</h3>
+        <h3 data-i18n="admin.messages.bookingDetailsTitle">Booking Details</h3>
         <button class="modal-close" onclick="closeModal('booking-modal')">&times;</button>
       </div>
       <div class="modal-body" id="booking-details">
@@ -554,7 +554,7 @@
   <div class="modal" id="city-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Add New City</h3>
+        <h3>Aggiungi Nuova Città</h3>
         <button class="modal-close" onclick="closeModal('city-modal')">&times;</button>
       </div>
       <form id="city-form" class="modal-body">
@@ -590,8 +590,8 @@
         </div>
       </form>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('city-modal')">Cancel</button>
-        <button class="btn btn-primary" onclick="addCity()">Add City</button>
+        <button class="btn btn-secondary" onclick="closeModal('city-modal')" data-i18n="admin.actions.cancel">Cancel</button>
+        <button class="btn btn-primary" onclick="addCity()" data-i18n="admin.actions.addCity">Add City</button>
       </div>
     </div>
   </div>
@@ -599,47 +599,50 @@
   <div class="modal" id="service-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="service-modal-title">Add New Service</h3>
+        <h3 id="service-modal-title" data-i18n="admin.actions.addServiceTitle">Add New Service</h3>
         <button class="modal-close" onclick="closeModal('service-modal')">&times;</button>
       </div>
       <form id="service-form" class="modal-body">
         <div class="form-group">
-          <label>Service Name (English)</label>
-          <input type="text" id="service-name" required placeholder="e.g., Regular Cleaning">
+          <label data-i18n="admin.form.serviceNameEn">Service Name (English)</label>
+          <input type="text" id="service-name" required data-i18n-placeholder="admin.form.serviceNameEnPlaceholder" placeholder="e.g., Regular Cleaning">
         </div>
         <div class="form-group">
-          <label>Service Name (Italian)</label>
-          <input type="text" id="service-name-it" required placeholder="e.g., Pulizia Regolare">
+          <label data-i18n="admin.form.serviceNameIt">Service Name (Italian)</label>
+          <input type="text" id="service-name-it" required data-i18n-placeholder="admin.form.serviceNameItPlaceholder" placeholder="e.g., Pulizia Regolare">
         </div>
         <div class="form-group">
-          <label>Description (English)</label>
-          <textarea id="service-description" required placeholder="Describe the service in English"></textarea>
+          <label data-i18n="admin.form.descriptionEn">Description (English)</label>
+          <textarea id="service-description" required data-i18n-placeholder="admin.form.descriptionEnPlaceholder" placeholder="Describe the service in English"></textarea>
         </div>
         <div class="form-group">
-          <label>Description (Italian)</label>
-          <textarea id="service-description-it" required placeholder="Descrivi il servizio in italiano"></textarea>
+          <label data-i18n="admin.form.descriptionIt">Description (Italian)</label>
+          <textarea id="service-description-it" required data-i18n-placeholder="admin.form.descriptionItPlaceholder" placeholder="Descrivi il servizio in italiano"></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Price per Hour (€)</label>
-            <input type="number" id="service-price" required min="0" step="0.01" placeholder="25.00">
+            <label data-i18n="admin.form.pricePerHour">Price per Hour (€)</label>
+            <input type="number" id="service-price" required min="0" step="0.01" data-i18n-placeholder="admin.form.pricePerHourPlaceholder" placeholder="25.00">
           </div>
           <div class="form-group">
-            <label>Status</label>
+            <label data-i18n="admin.form.status">Status</label>
             <select id="service-enabled">
-              <option value="true">Enabled</option>
-              <option value="false">Disabled</option>
+              <option value="true" data-i18n="admin.form.enabled">Enabled</option>
+              <option value="false" data-i18n="admin.form.disabled">Disabled</option>
             </select>
           </div>
         </div>
       </form>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('service-modal')">Cancel</button>
-        <button class="btn btn-primary" id="service-submit-btn" onclick="saveService()">Add Service</button>
+        <button class="btn btn-secondary" onclick="closeModal('service-modal')" data-i18n="admin.actions.cancel">Cancel</button>
+        <button class="btn btn-primary" id="service-submit-btn" onclick="saveService()" data-i18n="admin.actions.addService">Add Service</button>
       </div>
     </div>
   </div>
 
+  <script src="translations.js"></script>
+  <!-- Removed forced language to allow dynamic switching -->
   <script src="admin.js"></script>
 </body>
 </html>
+

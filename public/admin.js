@@ -2,6 +2,40 @@ let bookings = [];
 let cities = [];
 let services = [];
 
+// Force admin panel to Italian only (apply translations without permanently changing user's stored language)
+(function forceAdminItalian(){
+  try {
+    const prevLang = localStorage.getItem('language');
+    if (typeof setLanguage === 'function') {
+      setLanguage('it');
+      // restore previous stored preference so site-wide setting does not change
+      if (prevLang !== null) localStorage.setItem('language', prevLang); else localStorage.removeItem('language');
+    } else if (typeof currentLanguage !== 'undefined') {
+      currentLanguage = 'it';
+      if (typeof window.onLanguageChange === 'function') {
+        window.onLanguageChange('it');
+      }
+    }
+    try { document.documentElement.lang = 'it'; } catch(e) {}
+  } catch (e) { console.error('forceAdminItalian error', e); }
+})();
+
+// Re-render dynamic admin content when translations change
+window.onLanguageChange = function(lang) {
+  try {
+    renderServices();
+    renderCities();
+    renderRecentBookings();
+    renderAllBookings();
+    // update modal button texts if modal present
+    const submitBtn = document.getElementById('service-submit-btn');
+    if (submitBtn) {
+      const A = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions) || {};
+      submitBtn.textContent = submitBtn.textContent.includes((A.updateService || 'Update Service')) ? (A.updateService || 'Update Service') : (A.addService || 'Add Service');
+    }
+  } catch (e) { console.error('onLanguageChange admin hook error', e); }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
 
@@ -58,11 +92,11 @@ async function handleLogin(e) {
     if (response.ok) {
       showDashboard();
     } else {
-      alert('Invalid credentials');
+      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.invalidCredentials) || 'Invalid credentials');
     }
   } catch (error) {
     console.error('Login failed:', error);
-    alert('Login failed. Please try again.');
+      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.loginFailedTry) || 'Login failed. Please try again.');
   }
 }
 
@@ -134,7 +168,8 @@ function renderRecentBookings() {
   `).join('');
   
   if (recent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-light);">No bookings yet</td></tr>';
+    const msg = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.noBookingsYet) || 'No bookings yet';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
   }
 }
 
@@ -184,7 +219,8 @@ function renderAllBookings() {
   `).join('');
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-light);">No bookings found</td></tr>';
+    const msg = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.noBookingsFound) || 'No bookings found';
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
   }
 }
 
@@ -197,69 +233,74 @@ function showBookingDetails(id) {
   if (!booking) return;
   
   const details = document.getElementById('booking-details');
+  const Ladmin = (translations[currentLanguage] && translations[currentLanguage].admin) || {};
+  const Ltable = Ladmin.table || {};
+  const Lbooking = (translations[currentLanguage] && translations[currentLanguage].booking) || {};
+  const Lcontact = (translations[currentLanguage] && translations[currentLanguage].contact) || {};
+
   details.innerHTML = `
     <div class="detail-grid">
       <div class="detail-item">
-        <label>Booking ID</label>
+        <label>${Ltable.id || 'Booking ID'}</label>
         <span>#${booking.id}</span>
       </div>
       <div class="detail-item">
-        <label>Status</label>
+        <label>${Ltable.status || 'Status'}</label>
         <span class="status-badge ${booking.status}">${booking.status}</span>
       </div>
       <div class="detail-item">
-        <label>Customer Name</label>
+        <label>${Ltable.customer || 'Customer'}</label>
         <span>${booking.customer_name}</span>
       </div>
       <div class="detail-item">
-        <label>Email</label>
+        <label>${Lcontact.email || 'Email'}</label>
         <span>${booking.customer_email}</span>
       </div>
       <div class="detail-item">
-        <label>Phone</label>
+        <label>${Lcontact.phone || 'Phone'}</label>
         <span>${booking.customer_phone}</span>
       </div>
       <div class="detail-item">
-        <label>Service</label>
+        <label>${Ltable.service || 'Service'}</label>
         <span>${booking.service_name}</span>
       </div>
       <div class="detail-item full-width">
-        <label>Address</label>
+        <label>${'Address'}</label>
         <span>${booking.customer_address}</span>
       </div>
       <div class="detail-item">
-        <label>Date</label>
+        <label>${Ltable.date || 'Date'}</label>
         <span>${formatDate(booking.booking_date)}</span>
       </div>
       <div class="detail-item">
-        <label>Time</label>
+        <label>${Lbooking.time || 'Time'}</label>
         <span>${booking.booking_time}</span>
       </div>
       <div class="detail-item">
-        <label>Duration</label>
-        <span>${booking.hours} hours</span>
+        <label>${Ltable.duration || 'Duration'}</label>
+        <span>${booking.hours} ${(Lbooking.hoursOptions ? 'hours' : 'hours')}</span>
       </div>
       <div class="detail-item">
-        <label>Cleaners</label>
+        <label>${Lbooking.cleaners || 'Cleaners'}</label>
         <span>${booking.cleaners}</span>
       </div>
       <div class="detail-item">
-        <label>Total Amount</label>
+        <label>${Ltable.amount || 'Total Amount'}</label>
         <span style="font-size: 1.25rem; font-weight: 600; color: var(--primary);">€${parseFloat(booking.total_amount).toFixed(2)}</span>
       </div>
       <div class="detail-item">
-        <label>Payment Status</label>
+        <label>${Ltable.payment || 'Payment Status'}</label>
         <span class="status-badge ${booking.stripe_status}">${booking.stripe_status}</span>
       </div>
       ${booking.payment_intent_id ? `
         <div class="detail-item full-width">
-          <label>Payment Intent ID</label>
+          <label>${'Payment Intent ID'}</label>
           <span style="font-size: 0.85rem; word-break: break-all;">${booking.payment_intent_id}</span>
         </div>
       ` : ''}
       ${booking.notes ? `
         <div class="detail-item full-width">
-          <label>Special Instructions</label>
+          <label>${Lbooking.notes || 'Special Instructions'}</label>
           <span>${booking.notes}</span>
         </div>
       ` : ''}
@@ -268,12 +309,13 @@ function showBookingDetails(id) {
   
   const actions = document.getElementById('booking-actions');
   if (booking.status === 'pending') {
+    const A = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions) || {};
     actions.innerHTML = `
       <button class="btn btn-danger" onclick="rejectBooking(${booking.id}); closeModal('booking-modal');">
-        <i class="fas fa-times"></i> Reject
+        <i class="fas fa-times"></i> ${A.reject || 'Reject'}
       </button>
       <button class="btn btn-success" onclick="confirmBooking(${booking.id}); closeModal('booking-modal');">
-        <i class="fas fa-check"></i> Confirm & Charge
+        <i class="fas fa-check"></i> ${A.confirmAndCharge || 'Confirm & Charge'}
       </button>
     `;
   } else {
@@ -294,7 +336,7 @@ function showBookingDetails(id) {
 }
 
 async function confirmBooking(id) {
-  if (!confirm('Confirm this booking and charge the customer?')) return;
+  if (!confirm((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
   
   try {
     const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
@@ -302,10 +344,10 @@ async function confirmBooking(id) {
     });
     
     if (response.ok) {
-      alert('Booking confirmed successfully!');
+      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmBookingSuccess) || 'Booking confirmed successfully!');
       loadDashboardData();
     } else {
-      throw new Error('Failed to confirm booking');
+      throw new Error((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmBookingFailed) || 'Failed to confirm booking');
     }
   } catch (error) {
     console.error('Error confirming booking:', error);
@@ -314,7 +356,7 @@ async function confirmBooking(id) {
 }
 
 async function rejectBooking(id) {
-  if (!confirm('Reject this booking? The payment authorization will be released.')) return;
+  if (!confirm((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
   
   try {
     const response = await fetch(`/api/admin/bookings/${id}/reject`, {
@@ -322,10 +364,10 @@ async function rejectBooking(id) {
     });
     
     if (response.ok) {
-      alert('Booking rejected. Payment released.');
+      alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.rejectBookingSuccess) || 'Booking rejected. Payment released.');
       loadDashboardData();
     } else {
-      throw new Error('Failed to reject booking');
+      throw new Error((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.rejectBookingFailed) || 'Failed to reject booking');
     }
   } catch (error) {
     console.error('Error rejecting booking:', error);
@@ -404,7 +446,7 @@ async function addCity() {
   });
   
   if (!name || !nameIt) {
-    alert('Please fill in all required fields');
+    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.pleaseFillFields) || 'Please fill in all required fields');
     return;
   }
   
@@ -429,7 +471,7 @@ async function addCity() {
     }
   } catch (error) {
     console.error('Failed to add city:', error);
-    alert('Failed to add city. Please try again.');
+    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedAddCity) || 'Failed to add city. Please try again.');
   }
 }
 
@@ -446,15 +488,19 @@ async function loadServices() {
 function renderServices() {
   const grid = document.getElementById('services-grid');
 
-  grid.innerHTML = services.map(service => `
+  grid.innerHTML = services.map(service => {
+    const localizedName = (service[`name_${currentLanguage}`] && service[`name_${currentLanguage}`].trim()) || service.name || service.name_it || '';
+    const localizedDesc = (service[`description_${currentLanguage}`] && service[`description_${currentLanguage}`].trim()) || service.description || service.description_it || '';
+
+    return `
     <div class="admin-card">
       <h4>
-        ${service.name}
+        ${localizedName}
         <div class="card-actions">
-          <button class="btn btn-sm btn-secondary" onclick="showEditServiceModal(${service.id})" title="Edit">
+          <button class="btn btn-sm btn-secondary" onclick="showEditServiceModal(${service.id})" title="${(translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.editService) || 'Edit Service'}">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})" title="Delete">
+          <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})" title="${(translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.deleteService) || 'Delete'}">
             <i class="fas fa-trash"></i>
           </button>
           <label class="toggle-switch">
@@ -464,12 +510,13 @@ function renderServices() {
         </div>
       </h4>
       <div class="card-details">
-        <p><i class="fas fa-globe"></i> IT: ${service.name_it}</p>
-        <p>${service.description}</p>
+        <p><i class="fas fa-globe"></i> ${((currentLanguage === 'it') ? ((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.menu && translations[currentLanguage].admin.menu.services) || 'IT') : (service.name_it || 'IT'))}</p>
+        <p>${localizedDesc}</p>
       </div>
       <div class="card-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-light);">/hour</span></div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function toggleService(id, enabled) {
@@ -490,9 +537,9 @@ async function toggleService(id, enabled) {
 }
 
 function showAddServiceModal() {
-  document.getElementById('service-modal-title').textContent = 'Add New Service';
+  document.getElementById('service-modal-title').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.addServiceTitle) || 'Add New Service';
   document.getElementById('service-form').reset();
-  document.getElementById('service-submit-btn').textContent = 'Add Service';
+  document.getElementById('service-submit-btn').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.addService) || 'Add Service';
   document.getElementById('service-submit-btn').onclick = saveService;
   document.getElementById('service-modal').classList.add('active');
 }
@@ -501,7 +548,7 @@ function showEditServiceModal(id) {
   const service = services.find(s => s.id === id);
   if (!service) return;
 
-  document.getElementById('service-modal-title').textContent = 'Edit Service';
+  document.getElementById('service-modal-title').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.editService) || 'Edit Service';
   document.getElementById('service-name').value = service.name;
   document.getElementById('service-name-it').value = service.name_it;
   document.getElementById('service-description').value = service.description;
@@ -509,7 +556,7 @@ function showEditServiceModal(id) {
   document.getElementById('service-price').value = service.price_per_hour;
   document.getElementById('service-enabled').value = service.enabled.toString();
 
-  document.getElementById('service-submit-btn').textContent = 'Update Service';
+  document.getElementById('service-submit-btn').textContent = (translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.actions && translations[currentLanguage].admin.actions.updateService) || 'Update Service';
   document.getElementById('service-submit-btn').onclick = () => saveService(id);
   document.getElementById('service-modal').classList.add('active');
 }
@@ -523,7 +570,7 @@ async function saveService(id = null) {
   const enabled = document.getElementById('service-enabled').value === 'true';
 
   if (!name || !nameIt || !description || !descriptionIt || isNaN(price)) {
-    alert('Please fill in all required fields');
+    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.pleaseFillFields) || 'Please fill in all required fields');
     return;
   }
 
@@ -551,12 +598,12 @@ async function saveService(id = null) {
     }
   } catch (error) {
     console.error('Failed to save service:', error);
-    alert('Failed to save service. Please try again.');
+    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedSaveService) || 'Failed to save service. Please try again.');
   }
 }
 
 async function deleteService(id) {
-  if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) return;
+  if (!confirm('Sei sicuro di voler eliminare questo servizio? Questa azione è irreversibile.')) return;
 
   try {
     const response = await fetch(`/api/admin/services/${id}`, {
@@ -570,7 +617,7 @@ async function deleteService(id) {
     }
   } catch (error) {
     console.error('Failed to delete service:', error);
-    alert('Failed to delete service. Please try again.');
+    alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.failedDeleteService) || 'Failed to delete service. Please try again.');
   }
 }
 
@@ -619,7 +666,32 @@ function switchTab(tab) {
     'billing-commissions': 'Billing & Commissions',
     workers: 'Workers',
   };
-  document.getElementById('page-title').textContent = titles[tab] || 'Dashboard';
+  // Use translations if available
+  const titleKeyMap = {
+    overview: 'overview',
+    bookings: 'bookings',
+    cities: 'cities',
+    services: 'services',
+    'available-projects': 'availableProjects',
+    'my-projects': 'myProjects',
+    'appointment-calendar': 'appointmentCalendar',
+    'my-appointments': 'myAppointments',
+    earnings: 'earnings',
+    payout: 'payout',
+    'commission-invoices': 'commissionInvoices',
+    'billing-commissions': 'billingCommissions',
+    workers: 'workers'
+  };
+
+  let translatedTitle = null;
+  try {
+    const key = titleKeyMap[tab];
+    if (key && translations && translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.menu && translations[currentLanguage].admin.menu[key]) {
+      translatedTitle = translations[currentLanguage].admin.menu[key];
+    }
+  } catch (e) {}
+
+  document.getElementById('page-title').textContent = translatedTitle || (titles[tab] || 'Dashboard');
 
   // Load data for specific tabs
   switch(tab) {
@@ -676,7 +748,7 @@ document.addEventListener('click', function(e) {
 
 function formatDate(dateStr) {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB', {
+  return date.toLocaleDateString('it-IT', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -687,13 +759,13 @@ function formatDate(dateStr) {
 function loadAvailableProjects() {
   // TODO: Load available projects from API
   const grid = document.getElementById('available-projects-grid');
-  grid.innerHTML = '<div class="admin-card"><p>Available projects will be loaded here...</p></div>';
+  grid.innerHTML = '<div class="admin-card"><p>I progetti disponibili verranno caricati qui...</p></div>';
 }
 
 function loadMyProjects() {
   // TODO: Load user's projects from API
   const grid = document.getElementById('my-projects-grid');
-  grid.innerHTML = '<div class="admin-card"><p>Your projects will be loaded here...</p></div>';
+  grid.innerHTML = '<div class="admin-card"><p>I tuoi progetti verranno caricati qui...</p></div>';
 }
 
 function filterMyProjects() {
@@ -704,7 +776,7 @@ function filterMyProjects() {
 function loadAppointmentCalendar() {
   // TODO: Load appointment calendar
   const calendar = document.getElementById('appointment-calendar');
-  calendar.innerHTML = '<div class="calendar-placeholder"><p>Calendar view will be implemented here...</p></div>';
+  calendar.innerHTML = '<div class="calendar-placeholder"><p>La visualizzazione del calendario verrà implementata qui...</p></div>';
 }
 
 function changeCalendarView() {
@@ -715,7 +787,7 @@ function changeCalendarView() {
 function loadMyAppointments() {
   // TODO: Load user's appointments
   const table = document.getElementById('my-appointments-table');
-  table.innerHTML = '<tr><td colspan="7" style="text-align: center;">Your appointments will be loaded here...</td></tr>';
+  table.innerHTML = '<tr><td colspan="7" style="text-align: center;">I tuoi appuntamenti verranno caricati qui...</td></tr>';
 }
 
 function filterMyAppointments() {
@@ -733,18 +805,18 @@ function loadEarnings() {
 
   // Update earnings history
   const history = document.getElementById('earnings-history');
-  history.innerHTML = '<tr><td colspan="5" style="text-align: center;">Earnings history will be loaded here...</td></tr>';
+  history.innerHTML = '<tr><td colspan="5" style="text-align: center;">La cronologia delle entrate verrà caricata qui...</td></tr>';
 }
 
 function loadPayoutRequests() {
   // TODO: Load payout requests
   const requests = document.getElementById('payout-requests');
-  requests.innerHTML = '<tr><td colspan="6" style="text-align: center;">Payout requests will be loaded here...</td></tr>';
+  requests.innerHTML = '<tr><td colspan="6" style="text-align: center;">Le richieste di pagamento verranno caricate qui...</td></tr>';
 }
 
 function requestPayout() {
   // TODO: Show payout request modal
-  alert('Payout request functionality will be implemented here.');
+  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.payoutPlaceholder) || 'Payout request functionality will be implemented here.');
 }
 
 function loadCommissionInvoices() {
@@ -773,7 +845,7 @@ function loadBillingCommissions() {
 
 function generateCommissionReport() {
   // TODO: Generate commission report
-  alert('Commission report generation will be implemented here.');
+  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.commissionReportPlaceholder) || 'Commission report generation will be implemented here.');
 }
 
 function loadWorkers() {
@@ -784,10 +856,10 @@ function loadWorkers() {
 
 function showAddProjectModal() {
   // TODO: Show add project modal
-  alert('Add project modal will be implemented here.');
+  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.addProjectPlaceholder) || 'Add project modal will be implemented here.');
 }
 
 function showAddWorkerModal() {
   // TODO: Show add worker modal
-  alert('Add worker modal will be implemented here.');
+  alert((translations[currentLanguage] && translations[currentLanguage].admin && translations[currentLanguage].admin.messages && translations[currentLanguage].admin.messages.addWorkerPlaceholder) || 'Add worker modal will be implemented here.');
 }

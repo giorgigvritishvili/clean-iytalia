@@ -33,14 +33,28 @@ async function loadServices() {
   try {
     const response = await fetch('/api/services');
     services = await response.json();
-    
     const select = document.getElementById('service-select');
     const grid = document.getElementById('services-grid');
-    
+    // clear existing before repopulating (allows language reload)
+    select.innerHTML = `<option value="" data-i18n="booking.selectService">Select a service</option>`;
+    grid.innerHTML = '';
+
+    // helper to pick localized fields from service objects (e.g. name_it, name_ru)
+    function getLocalizedField(obj, base, lang) {
+      if (!obj) return '';
+      const key = `${base}_${lang}`;
+      if (obj[key]) return obj[key];
+      // prefer English fallback when available
+      if (obj[base]) return obj[base];
+      // then Italian
+      if (obj[`${base}_it`]) return obj[`${base}_it`];
+      return '';
+    }
+
     services.forEach(service => {
       const option = document.createElement('option');
       option.value = service.id;
-      option.textContent = currentLanguage === 'it' ? service.name_it : service.name;
+      option.textContent = getLocalizedField(service, 'name', currentLanguage);
       option.dataset.price = service.price_per_hour;
       select.appendChild(option);
       
@@ -48,13 +62,16 @@ async function loadServices() {
       const card = document.createElement('div');
       card.className = 'service-card';
       card.dataset.id = service.id;
+      const serviceName = getLocalizedField(service, 'name', currentLanguage);
+      const serviceDescription = getLocalizedField(service, 'description', currentLanguage) || service.description || '';
+      const hourLabel = currentLanguage === 'it' ? '/ora' : '/hour';
       card.innerHTML = `
         <div class="service-icon">
           <i class="fas ${icon}"></i>
         </div>
-        <h3>${currentLanguage === 'it' ? service.name_it : service.name}</h3>
-        <p>${currentLanguage === 'it' ? (service.description_it || service.description) : service.description}</p>
-        <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span>${currentLanguage === 'it' ? '/ora' : '/hour'}</span></div>
+        <h3>${serviceName}</h3>
+        <p>${serviceDescription}</p>
+        <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span>${hourLabel}</span></div>
       `;
       card.addEventListener('click', () => selectServiceCard(service.id));
       grid.appendChild(card);
@@ -68,18 +85,41 @@ async function loadCities() {
   try {
     const response = await fetch('/api/cities');
     cities = await response.json();
-    
     const select = document.getElementById('city-select');
+    // clear and repopulate so language changes take effect
+    select.innerHTML = `<option value="" data-i18n="booking.selectCity">Select a city</option>`;
     cities.forEach(city => {
       const option = document.createElement('option');
       option.value = city.id;
-      option.textContent = currentLanguage === 'it' ? city.name_it : city.name;
+      const nameKey = `name_${currentLanguage}`;
+      option.textContent = city[nameKey] || city.name || city.name_it || '';
       select.appendChild(option);
     });
   } catch (error) {
     console.error('Error loading cities:', error);
   }
 }
+
+// Called by translations.js when language changes
+window.onLanguageChange = function(lang) {
+  try {
+    currentLanguage = lang;
+    // reload dynamic lists so labels update
+    loadServices();
+    loadCities();
+
+    // update time placeholder if no date selected
+    const timeSelect = document.getElementById('time-select');
+    if (timeSelect && !timeSelect.value) {
+      timeSelect.innerHTML = `<option value="" data-i18n="booking.selectDate">Select a date first</option>`;
+    }
+
+    // refresh summary texts if visible
+    try { updateSummary(); } catch (e) {}
+  } catch (e) {
+    console.error('Language change handler error', e);
+  }
+};
 
 function selectServiceCard(serviceId) {
   document.querySelectorAll('.service-card').forEach(card => {
@@ -122,7 +162,7 @@ async function onDateChange() {
   const timeSelect = document.getElementById('time-select');
   
   if (!cityId || !date) {
-    timeSelect.innerHTML = `<option value="">${currentLanguage === 'it' ? 'Seleziona prima una data' : 'Select a date first'}</option>`;
+    timeSelect.innerHTML = `<option value="" data-i18n="booking.selectDate">Select a date first</option>`;
     return;
   }
   
@@ -183,9 +223,9 @@ function initStripe() {
       style: {
         base: {
           fontSize: '16px',
-          color: '#1E293B',
+          color: '#5F6368', // warm grey
           '::placeholder': {
-            color: '#64748B',
+            color: '#7A8C99', // dusty blue
           },
         },
         invalid: {
@@ -315,49 +355,55 @@ function updateSummary() {
     }
   });
 
+  const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : translations['en'];
   const summary = document.getElementById('booking-summary');
+  const serviceName = service ? (service[`name_${currentLanguage}`] || service.name_it || service.name) : '';
+  const cityName = city ? (city[`name_${currentLanguage}`] || city.name_it || city.name) : '';
+  const hoursLabel = t.booking && t.booking.hours ? t.booking.hours : 'Hours';
+  const durationUnit = currentLanguage === 'it' ? 'ore' : (t.booking && t.booking.hoursOptions ? t.booking.hoursOptions['4']?.split(' ')[1] || 'hours' : 'hours');
+
   summary.innerHTML = `
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Servizio' : 'Service'}:</span>
-      <span class="summary-value">${currentLanguage === 'it' ? service?.name_it : service?.name}</span>
+      <span class="summary-label">${t.booking && t.booking.service ? t.booking.service : 'Service'}:</span>
+      <span class="summary-value">${serviceName}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Città' : 'City'}:</span>
-      <span class="summary-value">${currentLanguage === 'it' ? city?.name_it : city?.name}</span>
+      <span class="summary-label">${t.booking && t.booking.city ? t.booking.city : 'City'}:</span>
+      <span class="summary-value">${cityName}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Data' : 'Date'}:</span>
+      <span class="summary-label">${t.booking && t.booking.date ? t.booking.date : 'Date'}:</span>
       <span class="summary-value">${date}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Ora' : 'Time'}:</span>
+      <span class="summary-label">${t.booking && t.booking.time ? t.booking.time : 'Time'}:</span>
       <span class="summary-value">${time}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Durata' : 'Duration'}:</span>
-      <span class="summary-value">${hours} ${currentLanguage === 'it' ? 'ore' : 'hours'}</span>
+      <span class="summary-label">${t.booking && t.booking.hours ? t.booking.hours : 'Duration'}:</span>
+      <span class="summary-value">${hours} ${durationUnit}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Addetti' : 'Cleaners'}:</span>
+      <span class="summary-label">${t.booking && t.booking.cleaners ? t.booking.cleaners : 'Cleaners'}:</span>
       <span class="summary-value">${cleaners}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">${currentLanguage === 'it' ? 'Indirizzo' : 'Address'}:</span>
+      <span class="summary-label">${t.booking && t.booking.placeholders && t.booking.placeholders.street ? t.booking.placeholders.street : 'Address'}:</span>
       <span class="summary-value">${streetName} ${houseNumber}${doorbellName ? ', ' + doorbellName : ''}</span>
     </div>
     <div class="summary-item">
-      <span class="summary-label">Property Size:</span>
+      <span class="summary-label">${t.booking && t.booking.propertySize ? t.booking.propertySize : 'Property Size'}:</span>
       <span class="summary-value">${propertySize} sqm</span>
     </div>
     ${additionalServices.length > 0 ? `
     <div class="summary-item">
-      <span class="summary-label">Additional Services:</span>
+      <span class="summary-label">${t.booking && t.booking.addons ? (t.booking.addonsTitle || 'Additional Services') : 'Additional Services'}:</span>
       <span class="summary-value">${additionalServices.join(', ')}</span>
     </div>
     ` : ''}
     ${supplies.length > 0 ? `
     <div class="summary-item">
-      <span class="summary-label">Supplies Provided:</span>
+      <span class="summary-label">${t.booking && t.booking.supplies ? 'Supplies Provided' : 'Supplies Provided'}:</span>
       <span class="summary-value">${supplies.join(', ')}</span>
     </div>
     ` : ''}
