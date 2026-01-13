@@ -3,3 +3,4 @@
 - [x] Add Georgian ('ka') translations to the translations object.
 - [x] Add Russian ('ru') translations to the translations object.
 - [x] Update toggleLanguage function to cycle through 'en', 'it', 'ka', 'ru'.
+- [x] Fix admin panel data loading issue on hosted platforms by hardcoding default services and cities.
