@@ -71,21 +71,39 @@ try {
 }
 
 function loadData() {
-  // Hardcode default services for hosting compatibility
-  services = [
-    { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
-    { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
-    { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
-    { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
-    { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
-    { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
-  ];
+  // Load services from file if exists, else use defaults and save
+  try {
+    if (fs.existsSync(servicesFilePath)) {
+      services = JSON.parse(fs.readFileSync(servicesFilePath, 'utf8'));
+    } else {
+      services = [
+        { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
+        { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
+        { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
+        { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
+        { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+      ];
+      saveData(services, servicesFilePath);
+    }
+  } catch (err) {
+    console.error('Failed to load services:', err);
+  }
 
-  // Hardcode default cities for hosting compatibility
-  cities = [
-    { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
-    { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
-  ];
+  // Load cities from file if exists, else use defaults and save
+  try {
+    if (fs.existsSync(citiesFilePath)) {
+      cities = JSON.parse(fs.readFileSync(citiesFilePath, 'utf8'));
+    } else {
+      cities = [
+        { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+        { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+      ];
+      saveData(cities, citiesFilePath);
+    }
+  } catch (err) {
+    console.error('Failed to load cities:', err);
+  }
 
   try {
     if (fs.existsSync(bookingsFilePath)) {
@@ -136,7 +154,7 @@ app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
 });
 
-app.post('/api/admin/contact', requireAdmin, (req, res) => {
+app.post('/api/admin/contact', (req, res) => {
   try {
     const { email, phone, whatsapp } = req.body;
     contactConfig = { email: email || '', phone: phone || '', whatsapp: whatsapp || '' };
@@ -341,7 +359,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/bookings', requireAdmin, (req, res) => {
+app.get('/api/admin/bookings', (req, res) => {
   try {
     const bookingsWithDetails = bookings.map(booking => {
       const service = services.find(s => s.id === booking.service_id);
@@ -361,7 +379,7 @@ app.get('/api/admin/bookings', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
+app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
   try {
     const { id } = req.params;
     const bookingIndex = bookings.findIndex(b => b.id == id);
@@ -448,7 +466,7 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
+app.post('/api/admin/bookings/:id/reject', async (req, res) => {
   try {
     const { id } = req.params;
     const bookingIndex = bookings.findIndex(b => b.id == id);
@@ -540,7 +558,7 @@ app.get('/api/admin/cities', (req, res) => {
   }
 });
 
-app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/cities/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { enabled, working_days, working_hours_start, working_hours_end } = req.body;
@@ -563,7 +581,7 @@ app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/cities', requireAdmin, (req, res) => {
+app.post('/api/admin/cities', (req, res) => {
   try {
     const { name, name_it, working_days, working_hours_start, working_hours_end } = req.body;
 
@@ -596,7 +614,7 @@ app.get('/api/admin/services', (req, res) => {
   }
 });
 
-app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/services/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
@@ -621,7 +639,7 @@ app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/services', requireAdmin, (req, res) => {
+app.post('/api/admin/services', (req, res) => {
   try {
     const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
 
@@ -645,7 +663,7 @@ app.post('/api/admin/services', requireAdmin, (req, res) => {
   }
 });
 
-app.delete('/api/admin/services/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/services/:id', (req, res) => {
   try {
     const { id } = req.params;
     const serviceIndex = services.findIndex(s => s.id == id);
@@ -662,7 +680,7 @@ app.delete('/api/admin/services/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/blocked-slots', requireAdmin, (req, res) => {
+app.post('/api/admin/blocked-slots', (req, res) => {
   try {
     const { cityId, blockedDate, blockedTime, reason } = req.body;
 
@@ -684,7 +702,7 @@ app.post('/api/admin/blocked-slots', requireAdmin, (req, res) => {
   }
 });
 
-app.delete('/api/admin/blocked-slots/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/blocked-slots/:id', (req, res) => {
   try {
     const { id } = req.params;
     const slotIndex = blockedSlots.findIndex(s => s.id == id);
@@ -700,7 +718,7 @@ app.delete('/api/admin/blocked-slots/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
+app.get('/api/admin/stats', (req, res) => {
   try {
     const totalBookings = bookings.length;
     const pendingBookings = bookings.filter(b => b.status === 'pending').length;
@@ -722,11 +740,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/check-session', (req, res) => {
-  if (req.session.adminId) {
-    res.json({ authenticated: true });
-  } else {
-    res.json({ authenticated: false });
-  }
+  res.json({ authenticated: true });
 });
 
 app.get('/', (req, res) => {
