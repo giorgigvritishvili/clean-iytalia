@@ -116,6 +116,10 @@
           <i class="fas fa-broom"></i>
           <span data-i18n="admin.menu.services">Services</span>
         </li>
+        <li data-tab="contact">
+          <i class="fas fa-envelope"></i>
+          <span>Contact Info</span>
+        </li>
       </ul>
       <div class="sidebar-footer">
         <a href="/" class="back-link">
@@ -532,6 +536,31 @@
             </button>
           </div>
           <div class="cards-grid" id="workers-grid">
+          </div>
+        </section>
+        <!-- Contact Tab (moved inside content) -->
+        <section id="contact-tab" class="tab-content" style="padding: 24px;">
+          <div class="section-header">
+            <h3>Contact Info</h3>
+            <p>Update site contact email, phone and WhatsApp link.</p>
+          </div>
+          <div style="max-width:600px;">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="contact-email" placeholder="info@cleanitalia.com">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="contact-phone" placeholder="+39 123 456 789">
+            </div>
+            <div class="form-group">
+              <label>WhatsApp (number)</label>
+              <input type="text" id="contact-whatsapp" placeholder="+39123456789">
+            </div>
+            <div style="margin-top:12px;">
+              <button class="btn btn-secondary" onclick="loadContactInfo()">Reload</button>
+              <button class="btn btn-primary" onclick="saveContactInfo()">Save Contact</button>
+            </div>
           </div>
         </section>
       </div>

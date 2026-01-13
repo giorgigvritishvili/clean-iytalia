@@ -1,10 +1,10 @@
 :root {
   /* Palette applied: Soft Cream, Sage Green, Dusty Blue, Warm Grey, Natural Linen */
   --soft-cream: #FBFAF8;
-  --sage-green: #8FA89F;
+  --sage-green: #8F9F71;
   --dusty-blue: #7A8C99;
   --warm-grey: #5F6368;
-  --natural-linen: #D8D2C8;
+  --natural-linen: #EAE3DC;
 
   --primary: var(--sage-green);
   --primary-dark: var(--dusty-blue);
@@ -118,6 +118,39 @@ body {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+}
+
+.lang-dropdown {
+  position: relative;
+}
+
+.lang-options {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  min-width: 60px;
+  display: none;
+  z-index: 1000;
+}
+
+.lang-options.active {
+  display: block;
+}
+
+.lang-option {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-align: center;
+  font-weight: 500;
+}
+
+.lang-option:hover {
+  background: var(--primary-light);
 }
 
 .admin-link {
@@ -265,8 +298,8 @@ body {
 }
 
 .hero .btn-primary {
-  background: white;
-  color: var(--primary);
+  background: #DDBB70;
+  color: white;
 }
 
 .hero .btn-primary:hover {
@@ -663,7 +696,7 @@ body {
 
 .contact-card i {
   font-size: 2.5rem;
-  color: var(--primary);
+  color: #EAE3DC;
   margin-bottom: 15px;
 }
 

@@ -1,0 +1,7 @@
+[
+  {
+    "id": 1,
+    "username": "CasaClean",
+    "password_hash": "$2a$10$hashedpassword"
+  }
+]

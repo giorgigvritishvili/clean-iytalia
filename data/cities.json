@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "name": "Rome",
+    "name_it": "Roma",
+    "name_ru": "Рим",
+    "name_ka": "რომი",
+    "enabled": true,
+    "working_days": "1,2,3,4,5,6,7",
+    "working_hours_start": "09:00",
+    "working_hours_end": "17:30"
+  },
+  {
+    "id": 2,
+    "name": "Milan",
+    "name_it": "Milano",
+    "name_ru": "Милан",
+    "name_ka": "მილანი",
+    "enabled": true,
+    "working_days": "1,2,3,4,5,6,7",
+    "working_hours_start": "09:00",
+    "working_hours_end": "17:30"
+  }
+]

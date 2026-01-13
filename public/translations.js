@@ -89,8 +89,8 @@ const translations = {
         name: "John Doe",
         email: "john@example.com",
         phone: "+39 123 456 7890",
-        street: "Via Roma",
-        houseNumber: "123",
+        street: "address",
+        houseNumber: "street number",
         propertySize: "100",
         doorbell: "Doe Family",
         notes: "Any special requests or access instructions"
@@ -371,8 +371,8 @@ const translations = {
         name: "Mario Rossi",
         email: "mario@example.com",
         phone: "+39 123 456 7890",
-        street: "Via Roma",
-        houseNumber: "123",
+        street: "address",
+        houseNumber: "street number",
         propertySize: "100",
         doorbell: "Cognome",
         notes: "Richieste speciali o istruzioni di accesso"
@@ -618,8 +618,8 @@ const translations = {
         name: "გიორგი გიორგაძე",
         email: "giorgi@example.com",
         phone: "+39 123 456 7890",
-        street: "Via Roma",
-        houseNumber: "123",
+        street: "address",
+        houseNumber: "street number",
         propertySize: "100",
         doorbell: "გვარი",
         notes: "სპეციალური მოთხოვნები ან შესასვლელის ინსტრუქციები"
@@ -858,8 +858,8 @@ const translations = {
         name: "Иван Иванов",
         email: "ivan@example.com",
         phone: "+39 123 456 7890",
-        street: "Via Roma",
-        houseNumber: "123",
+        street: "address",
+        houseNumber: "street number",
         propertySize: "100",
         doorbell: "Фамилия",
         notes: "Особые требования или инструкции по доступу"
@@ -1021,6 +1021,12 @@ function setLanguage(lang) {
     mobileLangElement.textContent = lang.toUpperCase();
   }
 
+  // Close the dropdown after selecting a language
+  const dropdown = document.getElementById('lang-options');
+  if (dropdown) {
+    dropdown.classList.remove('active');
+  }
+
   document.querySelectorAll('[data-i18n]').forEach(element => {
     const key = element.getAttribute('data-i18n');
     const keys = key.split('.');
@@ -1078,6 +1084,20 @@ function setLanguage(lang) {
 }
 
 const languages = ['en', 'it', 'ka', 'ru'];
+
+function toggleLanguageDropdown() {
+  const dropdown = document.getElementById('lang-options');
+  dropdown.classList.add('active');
+}
+function toggleLanguageDropdown() {
+  const dropdown = document.getElementById('lang-options');
+  dropdown.classList.toggle('active');
+}
+
+function toggleMobileLangDropdown() {
+  const dropdown = document.getElementById('mobile-lang-options');
+  dropdown.classList.toggle('active');
+}
 
 function toggleLanguage() {
   const currentIndex = languages.indexOf(currentLanguage);

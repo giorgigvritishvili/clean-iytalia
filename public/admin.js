@@ -112,6 +112,7 @@ async function loadDashboardData() {
     loadBookings(),
     loadCities(),
     loadServices(),
+    loadContactInfo(),
   ]);
 }
 
@@ -501,7 +502,7 @@ function renderServices() {
         </div>
       </h4>
       <div class="card-details">
-        <p><i class="fas fa-globe"></i> ${getAdminTranslations().menu && getAdminTranslations().menu.services ? getAdminTranslations().menu.services : 'Servizi'}</p>
+        <p><i class="fas fa-broom"></i> ${getAdminTranslations().menu && getAdminTranslations().menu.services ? getAdminTranslations().menu.services : 'Servizi'}</p>
         <p>${localizedDesc}</p>
       </div>
       <div class="card-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-light);">/ora</span></div>
@@ -757,6 +758,49 @@ function loadMyProjects() {
   // TODO: Load user's projects from API
   const grid = document.getElementById('my-projects-grid');
   grid.innerHTML = '<div class="admin-card"><p>I tuoi progetti verranno caricati qui...</p></div>';
+}
+
+// Contact info management
+async function loadContactInfo() {
+  try {
+    const res = await fetch('/api/contact');
+    if (!res.ok) return;
+    const c = await res.json();
+    const emailInput = document.getElementById('contact-email');
+    const phoneInput = document.getElementById('contact-phone');
+    const waInput = document.getElementById('contact-whatsapp');
+    if (emailInput) emailInput.value = c.email || '';
+    if (phoneInput) phoneInput.value = c.phone || '';
+    if (waInput) waInput.value = c.whatsapp || '';
+  } catch (e) {
+    console.error('Failed to load contact info', e);
+  }
+}
+
+async function saveContactInfo() {
+  try {
+    const email = (document.getElementById('contact-email') || {}).value || '';
+    const phone = (document.getElementById('contact-phone') || {}).value || '';
+    const whatsapp = (document.getElementById('contact-whatsapp') || {}).value || '';
+
+    const res = await fetch('/api/admin/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone, whatsapp }),
+    });
+
+    if (res.ok) {
+      alert('Contact info saved');
+      // reload public-facing contact elements if admin page is visible
+      await loadContactInfo();
+    } else {
+      const txt = await res.text();
+      throw new Error(txt || 'Save failed');
+    }
+  } catch (e) {
+    console.error('Failed to save contact info', e);
+    alert('Failed to save contact info');
+  }
 }
 
 function filterMyProjects() {

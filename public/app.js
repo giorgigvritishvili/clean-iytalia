@@ -13,6 +13,90 @@ const serviceIcons = {
   'Business Cleaning': 'fa-building'
 };
 
+// Mapping of which additional-service checkboxes are allowed per main service name.
+// Keys use the English service names returned by the /api/services objects (service.name).
+const addonMapping = {
+  'One-time Cleaning': [],
+  'Regular Cleaning': [
+    'fridge-cleaning','limescale-removal','dishwashing','ironing','balcony-cleaning',
+    'window-cleaning','laundry-service','gardening','carpet-cleaning'
+  ],
+  'Deep Cleaning': [
+    'fridge-cleaning','limescale-removal','dishwashing','ironing','balcony-cleaning',
+    'window-cleaning','laundry-service','gardening','carpet-cleaning','oven-cleaning',
+    'mold-removal','steam-cleaning','wall-stain-removal','sofa-cleaning','mattress-cleaning'
+  ],
+  'Move-in/Move-out': [
+    'fridge-cleaning','limescale-removal','dishwashing','ironing','balcony-cleaning',
+    'window-cleaning','laundry-service','gardening','carpet-cleaning','oven-cleaning',
+    'mold-removal','steam-cleaning','wall-stain-removal','sofa-cleaning','mattress-cleaning'
+  ],
+  'Last-minute Cleaning': [
+    'dishwashing','fridge-cleaning','window-cleaning'
+  ],
+  'Business Cleaning': [
+    'window-cleaning','carpet-cleaning','steam-cleaning','mold-removal','balcony-cleaning'
+  ]
+};
+
+// All addon IDs present in the form (keeps a single source of truth)
+const ALL_ADDONS = [
+  'fridge-cleaning','limescale-removal','dishwashing','ironing','balcony-cleaning',
+  'window-cleaning','laundry-service','gardening','carpet-cleaning','oven-cleaning',
+  'mold-removal','steam-cleaning','wall-stain-removal','sofa-cleaning','mattress-cleaning'
+];
+
+// Prices for supplies (added to the booking total when selected)
+const SUPPLY_PRICES = {
+  'provide-solvents': 5.00,
+  'provide-mop': 3.00,
+  'provide-vacuum': 7.00,
+};
+
+// Enable/disable additional-service checkboxes based on the selected main service.
+function filterAddonsForService(service) {
+  // If service is null, enable all addons (used on reset)
+  const allowed = service && addonMapping[service.name] ? addonMapping[service.name] : ALL_ADDONS.slice();
+
+  // Decide the unavailable-note text based on selected service
+  let noteText = null;
+  if (service && typeof service.name === 'string') {
+    if (service.name === 'Regular Cleaning' || service.name === 'Regular Basic Cleaning' || service.name.toLowerCase().includes('regular')) {
+      noteText = 'Not available with Regular Basic Cleaning';
+    } else if (service.name === 'Business Cleaning' || service.name.toLowerCase().includes('business')) {
+      noteText = 'Not available with Cleaning For Business';
+    }
+  }
+
+  ALL_ADDONS.forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const label = input.closest('label') || input.parentElement;
+    // Keep a reference to the label's original text so we can restore it
+    const labelSpan = label ? label.querySelector('span') : null;
+    if (labelSpan && !labelSpan.dataset.originalText) {
+      labelSpan.dataset.originalText = labelSpan.textContent.trim();
+    }
+
+    if (allowed.includes(id)) {
+      input.disabled = false;
+      if (label) label.classList.remove('disabled');
+      if (labelSpan && labelSpan.dataset.originalText) {
+        labelSpan.textContent = labelSpan.dataset.originalText;
+      }
+    } else {
+      input.checked = false;
+      input.disabled = true;
+      if (label) label.classList.add('disabled');
+
+      // If a noteText is defined for the selected service, append it to disabled addon labels
+      if (noteText && labelSpan && labelSpan.dataset.originalText) {
+        labelSpan.textContent = `${labelSpan.dataset.originalText} — ${noteText}`;
+      }
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadServices();
   await loadCities();
@@ -76,6 +160,12 @@ async function loadServices() {
       card.addEventListener('click', () => selectServiceCard(service.id));
       grid.appendChild(card);
     });
+    // If a service is already selected (e.g., on language reload), apply addon filtering
+    const currentServiceId = document.getElementById('service-select')?.value;
+    if (currentServiceId) {
+      selectedService = services.find(s => s.id === parseInt(currentServiceId));
+      try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
+    }
   } catch (error) {
     console.error('Error loading services:', error);
   }
@@ -133,6 +223,8 @@ function selectServiceCard(serviceId) {
   
   document.getElementById('service-select').value = serviceId;
   selectedService = services.find(s => s.id === parseInt(serviceId));
+  // filter available addons for the selected service
+  try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
   updatePrice();
   
   document.getElementById('booking').scrollIntoView({ behavior: 'smooth' });
@@ -147,6 +239,8 @@ function onServiceChange() {
   });
   
   updatePrice();
+  // filter available addons when service changes
+  try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
 }
 
 function onCityChange() {
@@ -193,10 +287,21 @@ function updatePrice() {
   const cleaners = parseInt(document.getElementById('cleaners-select').value) || 1;
   const pricePerHour = selectedService ? parseFloat(selectedService.price_per_hour) : 25;
   
-  const total = pricePerHour * hours * cleaners;
+  let total = pricePerHour * hours * cleaners;
+
+  // Add supplies cost if selected
+  let suppliesTotal = 0;
+  Object.keys(SUPPLY_PRICES).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.checked) suppliesTotal += SUPPLY_PRICES[id];
+  });
+
+  total += suppliesTotal;
+
   document.getElementById('total-price').textContent = `€${total.toFixed(2)}`;
-  
-  return total;
+
+  // expose suppliesTotal for callers if needed
+  return { total, suppliesTotal };
 }
 
 function initDatePicker() {
@@ -355,6 +460,13 @@ function updateSummary() {
     }
   });
 
+  // calculate supplies total for display
+  let suppliesTotalForDisplay = 0;
+  supplyCheckboxes.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.checked && SUPPLY_PRICES[id]) suppliesTotalForDisplay += SUPPLY_PRICES[id];
+  });
+
   const t = (typeof translations !== 'undefined' && translations[currentLanguage]) ? translations[currentLanguage] : translations['en'];
   const summary = document.getElementById('booking-summary');
   const serviceName = service ? (service[`name_${currentLanguage}`] || service.name_it || service.name) : '';
@@ -404,12 +516,14 @@ function updateSummary() {
     ${supplies.length > 0 ? `
     <div class="summary-item">
       <span class="summary-label">${t.booking && t.booking.supplies ? 'Supplies Provided' : 'Supplies Provided'}:</span>
-      <span class="summary-value">${supplies.join(', ')}</span>
+      <span class="summary-value">${supplies.join(', ')}${suppliesTotalForDisplay ? ' — €' + suppliesTotalForDisplay.toFixed(2) : ''}</span>
     </div>
     ` : ''}
   `;
 
-  updatePrice();
+  // refresh displayed total and capture supply total
+  const priceInfo = updatePrice();
+  // priceInfo.total and priceInfo.suppliesTotal are available if callers need them
 }
 
 async function handleBookingSubmit(e) {
@@ -534,6 +648,8 @@ function resetBooking() {
   
   document.querySelectorAll('.service-card').forEach(card => card.classList.remove('selected'));
   selectedService = null;
+  // re-enable all addons on reset
+  try { filterAddonsForService(null); } catch (e) { console.warn('filterAddonsForService error', e); }
   
   document.getElementById('time-select').innerHTML = `<option value="">${currentLanguage === 'it' ? 'Seleziona prima una data' : 'Select a date first'}</option>`;
   

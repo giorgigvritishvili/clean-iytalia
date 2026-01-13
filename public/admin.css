@@ -694,6 +694,53 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* Contact tab specific styles */
+#contact-tab {
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+}
+
+#contact-tab .form-group {
+  margin-bottom: 16px;
+}
+
+#contact-tab label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#contact-tab input[type="text"],
+#contact-tab input[type="email"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: white;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s, transform 0.12s;
+}
+
+#contact-tab input:focus {
+  outline: none;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+#contact-tab .btn {
+  min-width: 120px;
+}
+
+#contact-tab .btn + .btn {
+  margin-left: 8px;
+}
+
+#contact-tab .hint {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

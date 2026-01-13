@@ -25,10 +25,19 @@
         <a href="#contact" data-i18n="nav.contact">Contact</a>
       </div>
       <div class="nav-actions">
-        <button class="lang-switch" onclick="toggleLanguage()">
-          <i class="fas fa-globe"></i>
-          <span id="current-lang">EN</span>
-        </button>
+        <div class="lang-dropdown">
+          <button class="lang-switch" onclick="toggleLanguageDropdown()">
+            <i class="fas fa-globe"></i>
+            <span id="current-lang">EN</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="lang-options" id="lang-options">
+            <div class="lang-option" data-lang="en" onclick="setLanguage('en')">EN</div>
+            <div class="lang-option" data-lang="it" onclick="setLanguage('it')">IT</div>
+            <div class="lang-option" data-lang="ka" onclick="setLanguage('ka')">KA</div>
+            <div class="lang-option" data-lang="ru" onclick="setLanguage('ru')">RU</div>
+          </div>
+        </div>
         <a href="/admin" class="admin-link">
           <i class="fas fa-user-shield"></i>
         </a>
@@ -44,10 +53,17 @@
     <a href="#booking" data-i18n="nav.book" onclick="toggleMobileMenu()">Book Now</a>
     <a href="#faq" data-i18n="nav.faq" onclick="toggleMobileMenu()">FAQ</a>
     <a href="#contact" data-i18n="nav.contact" onclick="toggleMobileMenu()">Contact</a>
-    <button class="mobile-lang-switch" onclick="toggleLanguage(); toggleMobileMenu()">
+    <button class="mobile-lang-switch" onclick="toggleMobileLangDropdown()">
       <i class="fas fa-globe"></i>
       <span id="mobile-current-lang">EN</span>
+      <i class="fas fa-chevron-down"></i>
     </button>
+    <div class="mobile-lang-options" id="mobile-lang-options">
+      <div class="lang-option" data-lang="en" onclick="setLanguage('en'); toggleMobileLangDropdown()">EN</div>
+      <div class="lang-option" data-lang="it" onclick="setLanguage('it'); toggleMobileLangDropdown()">IT</div>
+      <div class="lang-option" data-lang="ka" onclick="setLanguage('ka'); toggleMobileLangDropdown()">KA</div>
+      <div class="lang-option" data-lang="ru" onclick="setLanguage('ru'); toggleMobileLangDropdown()">RU</div>
+    </div>
     <a href="/admin" onclick="toggleMobileMenu()">
       <i class="fas fa-user-shield"></i>
       Admin

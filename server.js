@@ -6,30 +6,26 @@ const bcrypt = require('bcryptjs');
 const Stripe = require('stripe');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = 5000;
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-// In-memory data
-let services = [
-  { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
-  { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
-  { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
-  { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
-  { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
-  { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
-];
+// Data file paths
+const servicesFilePath = path.join(__dirname, 'data', 'services.json');
+const citiesFilePath = path.join(__dirname, 'data', 'cities.json');
+const bookingsFilePath = path.join(__dirname, 'data', 'bookings.json');
+const blockedSlotsFilePath = path.join(__dirname, 'data', 'blockedSlots.json');
+const adminsFilePath = path.join(__dirname, 'data', 'admins.json');
 
-let cities = [
-  { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
-  { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
-];
-
+// Load data from files
+let services = [];
+let cities = [];
 let bookings = [];
-let admins = [{ id: 1, username: 'CasaClean', password_hash: '$2a$10$hashedpassword' }];
 let blockedSlots = [];
+let admins = [];
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -56,6 +52,116 @@ app.use((req, res, next) => {
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   next();
+});
+
+// Contact configuration (persisted to data/contact.json)
+const contactFilePath = path.join(__dirname, 'data', 'contact.json');
+let contactConfig = { email: 'info@cleanitalia.com', phone: '+39123456789', whatsapp: '+39123456789' };
+try {
+  if (fs.existsSync(contactFilePath)) {
+    const raw = fs.readFileSync(contactFilePath, 'utf8');
+    contactConfig = JSON.parse(raw);
+  } else {
+    // ensure directory exists
+    fs.mkdirSync(path.dirname(contactFilePath), { recursive: true });
+    fs.writeFileSync(contactFilePath, JSON.stringify(contactConfig, null, 2));
+  }
+} catch (err) {
+  console.error('Failed to load contact config:', err);
+}
+
+function loadData() {
+  try {
+    if (fs.existsSync(servicesFilePath)) {
+      services = JSON.parse(fs.readFileSync(servicesFilePath, 'utf8'));
+    } else {
+      services = [
+        { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
+        { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
+        { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
+        { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
+        { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+      ];
+      fs.writeFileSync(servicesFilePath, JSON.stringify(services, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load services:', err);
+  }
+
+  try {
+    if (fs.existsSync(citiesFilePath)) {
+      cities = JSON.parse(fs.readFileSync(citiesFilePath, 'utf8'));
+    } else {
+      cities = [
+        { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+        { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+      ];
+      fs.writeFileSync(citiesFilePath, JSON.stringify(cities, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load cities:', err);
+  }
+
+  try {
+    if (fs.existsSync(bookingsFilePath)) {
+      bookings = JSON.parse(fs.readFileSync(bookingsFilePath, 'utf8'));
+    } else {
+      bookings = [];
+      fs.writeFileSync(bookingsFilePath, JSON.stringify(bookings, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load bookings:', err);
+  }
+
+  try {
+    if (fs.existsSync(blockedSlotsFilePath)) {
+      blockedSlots = JSON.parse(fs.readFileSync(blockedSlotsFilePath, 'utf8'));
+    } else {
+      blockedSlots = [];
+      fs.writeFileSync(blockedSlotsFilePath, JSON.stringify(blockedSlots, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load blocked slots:', err);
+  }
+
+  try {
+    if (fs.existsSync(adminsFilePath)) {
+      admins = JSON.parse(fs.readFileSync(adminsFilePath, 'utf8'));
+    } else {
+      admins = [{ id: 1, username: 'CasaClean', password_hash: '$2a$10$hashedpassword' }];
+      fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load admins:', err);
+  }
+}
+
+function saveData(array, filePath) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
+  } catch (err) {
+    console.error('Failed to save data to', filePath, err);
+  }
+}
+
+// Load data on startup
+loadData();
+
+app.get('/api/contact', (req, res) => {
+  res.json(contactConfig);
+});
+
+app.post('/api/admin/contact', requireAdmin, (req, res) => {
+  try {
+    const { email, phone, whatsapp } = req.body;
+    contactConfig = { email: email || '', phone: phone || '', whatsapp: whatsapp || '' };
+    fs.writeFileSync(contactFilePath, JSON.stringify(contactConfig, null, 2));
+    res.json({ success: true, contact: contactConfig });
+  } catch (err) {
+    console.error('Failed to save contact config:', err);
+    res.status(500).json({ error: 'Failed to save contact config' });
+  }
 });
 
 // Initialize admin password hash
@@ -182,6 +288,7 @@ app.post('/api/bookings', async (req, res) => {
     };
 
     bookings.push(newBooking);
+    saveData(bookings, bookingsFilePath);
 
     try {
       await transporter.sendMail({
@@ -281,17 +388,39 @@ app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
 
     const booking = bookings[bookingIndex];
 
-    if (stripe && booking.payment_intent_id) {
-      try {
-        await stripe.paymentIntents.capture(booking.payment_intent_id);
-      } catch (stripeError) {
-        console.error('Stripe capture error:', stripeError);
+    // Attempt to capture the PaymentIntent when Stripe is configured
+    let captureSucceeded = false;
+    if (booking.payment_intent_id) {
+      if (stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+        try {
+          const captured = await stripe.paymentIntents.capture(booking.payment_intent_id);
+          // consider capture successful when Stripe returns a succeeded/captured status
+          if (captured && (captured.status === 'succeeded' || captured.status === 'requires_capture' || captured.status === 'captured')) {
+            captureSucceeded = true;
+          } else {
+            console.error('Unexpected Stripe capture status:', captured && captured.status);
+          }
+        } catch (stripeError) {
+          console.error('Stripe capture error:', stripeError);
+          return res.status(502).json({ error: 'Stripe capture failed' });
+        }
+      } else {
+        // demo mode or no stripe configured - treat as succeeded for local/demo flows
+        captureSucceeded = true;
       }
+    } else {
+      // No payment intent attached - treat as confirmed without payment
+      captureSucceeded = true;
+    }
+
+    if (!captureSucceeded) {
+      return res.status(502).json({ error: 'Failed to capture payment' });
     }
 
     bookings[bookingIndex].status = 'confirmed';
     bookings[bookingIndex].stripe_status = 'captured';
     bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
 
     try {
       const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
@@ -346,17 +475,34 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
 
     const booking = bookings[bookingIndex];
 
-    if (stripe && booking.payment_intent_id) {
-      try {
-        await stripe.paymentIntents.cancel(booking.payment_intent_id);
-      } catch (stripeError) {
-        console.error('Stripe cancel error:', stripeError);
+    // Attempt to cancel the PaymentIntent when Stripe is configured
+    let cancelSucceeded = false;
+    if (booking.payment_intent_id) {
+      if (stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+        try {
+          await stripe.paymentIntents.cancel(booking.payment_intent_id);
+          cancelSucceeded = true;
+        } catch (stripeError) {
+          console.error('Stripe cancel error:', stripeError);
+          return res.status(502).json({ error: 'Stripe cancel failed' });
+        }
+      } else {
+        // demo mode or no stripe configured - treat as succeeded for local/demo flows
+        cancelSucceeded = true;
       }
+    } else {
+      // No payment intent attached - nothing to cancel
+      cancelSucceeded = true;
+    }
+
+    if (!cancelSucceeded) {
+      return res.status(502).json({ error: 'Failed to cancel payment' });
     }
 
     bookings[bookingIndex].status = 'cancelled';
     bookings[bookingIndex].stripe_status = 'released';
     bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
 
     try {
       const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
@@ -424,6 +570,7 @@ app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
     cities[cityIndex].working_days = working_days;
     cities[cityIndex].working_hours_start = working_hours_start;
     cities[cityIndex].working_hours_end = working_hours_end;
+    saveData(cities, citiesFilePath);
 
     res.json({ success: true });
   } catch (error) {
@@ -448,6 +595,7 @@ app.post('/api/admin/cities', requireAdmin, (req, res) => {
     };
 
     cities.push(newCity);
+    saveData(cities, citiesFilePath);
     res.json(newCity);
   } catch (error) {
     console.error('Error adding city:', error);
@@ -480,6 +628,7 @@ app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
     services[serviceIndex].description_it = description_it;
     services[serviceIndex].price_per_hour = price_per_hour;
     services[serviceIndex].enabled = enabled;
+    saveData(services, servicesFilePath);
 
     res.json({ success: true });
   } catch (error) {
@@ -504,6 +653,7 @@ app.post('/api/admin/services', requireAdmin, (req, res) => {
     };
 
     services.push(newService);
+    saveData(services, servicesFilePath);
     res.json(newService);
   } catch (error) {
     console.error('Error adding service:', error);
@@ -520,6 +670,7 @@ app.delete('/api/admin/services/:id', requireAdmin, (req, res) => {
     }
 
     services.splice(serviceIndex, 1);
+    saveData(services, servicesFilePath);
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting service:', error);
@@ -541,6 +692,7 @@ app.post('/api/admin/blocked-slots', requireAdmin, (req, res) => {
     };
 
     blockedSlots.push(newSlot);
+    saveData(blockedSlots, blockedSlotsFilePath);
     res.json(newSlot);
   } catch (error) {
     console.error('Error blocking slot:', error);
@@ -556,6 +708,7 @@ app.delete('/api/admin/blocked-slots/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Blocked slot not found' });
     }
     blockedSlots.splice(slotIndex, 1);
+    saveData(blockedSlots, blockedSlotsFilePath);
     res.json({ success: true });
   } catch (error) {
     console.error('Error unblocking slot:', error);
