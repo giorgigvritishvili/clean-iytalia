@@ -1,12 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const Stripe = require('stripe');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,12 +43,9 @@ const transporter = nodemailer.createTransport({
 app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(express.static('public'));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'cleaning-service-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
-}));
+
+// Simple token-based auth for serverless compatibility
+const adminTokens = new Map(); // token -> adminId
 
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -134,7 +131,9 @@ function loadData() {
     if (fs.existsSync(adminsFilePath)) {
       admins = JSON.parse(fs.readFileSync(adminsFilePath, 'utf8'));
     } else {
-      admins = [{ id: 1, username: 'CasaClean', password_hash: '$2a$10$hashedpassword' }];
+      const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
+      const hashedPassword = bcrypt.hashSync(adminPassword, 10);
+      admins = [{ id: 1, username: 'CasaClean', password_hash: hashedPassword }];
       fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2));
     }
   } catch (err) {
@@ -342,8 +341,9 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    req.session.adminId = admin.id;
-    res.json({ success: true, message: 'Login successful' });
+    const token = crypto.randomBytes(32).toString('hex');
+    adminTokens.set(token, admin.id);
+    res.json({ success: true, message: 'Login successful', token });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -351,12 +351,16 @@ app.post('/api/admin/login', async (req, res) => {
 });
 
 app.post('/api/admin/logout', (req, res) => {
-  req.session.destroy();
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) {
+    adminTokens.delete(token);
+  }
   res.json({ success: true });
 });
 
 function requireAdmin(req, res, next) {
-  if (!req.session.adminId) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token || !adminTokens.has(token)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
