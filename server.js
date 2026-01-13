@@ -150,7 +150,7 @@ app.post('/api/admin/contact', requireAdmin, (req, res) => {
 
 // Initialize admin password hash
 (async () => {
-  const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
   admins[0].password_hash = await bcrypt.hash(adminPassword, 10);
 })();
 
@@ -531,7 +531,7 @@ app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/cities', requireAdmin, (req, res) => {
+app.get('/api/admin/cities', (req, res) => {
   try {
     res.json(cities);
   } catch (error) {
@@ -587,7 +587,7 @@ app.post('/api/admin/cities', requireAdmin, (req, res) => {
   }
 });
 
-app.get('/api/admin/services', requireAdmin, (req, res) => {
+app.get('/api/admin/services', (req, res) => {
   try {
     res.json(services);
   } catch (error) {
