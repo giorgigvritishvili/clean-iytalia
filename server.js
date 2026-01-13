@@ -166,7 +166,7 @@ app.post('/api/admin/contact', requireAdmin, (req, res) => {
 
 // Initialize admin password hash
 (async () => {
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
   admins[0].password_hash = await bcrypt.hash(adminPassword, 10);
 })();
 
