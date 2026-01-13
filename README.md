@@ -1,3 +1,39 @@
+# Clear Italia — Backend + Frontend
+
+This project contains a small Express backend plus a static frontend in `public/`.
+It is configured to run on Vercel using a serverless function for `/api/*` and static routes for the frontend.
+
+Quick local checks
+
+PowerShell:
+```powershell
+# Run dev server (starts a listener locally)
+npm install
+npm start
+
+# Vercel-like load check (does not start a listener)
+$env:VERCEL=1; node -e "require('./server.js'); console.log('loaded OK')"
+```
+
+Deploying to Vercel
+
+1. Push the repo to Git (GitHub, GitLab, or Bitbucket).
+2. Create a new Project in Vercel and import the repository.
+3. In the Vercel Project Settings, add the following Environment Variables (Production/Preview/Development as needed):
+   - `STRIPE_SECRET_KEY` — (optional) your Stripe secret key.
+   - `SMTP_USER` — (optional) email account for sending notifications.
+   - `SMTP_PASS` — (optional) password for the SMTP account.
+   - `SMTP_HOST` — (optional) default `smtp.gmail.com`.
+   - `SMTP_PORT` — (optional) default `587`.
+   - `SESSION_SECRET` — random string used for session signing.
+   - `ADMIN_PASSWORD` — optional admin password override.
+
+Notes & runtime behavior
+- Static frontend is served from `public/` via `vercel.json` routes.
+- API routes are handled by a serverless function at `api/index.js`, which reuses the Express `app` from `server.js`.
+- On Vercel the server writes runtime data to `/tmp` (configured in `server.js`). Files in the project root are read-only on Vercel build/runtime.
+
+If you'd like, I can add a GitHub Action to automatically deploy on push or help connect the repo to Vercel.
 # Clear Italia - Cleaning Service Booking
 
 A comprehensive one-page web application for booking cleaning services in Rome and Milan, Italy. Bilingual (English/Italian), mobile-first design, with full admin dashboard, Stripe payment authorization, and GDPR compliance.
