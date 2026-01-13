@@ -154,7 +154,7 @@ app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
 });
 
-app.post('/api/admin/contact', (req, res) => {
+app.post('/api/admin/contact', requireAdmin, (req, res) => {
   try {
     const { email, phone, whatsapp } = req.body;
     contactConfig = { email: email || '', phone: phone || '', whatsapp: whatsapp || '' };
@@ -359,7 +359,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/bookings', (req, res) => {
+app.get('/api/admin/bookings', requireAdmin, (req, res) => {
   try {
     const bookingsWithDetails = bookings.map(booking => {
       const service = services.find(s => s.id === booking.service_id);
@@ -379,7 +379,7 @@ app.get('/api/admin/bookings', (req, res) => {
   }
 });
 
-app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
+app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const bookingIndex = bookings.findIndex(b => b.id == id);
@@ -466,7 +466,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
   }
 });
 
-app.post('/api/admin/bookings/:id/reject', async (req, res) => {
+app.post('/api/admin/bookings/:id/reject', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const bookingIndex = bookings.findIndex(b => b.id == id);
@@ -549,7 +549,7 @@ app.post('/api/admin/bookings/:id/reject', async (req, res) => {
   }
 });
 
-app.get('/api/admin/cities', (req, res) => {
+app.get('/api/admin/cities', requireAdmin, (req, res) => {
   try {
     res.json(cities);
   } catch (error) {
@@ -558,7 +558,7 @@ app.get('/api/admin/cities', (req, res) => {
   }
 });
 
-app.put('/api/admin/cities/:id', (req, res) => {
+app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { enabled, working_days, working_hours_start, working_hours_end } = req.body;
@@ -581,7 +581,7 @@ app.put('/api/admin/cities/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/cities', (req, res) => {
+app.post('/api/admin/cities', requireAdmin, (req, res) => {
   try {
     const { name, name_it, working_days, working_hours_start, working_hours_end } = req.body;
 
@@ -605,7 +605,7 @@ app.post('/api/admin/cities', (req, res) => {
   }
 });
 
-app.get('/api/admin/services', (req, res) => {
+app.get('/api/admin/services', requireAdmin, (req, res) => {
   try {
     res.json(services);
   } catch (error) {
@@ -614,7 +614,7 @@ app.get('/api/admin/services', (req, res) => {
   }
 });
 
-app.put('/api/admin/services/:id', (req, res) => {
+app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
@@ -639,7 +639,7 @@ app.put('/api/admin/services/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/services', (req, res) => {
+app.post('/api/admin/services', requireAdmin, (req, res) => {
   try {
     const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
 
@@ -663,7 +663,7 @@ app.post('/api/admin/services', (req, res) => {
   }
 });
 
-app.delete('/api/admin/services/:id', (req, res) => {
+app.delete('/api/admin/services/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const serviceIndex = services.findIndex(s => s.id == id);
@@ -680,7 +680,7 @@ app.delete('/api/admin/services/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/blocked-slots', (req, res) => {
+app.post('/api/admin/blocked-slots', requireAdmin, (req, res) => {
   try {
     const { cityId, blockedDate, blockedTime, reason } = req.body;
 
@@ -702,7 +702,7 @@ app.post('/api/admin/blocked-slots', (req, res) => {
   }
 });
 
-app.delete('/api/admin/blocked-slots/:id', (req, res) => {
+app.delete('/api/admin/blocked-slots/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const slotIndex = blockedSlots.findIndex(s => s.id == id);
@@ -718,7 +718,7 @@ app.delete('/api/admin/blocked-slots/:id', (req, res) => {
   }
 });
 
-app.get('/api/admin/stats', (req, res) => {
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
   try {
     const totalBookings = bookings.length;
     const pendingBookings = bookings.filter(b => b.status === 'pending').length;
@@ -739,7 +739,7 @@ app.get('/api/admin/stats', (req, res) => {
   }
 });
 
-app.get('/api/admin/check-session', (req, res) => {
+app.get('/api/admin/check-session', requireAdmin, (req, res) => {
   res.json({ authenticated: !!req.session.adminId });
 });
 
