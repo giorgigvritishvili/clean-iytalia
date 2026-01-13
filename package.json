@@ -4,7 +4,7 @@
   "description": "Backend for Clear Italia cleaning service booking with Stripe integration",
   "main": "server.js",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "scripts": {
     "start": "node server.js",
