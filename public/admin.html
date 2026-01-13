@@ -18,7 +18,13 @@
         <h1>CasaClean</h1>
         <p data-i18n="admin.title">Admin Dashboard</p>
       </div>
-          <form id="login-form" class="login-form">
+      <div id="access-button" class="access-button">
+        <button class="btn btn-primary btn-block" onclick="showLoginForm()">
+          <i class="fas fa-lock"></i>
+          <span>Access Admin Panel</span>
+        </button>
+      </div>
+      <form id="login-form" class="login-form" style="display: none;">
         <div class="form-group">
           <label data-i18n="admin.username">Username</label>
           <input type="text" id="username" required placeholder="Inserisci nome utente">

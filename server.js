@@ -740,8 +740,7 @@ app.get('/api/admin/stats', (req, res) => {
 });
 
 app.get('/api/admin/check-session', (req, res) => {
-  req.session.adminId = 1;
-  res.json({ authenticated: true });
+  res.json({ authenticated: !!req.session.adminId });
 });
 
 app.get('/', (req, res) => {

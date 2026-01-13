@@ -26,6 +26,11 @@ window.onLanguageChange = function(lang) {
   } catch (e) { console.error('onLanguageChange admin hook error', e); }
 };
 
+function showLoginForm() {
+  document.getElementById('access-button').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
 
