@@ -111,6 +111,11 @@ uploads/
 *.bak
 *.backup
 
+# Ignore frontend dependencies inside public
+public/node_modules/
+public/package-lock.json
+public/package.json
+
 # Certificate files
 *.pem
 *.key
