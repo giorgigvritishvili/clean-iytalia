@@ -1,7 +1,1 @@
-- [x] Fix syntax of English translations object by adding closing braces.
-- [x] Add Italian ('it') translations to the translations object.
-- [x] Add Georgian ('ka') translations to the translations object.
-- [x] Add Russian ('ru') translations to the translations object.
-- [x] Update toggleLanguage function to cycle through 'en', 'it', 'ka', 'ru'.
-- [x] Fix admin panel data loading issue on hosted platforms by hardcoding default services and cities.
-- [x] Remove requireAdmin middleware from all admin routes to allow public access.
+ - [x] Make backend Vercel-compatible: export Express app and add `api/index.js` + `vercel.json`.
