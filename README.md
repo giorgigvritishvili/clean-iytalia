@@ -1,42 +1,8 @@
-# Clear Italia — Backend + Frontend
-
-This project contains a small Express backend plus a static frontend in `public/`.
-It is configured to run on Vercel using a serverless function for `/api/*` and static routes for the frontend.
-
-Quick local checks
-
-PowerShell:
-```powershell
-# Run dev server (starts a listener locally)
-npm install
-npm start
-
-# Vercel-like load check (does not start a listener)
-$env:VERCEL=1; node -e "require('./server.js'); console.log('loaded OK')"
-```
-
-Deploying to Vercel
-
-1. Push the repo to Git (GitHub, GitLab, or Bitbucket).
-2. Create a new Project in Vercel and import the repository.
-3. In the Vercel Project Settings, add the following Environment Variables (Production/Preview/Development as needed):
-   - `STRIPE_SECRET_KEY` — (optional) your Stripe secret key.
-   - `SMTP_USER` — (optional) email account for sending notifications.
-   - `SMTP_PASS` — (optional) password for the SMTP account.
-   - `SMTP_HOST` — (optional) default `smtp.gmail.com`.
-   - `SMTP_PORT` — (optional) default `587`.
-   - `SESSION_SECRET` — random string used for session signing.
-   - `ADMIN_PASSWORD` — optional admin password override.
-
-Notes & runtime behavior
-- Static frontend is served from `public/` via `vercel.json` routes.
-- API routes are handled by a serverless function at `api/index.js`, which reuses the Express `app` from `server.js`.
-- On Vercel the server writes runtime data to `/tmp` (configured in `server.js`). Files in the project root are read-only on Vercel build/runtime.
-
-If you'd like, I can add a GitHub Action to automatically deploy on push or help connect the repo to Vercel.
 # Clear Italia - Cleaning Service Booking
 
 A comprehensive one-page web application for booking cleaning services in Rome and Milan, Italy. Bilingual (English/Italian), mobile-first design, with full admin dashboard, Stripe payment authorization, and GDPR compliance.
+
+This project contains a small Express backend plus a static frontend in `public/`. It is configured to run on Vercel using a serverless function for `/api/*` and static routes for the frontend.
 
 ## Features
 
@@ -68,34 +34,22 @@ A comprehensive one-page web application for booking cleaning services in Rome a
 - **GDPR/PCI compliance**: No card data stored, cookie consent, privacy policy.
 - **No double booking**: Blocked slots in calendar prevent conflicts.
 
-## Files
-
-- `index.html`: Main one-page site with all sections.
-- `styles.css`: Responsive CSS with Roboto font, modern styling.
-- `script.js`: Frontend logic for language, navigation, form, Stripe, localStorage.
-- `admin.html`: Admin dashboard with tabs.
-- `admin-styles.css`: Admin-specific styling.
-- `admin-script.js`: Admin logic for tabs, bookings, calendar, etc.
-- `server.js`: Node.js backend for Stripe and bookings.
-- `package.json`: Node dependencies.
-- `.env`: Environment variables (Stripe keys, email).
-- `README.md`: This file.
-
 ## Project Structure
 - `/`: Backend (Node.js, Express)
 - `/public/`: Frontend (HTML, CSS, JS)
+- `/api/`: Serverless functions for Vercel
+- `/data/`: JSON data files
 
 ## Setup
 
-### Backend
+### Local Development
 1. In root directory: `npm install`
-2. Configure `.env` with Stripe and email settings.
+2. Configure `.env` with Stripe and email settings (see Environment Variables below).
 3. `npm start` to run server on port 3000.
 
-### Frontend
-1. In `public/` directory: `npm install`
-2. `npm run dev` to serve on port 3001 (for development).
-3. Or open files directly in browser for static serving.
+### Frontend (Static)
+- Open `public/index.html` directly in browser for static serving.
+- For development with live reload: In `public/` directory: `npm install` then `npm run dev` to serve on port 3001.
 
 ### Backend Features
 - **Stripe Integration**: Creates PaymentIntents with manual capture for authorization.
@@ -127,6 +81,34 @@ A comprehensive one-page web application for booking cleaning services in Rome a
 - **Admin**: Confirm/reject bookings, block calendar dates, manage locations.
 - **Language**: Switch via buttons, persists across sessions.
 - **Cookies**: Accept banner to hide it.
+
+## Deploying to Vercel
+
+1. Push the repo to Git (GitHub, GitLab, or Bitbucket).
+2. Create a new Project in Vercel and import the repository.
+3. In the Vercel Project Settings, add the following Environment Variables (Production/Preview/Development as needed):
+   - `STRIPE_SECRET_KEY` — (optional) your Stripe secret key.
+   - `SMTP_USER` — (optional) email account for sending notifications.
+   - `SMTP_PASS` — (optional) password for the SMTP account.
+   - `SMTP_HOST` — (optional) default `smtp.gmail.com`.
+   - `SMTP_PORT` — (optional) default `587`.
+   - `SESSION_SECRET` — random string used for session signing.
+   - `ADMIN_PASSWORD` — optional admin password override.
+
+Notes & runtime behavior
+- Static frontend is served from `public/` via `vercel.json` routes.
+- API routes are handled by a serverless function at `api/index.js`, which reuses the Express `app` from `server.js`.
+- On Vercel the server writes runtime data to `/tmp` (configured in `server.js`). Files in the project root are read-only on Vercel build/runtime.
+
+Quick local checks (PowerShell):
+```powershell
+# Run dev server (starts a listener locally)
+npm install
+npm start
+
+# Vercel-like load check (does not start a listener)
+$env:VERCEL=1; node -e "require('./server.js'); console.log('loaded OK')"
+```
 
 ## Limitations
 
