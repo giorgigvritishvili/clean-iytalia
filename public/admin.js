@@ -60,9 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function checkSession() {
   try {
-    const response = await fetch('/api/admin/check-session');
+    const response = await fetch('/api/admin/check-session', { credentials: 'include' });
     const data = await response.json();
-    
+
     if (data.authenticated) {
       showDashboard();
     }
@@ -73,17 +73,18 @@ async function checkSession() {
 
 async function handleLogin(e) {
   e.preventDefault();
-  
+
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
-  
+
   try {
     const response = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ username, password }),
     });
-    
+
     if (response.ok) {
       showDashboard();
     } else {
@@ -123,9 +124,9 @@ async function loadDashboardData() {
 
 async function loadStats() {
   try {
-    const response = await fetch('/api/admin/stats');
+    const response = await fetch('/api/admin/stats', { credentials: 'include' });
     const stats = await response.json();
-    
+
     document.getElementById('stat-total').textContent = stats.totalBookings;
     document.getElementById('stat-pending').textContent = stats.pendingBookings;
     document.getElementById('stat-confirmed').textContent = stats.confirmedBookings;
@@ -137,9 +138,9 @@ async function loadStats() {
 
 async function loadBookings() {
   try {
-    const response = await fetch('/api/admin/bookings');
+    const response = await fetch('/api/admin/bookings', { credentials: 'include' });
     bookings = await response.json();
-    
+
     renderRecentBookings();
     renderAllBookings();
   } catch (error) {
@@ -373,7 +374,7 @@ async function rejectBooking(id) {
 
 async function loadCities() {
   try {
-    const response = await fetch('/api/admin/cities');
+    const response = await fetch('/api/admin/cities', { credentials: 'include' });
     cities = await response.json();
     renderCities();
   } catch (error) {
@@ -577,6 +578,7 @@ async function saveService(id = null) {
     const response = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         name,
         name_it: nameIt,
@@ -791,6 +793,7 @@ async function saveContactInfo() {
     const res = await fetch('/api/admin/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, phone, whatsapp }),
     });
 

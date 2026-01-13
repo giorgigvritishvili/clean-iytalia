@@ -37,7 +37,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.use(cors());
+app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({
