@@ -285,8 +285,15 @@ async function onDateChange() {
 function updatePrice() {
   const hours = parseInt(document.getElementById('hours-select').value) || 4;
   const cleaners = parseInt(document.getElementById('cleaners-select').value) || 1;
-  const pricePerHour = selectedService ? parseFloat(selectedService.price_per_hour) : 25;
-  
+  let pricePerHour = 25; // default fallback
+
+  if (selectedService && selectedService.price_per_hour) {
+    const parsed = parseFloat(selectedService.price_per_hour);
+    if (!isNaN(parsed) && parsed > 0) {
+      pricePerHour = parsed;
+    }
+  }
+
   let total = pricePerHour * hours * cleaners;
 
   // Add supplies cost if selected
@@ -298,10 +305,12 @@ function updatePrice() {
 
   total += suppliesTotal;
 
-  document.getElementById('total-price').textContent = `€${total.toFixed(2)}`;
+  // Ensure total is a valid number before displaying
+  const displayTotal = isNaN(total) ? 0 : total;
+  document.getElementById('total-price').textContent = `€${displayTotal.toFixed(2)}`;
 
   // expose suppliesTotal for callers if needed
-  return { total, suppliesTotal };
+  return { total: displayTotal, suppliesTotal };
 }
 
 function initDatePicker() {

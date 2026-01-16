@@ -3,5 +3,5 @@
 - [x] Add new endpoint /api/admin/bookings/:id/manual-pay for admin to mark bookings as paid manually
 - [x] Update admin.js to add manual payment function and button
 - [x] Update admin.html to include the manual payment button
-- [ ] Test payment flow to ensure bookings don't disappear on failed capture
-- [ ] Test manual payment feature
+- [x] Test payment flow to ensure bookings don't disappear on failed capture
+- [x] Test manual payment feature
