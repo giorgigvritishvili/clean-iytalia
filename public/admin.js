@@ -1,6 +1,7 @@
 let bookings = [];
 let cities = [];
 let services = [];
+let adminToken = null; // Store admin authentication token
 
 // Admin language override: always use Italian translations for the admin UI
 const ADMIN_LANG = 'it';
@@ -32,7 +33,14 @@ function showLoginForm() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await checkSession();
+  // Check for stored token
+  const storedToken = localStorage.getItem('adminToken');
+  if (storedToken) {
+    adminToken = storedToken;
+    await checkSession();
+  } else {
+    await checkSession();
+  }
 
   document.getElementById('login-form').addEventListener('submit', handleLogin);
 
@@ -81,11 +89,13 @@ async function handleLogin(e) {
     const response = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ username, password }),
     });
 
     if (response.ok) {
+      const data = await response.json();
+      adminToken = data.token;
+      localStorage.setItem('adminToken', adminToken);
       showDashboard();
     } else {
       alert((getAdminTranslations().messages && getAdminTranslations().messages.invalidCredentials) || 'Invalid credentials');
@@ -124,7 +134,8 @@ async function loadDashboardData() {
 
 async function loadStats() {
   try {
-    const response = await fetch('/api/admin/stats', { credentials: 'include' });
+    const headers = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+    const response = await fetch('/api/admin/stats', { headers });
     const stats = await response.json();
 
     document.getElementById('stat-total').textContent = stats.totalBookings;
@@ -138,7 +149,8 @@ async function loadStats() {
 
 async function loadBookings() {
   try {
-    const response = await fetch('/api/admin/bookings', { credentials: 'include' });
+    const headers = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+    const response = await fetch('/api/admin/bookings', { headers });
     bookings = await response.json();
 
     renderRecentBookings();
@@ -339,8 +351,10 @@ async function confirmBooking(id) {
   if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
 
   try {
+    const headers = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
     const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
       method: 'POST',
+      headers,
     });
 
     if (response.ok) {
@@ -399,7 +413,8 @@ async function rejectBooking(id) {
 
 async function loadCities() {
   try {
-    const response = await fetch('/api/admin/cities', { credentials: 'include' });
+    const headers = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+    const response = await fetch('/api/admin/cities', { headers });
     cities = await response.json();
     renderCities();
   } catch (error) {
