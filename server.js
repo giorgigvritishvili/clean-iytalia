@@ -13,28 +13,23 @@ const PORT = process.env.PORT || 3000;
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-// მონაცემთა ბაზის საქაღალდე
+// Data directory (use /tmp on Vercel for writable storage)
 const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
-const dataSubDir = path.join(dataDir, 'data');
-if (!fs.existsSync(dataSubDir)) {
-  fs.mkdirSync(dataSubDir, { recursive: true });
-}
 
-// ფაილების გზები
-const paths = {
-  services: path.join(dataSubDir, 'services.json'),
-  cities: path.join(dataSubDir, 'cities.json'),
-  bookings: path.join(dataSubDir, 'bookings.json'),
-  blockedSlots: path.join(dataSubDir, 'blockedSlots.json'),
-  admins: path.join(dataSubDir, 'admins.json'),
-  contact: path.join(dataSubDir, 'contact.json')
-};
+// Data file paths
+const servicesFilePath = path.join(dataDir, 'data', 'services.json');
+const citiesFilePath = path.join(dataDir, 'data', 'cities.json');
+const bookingsFilePath = path.join(dataDir, 'data', 'bookings.json');
+const blockedSlotsFilePath = path.join(dataDir, 'data', 'blockedSlots.json');
+const adminsFilePath = path.join(dataDir, 'data', 'admins.json');
 
-let services = [], cities = [], bookings = [], blockedSlots = [], admins = [];
-let contactConfig = { email: 'info@cleanitalia.com', phone: '+39123456789', whatsapp: '+39123456789' };
-const adminTokens = new Map();
+// Load data from files
+let services = [];
+let cities = [];
+let bookings = [];
+let blockedSlots = [];
+let admins = [];
 
-// Nodemailer კონფიგურაცია
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: process.env.SMTP_PORT || 587,
@@ -49,7 +44,9 @@ app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(express.static('public'));
 
-// ქეშირების საწინააღმდეგო Header-ები
+// Simple token-based auth for serverless compatibility
+const adminTokens = new Map(); // token -> adminId
+
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.set('Pragma', 'no-cache');
@@ -57,197 +54,811 @@ app.use((req, res, next) => {
   next();
 });
 
-// მონაცემების შენახვის ფუნქცია
-function saveData(array, filePath) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
-  } catch (err) {
-    console.error('Failed to save data:', filePath, err);
+// Contact configuration (persisted to data/contact.json)
+const contactFilePath = path.join(dataDir, 'data', 'contact.json');
+let contactConfig = { email: 'info@cleanitalia.com', phone: '+39123456789', whatsapp: '+39123456789' };
+try {
+  if (fs.existsSync(contactFilePath)) {
+    const raw = fs.readFileSync(contactFilePath, 'utf8');
+    contactConfig = JSON.parse(raw);
+  } else {
+    // ensure directory exists
+    fs.mkdirSync(path.dirname(contactFilePath), { recursive: true });
+    fs.writeFileSync(contactFilePath, JSON.stringify(contactConfig, null, 2));
   }
+} catch (err) {
+  console.error('Failed to load contact config:', err);
 }
 
-// მონაცემების ჩატვირთვა და საწყისი ინიციალიზაცია
 function loadData() {
+  // Load services from file if exists, else use defaults and save
   try {
-    // Services
-    if (fs.existsSync(paths.services)) {
-      services = JSON.parse(fs.readFileSync(paths.services, 'utf8'));
+    if (fs.existsSync(servicesFilePath)) {
+      services = JSON.parse(fs.readFileSync(servicesFilePath, 'utf8'));
     } else {
       services = [
-        { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', price_per_hour: 18.90, enabled: true },
-        { id: 2, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', price_per_hour: 25.90, enabled: true },
-        { id: 3, name: 'Move-in/out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', price_per_hour: 25.90, enabled: true }
+        { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
+        { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
+        { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
+        { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
+        { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
       ];
-      saveData(services, paths.services);
+      saveData(services, servicesFilePath);
     }
+  } catch (err) {
+    console.error('Failed to load services:', err);
+  }
 
-    // Cities
-    if (fs.existsSync(paths.cities)) {
-      cities = JSON.parse(fs.readFileSync(paths.cities, 'utf8'));
+  // Load cities from file if exists, else use defaults and save
+  try {
+    if (fs.existsSync(citiesFilePath)) {
+      cities = JSON.parse(fs.readFileSync(citiesFilePath, 'utf8'));
     } else {
       cities = [
-        { id: 1, name: 'Rome', name_it: 'Roma', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
-        { id: 2, name: 'Milan', name_it: 'Milano', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+        { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+        { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
       ];
-      saveData(cities, paths.cities);
+      saveData(cities, citiesFilePath);
     }
+  } catch (err) {
+    console.error('Failed to load cities:', err);
+  }
 
-    // Bookings, Blocked Slots, Contact
-    if (fs.existsSync(paths.bookings)) bookings = JSON.parse(fs.readFileSync(paths.bookings, 'utf8'));
-    if (fs.existsSync(paths.blockedSlots)) blockedSlots = JSON.parse(fs.readFileSync(paths.blockedSlots, 'utf8'));
-    if (fs.existsSync(paths.contact)) contactConfig = JSON.parse(fs.readFileSync(paths.contact, 'utf8'));
+  try {
+    if (fs.existsSync(bookingsFilePath)) {
+      bookings = JSON.parse(fs.readFileSync(bookingsFilePath, 'utf8'));
+    } else {
+      bookings = [];
+      fs.writeFileSync(bookingsFilePath, JSON.stringify(bookings, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load bookings:', err);
+  }
 
-    // Admins
-    if (fs.existsSync(paths.admins)) {
-      admins = JSON.parse(fs.readFileSync(paths.admins, 'utf8'));
+  try {
+    if (fs.existsSync(blockedSlotsFilePath)) {
+      blockedSlots = JSON.parse(fs.readFileSync(blockedSlotsFilePath, 'utf8'));
+    } else {
+      blockedSlots = [];
+      fs.writeFileSync(blockedSlotsFilePath, JSON.stringify(blockedSlots, null, 2));
+    }
+  } catch (err) {
+    console.error('Failed to load blocked slots:', err);
+  }
+
+  try {
+    if (fs.existsSync(adminsFilePath)) {
+      admins = JSON.parse(fs.readFileSync(adminsFilePath, 'utf8'));
     } else {
       const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
       const hashedPassword = bcrypt.hashSync(adminPassword, 10);
       admins = [{ id: 1, username: 'CasaClean', password_hash: hashedPassword }];
-      saveData(admins, paths.admins);
+      fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2));
     }
   } catch (err) {
-    console.error('Data loading error:', err);
+    console.error('Failed to load admins:', err);
   }
 }
+
+function saveData(array, filePath) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
+  } catch (err) {
+    console.error('Failed to save data to', filePath, err);
+  }
+}
+
+// Load data on startup
 loadData();
 
-// --- STRIPE & PAYMENTS ---
-
 app.get('/api/stripe/config', (req, res) => {
-  res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
+  try {
+    const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      return res.status(500).json({ error: 'Stripe publishable key not configured' });
+    }
+    res.json({ publishableKey });
+  } catch (error) {
+    console.error('Error getting Stripe config:', error);
+    res.status(500).json({ error: 'Failed to get Stripe config' });
+  }
+});
+
+app.get('/api/contact', (req, res) => {
+  res.json(contactConfig);
+});
+
+app.post('/api/admin/contact', (req, res) => {
+  try {
+    const { email, phone, whatsapp } = req.body;
+    contactConfig = { email: email || '', phone: phone || '', whatsapp: whatsapp || '' };
+    fs.writeFileSync(contactFilePath, JSON.stringify(contactConfig, null, 2));
+    res.json({ success: true, contact: contactConfig });
+  } catch (err) {
+    console.error('Failed to save contact config:', err);
+    res.status(500).json({ error: 'Failed to save contact config' });
+  }
+});
+
+// Initialize admin password hash
+(async () => {
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
+  admins[0].password_hash = await bcrypt.hash(adminPassword, 10);
+})();
+
+app.get('/api/cities', (req, res) => {
+  try {
+    const enabledCities = cities.filter(city => city.enabled).sort((a, b) => a.name.localeCompare(b.name));
+    res.json(enabledCities);
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ error: 'Failed to fetch cities' });
+  }
+});
+
+app.get('/api/services', (req, res) => {
+  try {
+    const enabledServices = services.filter(service => service.enabled).sort((a, b) => a.name.localeCompare(b.name));
+    res.json(enabledServices);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
+});
+
+app.get('/api/available-slots', (req, res) => {
+  try {
+    const { cityId, date } = req.query;
+
+    const city = cities.find(c => c.id == cityId);
+    if (!city) {
+      return res.status(404).json({ error: 'City not found' });
+    }
+
+    const requestDate = new Date(date);
+    const dayOfWeek = requestDate.getDay() || 7;
+
+    if (!city.working_days.split(',').includes(dayOfWeek.toString())) {
+      return res.json({ slots: [], message: 'Not a working day' });
+    }
+
+    const blockedTimes = blockedSlots
+      .filter(slot => slot.city_id == cityId && slot.blocked_date === date)
+      .map(slot => slot.blocked_time);
+
+    const startHour = parseInt(city.working_hours_start.split(':')[0]);
+    const endHour = parseInt(city.working_hours_end.split(':')[0]);
+
+    const slots = [];
+    for (let hour = startHour; hour < endHour; hour++) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:00:00`;
+      if (!blockedTimes.includes(timeStr)) {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      }
+    }
+
+    res.json({ slots });
+  } catch (error) {
+    console.error('Error fetching available slots:', error);
+    res.status(500).json({ error: 'Failed to fetch available slots' });
+  }
 });
 
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
-    if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
-    const { amount } = req.body;
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe is not configured' });
+    }
+    
+    const { amount, currency = 'eur' } = req.body;
+    
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(parseFloat(amount) * 100),
-      currency: 'eur',
+      amount: Math.round(amount * 100),
+      currency,
       capture_method: 'manual',
     });
-    res.json({ clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
   }
 });
 
-// --- BOOKINGS ---
-
 app.post('/api/bookings', async (req, res) => {
   try {
-    const data = req.body;
+    const {
+      serviceId, cityId, customerName, customerEmail, customerPhone,
+      streetName, houseNumber, propertySize, doorbellName,
+      bookingDate, bookingTime, hours, cleaners,
+      totalAmount, paymentIntentId, notes, additionalServices, supplies
+    } = req.body;
+
     const newId = bookings.length > 0 ? Math.max(...bookings.map(b => b.id)) + 1 : 1;
     const newBooking = {
       id: newId,
-      ...data,
+      service_id: serviceId,
+      city_id: cityId,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      street_name: streetName,
+      house_number: houseNumber,
+      property_size: propertySize,
+      doorbell_name: doorbellName,
+      booking_date: bookingDate,
+      booking_time: bookingTime,
+      hours,
+      cleaners,
+      total_amount: totalAmount,
+      payment_intent_id: paymentIntentId,
+      notes,
+      additional_services: additionalServices || [],
+      supplies: supplies || [],
       status: 'pending',
       stripe_status: 'authorized',
       created_at: new Date().toISOString()
     };
 
     bookings.push(newBooking);
-    saveData(bookings, paths.bookings);
+    saveData(bookings, bookingsFilePath);
 
-    // იმეილის გაგზავნა
+    // For demo mode, mark booking as confirmed immediately
+    let isConfirmed = false;
+    if (String(paymentIntentId).startsWith('demo_')) {
+      newBooking.status = 'confirmed';
+      newBooking.stripe_status = 'captured';
+      newBooking.updated_at = new Date().toISOString();
+      saveData(bookings, bookingsFilePath);
+      isConfirmed = true;
+    }
+
     try {
+      const subject = isConfirmed ? 'Booking Confirmed - CasaClean' : 'Booking Pending Confirmation - CasaClean';
+      const statusMessage = isConfirmed
+        ? 'Great news! Your cleaning service booking has been confirmed.'
+        : 'Your booking is pending confirmation. We will notify you once it\'s confirmed.';
+      const paymentMessage = isConfirmed
+        ? 'Your payment has been processed.'
+        : 'Your payment has been authorized and will only be charged upon confirmation.';
+
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: data.customerEmail,
-        subject: 'Booking Received - CasaClean',
-        html: `<h2>Thank you for your booking, ${data.customerName}!</h2><p>Date: ${data.bookingDate} at ${data.bookingTime}</p>`
+        to: customerEmail,
+        subject: subject,
+        html: `
+          <h2>${isConfirmed ? 'Your booking is confirmed!' : 'Thank you for your booking!'}</h2>
+          <p>Dear ${customerName},</p>
+          <p>${statusMessage}</p>
+          <p><strong>Details:</strong></p>
+          <ul>
+            <li>Date: ${bookingDate}</li>
+            <li>Time: ${bookingTime}</li>
+            <li>Duration: ${hours} hours</li>
+            <li>Total: €${totalAmount}</li>
+          </ul>
+          <p>${paymentMessage}</p>
+          <p>Best regards,<br>CasaClean Team</p>
+        `
       });
-    } catch (e) { console.log('Email error skipped'); }
+    } catch (emailError) {
+      console.log('Email sending skipped:', emailError.message);
+    }
 
     res.json(newBooking);
   } catch (error) {
-    res.status(500).json({ error: 'Booking failed' });
+    console.error('Error creating booking:', error);
+    res.status(500).json({ error: 'Failed to create booking' });
   }
 });
 
-// --- ADMIN CORE ---
-
 app.post('/api/admin/login', async (req, res) => {
-  const { username, password } = req.body;
-  const admin = admins.find(a => a.username === username);
-  if (admin && await bcrypt.compare(password, admin.password_hash)) {
+  try {
+    const { username, password } = req.body;
+
+    const admin = admins.find(a => a.username === username);
+
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const validPassword = await bcrypt.compare(password, admin.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     const token = crypto.randomBytes(32).toString('hex');
     adminTokens.set(token, admin.id);
-    return res.json({ success: true, token });
+    res.json({ success: true, message: 'Login successful', token });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ error: 'Login failed' });
   }
-  res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) {
+    adminTokens.delete(token);
+  }
+  res.json({ success: true });
 });
 
 function requireAdmin(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token || !adminTokens.has(token)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!token || !adminTokens.has(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   next();
 }
 
-app.get('/api/admin/bookings', requireAdmin, (req, res) => {
-  const detailed = bookings.map(b => ({
-    ...b,
-    service_name: services.find(s => s.id == b.serviceId)?.name || '',
-    city_name: cities.find(c => c.id == b.cityId)?.name || ''
-  }));
-  res.json(detailed);
+app.get('/api/admin/bookings', (req, res) => {
+  try {
+    const bookingsWithDetails = bookings.map(booking => {
+      const service = services.find(s => s.id === booking.service_id);
+      const city = cities.find(c => c.id === booking.city_id);
+      return {
+        ...booking,
+        service_name: service ? service.name : '',
+        service_name_it: service ? service.name_it : '',
+        city_name: city ? city.name : '',
+        city_name_it: city ? city.name_it : ''
+      };
+    });
+    res.json(bookingsWithDetails);
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
 });
 
-app.post('/api/admin/bookings/:id/confirm', requireAdmin, async (req, res) => {
+app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = bookings.find(b => b.id == id);
-    if (!booking) return res.status(404).json({ error: 'Not found' });
+    const bookingIndex = bookings.findIndex(b => b.id == id);
 
-    if (stripe && booking.paymentIntentId && !booking.paymentIntentId.startsWith('demo_')) {
-      await stripe.paymentIntents.capture(booking.paymentIntentId);
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
     }
 
-    booking.status = 'confirmed';
-    booking.stripe_status = 'captured';
-    saveData(bookings, paths.bookings);
+    const booking = bookings[bookingIndex];
+
+    // Attempt to capture the PaymentIntent when Stripe is configured
+    let captureSucceeded = false;
+    if (booking.payment_intent_id) {
+      if (stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+        try {
+          const captured = await stripe.paymentIntents.capture(booking.payment_intent_id);
+          // consider capture successful when Stripe returns a succeeded/captured status
+          if (captured && (captured.status === 'succeeded' || captured.status === 'requires_capture' || captured.status === 'captured')) {
+            captureSucceeded = true;
+          } else {
+            console.error('Unexpected Stripe capture status:', captured && captured.status);
+          }
+        } catch (stripeError) {
+          console.error('Stripe capture error:', stripeError);
+          // Do not update booking status if capture fails
+          return res.status(502).json({ error: 'Stripe capture failed. Booking remains pending.' });
+        }
+      } else {
+        // demo mode or no stripe configured - treat as succeeded for local/demo flows
+        captureSucceeded = true;
+      }
+    } else {
+      // No payment intent attached - treat as confirmed without payment
+      captureSucceeded = true;
+    }
+
+    if (!captureSucceeded) {
+      return res.status(502).json({ error: 'Failed to capture payment. Booking remains pending.' });
+    }
+
+    bookings[bookingIndex].status = 'confirmed';
+    bookings[bookingIndex].stripe_status = 'captured';
+    bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
+
+    try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: booking.customer_email,
+        subject: 'Booking Confirmed - CasaClean',
+        html: `
+          <h2>Your booking is confirmed!</h2>
+          <p>Dear ${booking.customer_name},</p>
+          <p>Great news! Your cleaning service booking has been confirmed.</p>
+          <p><strong>Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+          </ul>
+          <p>Your payment has been processed.</p>
+          <p>Best regards,<br>CasaClean Team</p>
+        `
+      });
+    } catch (emailError) {
+      console.log('Email sending skipped:', emailError.message);
+    }
+
+    res.json({ success: true, message: 'Booking confirmed' });
+  } catch (error) {
+    console.error('Error confirming booking:', error);
+    res.status(500).json({ error: 'Failed to confirm booking' });
+  }
+});
+
+app.post('/api/admin/bookings/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingIndex = bookings.findIndex(b => b.id == id);
+
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookings[bookingIndex];
+
+    // Attempt to cancel the PaymentIntent when Stripe is configured
+    let cancelSucceeded = false;
+    if (booking.payment_intent_id) {
+      if (stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+        try {
+          await stripe.paymentIntents.cancel(booking.payment_intent_id);
+          cancelSucceeded = true;
+        } catch (stripeError) {
+          console.error('Stripe cancel error:', stripeError);
+          return res.status(502).json({ error: 'Stripe cancel failed' });
+        }
+      } else {
+        // demo mode or no stripe configured - treat as succeeded for local/demo flows
+        cancelSucceeded = true;
+      }
+    } else {
+      // No payment intent attached - nothing to cancel
+      cancelSucceeded = true;
+    }
+
+    if (!cancelSucceeded) {
+      return res.status(502).json({ error: 'Failed to cancel payment' });
+    }
+
+    bookings[bookingIndex].status = 'cancelled';
+    bookings[bookingIndex].stripe_status = 'released';
+    bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
+
+    try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: booking.customer_email,
+        subject: 'Booking Rejected - CasaClean',
+        html: `
+          <h2>Booking Update</h2>
+          <p>Dear ${booking.customer_name},</p>
+          <p>Unfortunately, we were unable to confirm your booking for ${booking.booking_date}.</p>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+          </ul>
+          <p>The authorized payment has been released and will be returned to your card.</p>
+          <p>Please feel free to book another time that works for you.</p>
+          <p>Best regards,<br>CasaClean Team</p>
+        `
+      });
+    } catch (emailError) {
+      console.log('Email sending skipped:', emailError.message);
+    }
+
+    res.json({ success: true, message: 'Booking rejected' });
+  } catch (error) {
+    console.error('Error rejecting booking:', error);
+    res.status(500).json({ error: 'Failed to reject booking' });
+  }
+});
+
+app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingIndex = bookings.findIndex(b => b.id == id);
+
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookings[bookingIndex];
+
+    if (booking.status === 'confirmed') {
+      return res.status(400).json({ error: 'Booking is already confirmed' });
+    }
+
+    // Mark as manually paid and confirmed
+    bookings[bookingIndex].status = 'confirmed';
+    bookings[bookingIndex].stripe_status = 'manually_paid';
+    bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
+
+    try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: booking.customer_email,
+        subject: 'Booking Confirmed - CasaClean',
+        html: `
+          <h2>Your booking is confirmed!</h2>
+          <p>Dear ${booking.customer_name},</p>
+          <p>Great news! Your cleaning service booking has been confirmed.</p>
+          <p><strong>Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+          </ul>
+          <p>Your payment has been processed.</p>
+          <p>Best regards,<br>CasaClean Team</p>
+        `
+      });
+    } catch (emailError) {
+      console.log('Email sending skipped:', emailError.message);
+    }
+
+    res.json({ success: true, message: 'Booking manually confirmed and marked as paid' });
+  } catch (error) {
+    console.error('Error manually confirming booking:', error);
+    res.status(500).json({ error: 'Failed to manually confirm booking' });
+  }
+});
+
+app.get('/api/admin/cities', (req, res) => {
+  try {
+    res.json(cities);
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ error: 'Failed to fetch cities' });
+  }
+});
+
+app.put('/api/admin/cities/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { enabled, working_days, working_hours_start, working_hours_end } = req.body;
+
+    const cityIndex = cities.findIndex(c => c.id == id);
+    if (cityIndex === -1) {
+      return res.status(404).json({ error: 'City not found' });
+    }
+
+    cities[cityIndex].enabled = enabled;
+    cities[cityIndex].working_days = working_days;
+    cities[cityIndex].working_hours_start = working_hours_start;
+    cities[cityIndex].working_hours_end = working_hours_end;
+    saveData(cities, citiesFilePath);
+
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error('Error updating city:', error);
+    res.status(500).json({ error: 'Failed to update city' });
   }
 });
 
-// --- SLOTS & SETTINGS ---
+app.post('/api/admin/cities', (req, res) => {
+  try {
+    const { name, name_it, working_days, working_hours_start, working_hours_end } = req.body;
 
-app.get('/api/available-slots', (req, res) => {
-  const { cityId, date } = req.query;
-  const city = cities.find(c => c.id == cityId);
-  if (!city) return res.status(404).json({ error: 'City not found' });
+    const newId = Math.max(...cities.map(c => c.id)) + 1;
+    const newCity = {
+      id: newId,
+      name,
+      name_it,
+      enabled: true,
+      working_days: working_days || '1,2,3,4,5',
+      working_hours_start: working_hours_start || '08:00',
+      working_hours_end: working_hours_end || '18:00'
+    };
 
-  const blocked = blockedSlots.filter(s => s.city_id == cityId && s.blocked_date === date).map(s => s.blocked_time);
-  const start = parseInt(city.working_hours_start);
-  const end = parseInt(city.working_hours_end);
-  
-  let slots = [];
-  for (let i = start; i < end; i++) {
-    const t = `${i.toString().padStart(2, '0')}:00`;
-    if (!blocked.includes(t + ':00')) slots.push(t);
+    cities.push(newCity);
+    saveData(cities, citiesFilePath);
+    res.json(newCity);
+  } catch (error) {
+    console.error('Error adding city:', error);
+    res.status(500).json({ error: 'Failed to add city' });
   }
-  res.json({ slots });
 });
 
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
-  const stats = {
-    totalBookings: bookings.length,
-    pendingBookings: bookings.filter(b => b.status === 'pending').length,
-    confirmedBookings: bookings.filter(b => b.status === 'confirmed').length,
-    totalRevenue: bookings.filter(b => b.status === 'confirmed').reduce((s, b) => s + parseFloat(b.totalAmount || 0), 0)
-  };
-  res.json(stats);
+app.get('/api/admin/services', (req, res) => {
+  try {
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
 });
 
-// Static Files & Start
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.put('/api/admin/services/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
+
+    const serviceIndex = services.findIndex(s => s.id == id);
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    services[serviceIndex].name = name;
+    services[serviceIndex].name_it = name_it;
+    services[serviceIndex].description = description;
+    services[serviceIndex].description_it = description_it;
+    services[serviceIndex].price_per_hour = price_per_hour;
+    services[serviceIndex].enabled = enabled;
+    saveData(services, servicesFilePath);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ error: 'Failed to update service' });
+  }
+});
+
+app.post('/api/admin/services', (req, res) => {
+  try {
+    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
+
+    const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
+    const newService = {
+      id: newId,
+      name,
+      name_it,
+      description,
+      description_it,
+      price_per_hour: parseFloat(price_per_hour),
+      enabled: enabled !== undefined ? enabled : true
+    };
+
+    services.push(newService);
+    saveData(services, servicesFilePath);
+    res.json(newService);
+  } catch (error) {
+    console.error('Error adding service:', error);
+    res.status(500).json({ error: 'Failed to add service' });
+  }
+});
+
+app.delete('/api/admin/services/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const serviceIndex = services.findIndex(s => s.id == id);
+    if (serviceIndex === -1) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    services.splice(serviceIndex, 1);
+    saveData(services, servicesFilePath);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ error: 'Failed to delete service' });
+  }
+});
+
+app.post('/api/admin/blocked-slots', (req, res) => {
+  try {
+    const { cityId, blockedDate, blockedTime, reason } = req.body;
+
+    const newId = blockedSlots.length > 0 ? Math.max(...blockedSlots.map(s => s.id)) + 1 : 1;
+    const newSlot = {
+      id: newId,
+      city_id: cityId,
+      blocked_date: blockedDate,
+      blocked_time: blockedTime,
+      reason: reason
+    };
+
+    blockedSlots.push(newSlot);
+    saveData(blockedSlots, blockedSlotsFilePath);
+    res.json(newSlot);
+  } catch (error) {
+    console.error('Error blocking slot:', error);
+    res.status(500).json({ error: 'Failed to block slot' });
+  }
+});
+
+app.delete('/api/admin/blocked-slots/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const slotIndex = blockedSlots.findIndex(s => s.id == id);
+    if (slotIndex === -1) {
+      return res.status(404).json({ error: 'Blocked slot not found' });
+    }
+    blockedSlots.splice(slotIndex, 1);
+    saveData(blockedSlots, blockedSlotsFilePath);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error unblocking slot:', error);
+    res.status(500).json({ error: 'Failed to unblock slot' });
+  }
+});
+
+app.get('/api/admin/stats', (req, res) => {
+  try {
+    const totalBookings = bookings.length;
+    const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+    const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
+    const totalRevenue = bookings
+      .filter(b => b.status === 'confirmed')
+      .reduce((sum, b) => sum + parseFloat(b.total_amount), 0);
+
+    res.json({
+      totalBookings,
+      pendingBookings,
+      confirmedBookings,
+      totalRevenue
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+app.get('/api/admin/check-session', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  res.json({ authenticated: !!token && adminTokens.has(token) });
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
 
 if (process.env.VERCEL) {
+  // When running on Vercel, export the Express app as the serverless handler.
   module.exports = app;
 } else {
-  app.listen(PORT, '0.0.0.0', () => console.log(`Server started at http://localhost:${PORT}`));
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 }
