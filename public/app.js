@@ -285,15 +285,8 @@ async function onDateChange() {
 function updatePrice() {
   const hours = parseInt(document.getElementById('hours-select').value) || 4;
   const cleaners = parseInt(document.getElementById('cleaners-select').value) || 1;
-  let pricePerHour = 25; // default fallback
-
-  if (selectedService && selectedService.price_per_hour) {
-    const parsed = parseFloat(selectedService.price_per_hour);
-    if (!isNaN(parsed) && parsed > 0) {
-      pricePerHour = parsed;
-    }
-  }
-
+  const pricePerHour = selectedService ? parseFloat(selectedService.price_per_hour) : 25;
+  
   let total = pricePerHour * hours * cleaners;
 
   // Add supplies cost if selected
@@ -305,12 +298,10 @@ function updatePrice() {
 
   total += suppliesTotal;
 
-  // Ensure total is a valid number before displaying
-  const displayTotal = isNaN(total) ? 0 : total;
-  document.getElementById('total-price').textContent = `€${displayTotal.toFixed(2)}`;
+  document.getElementById('total-price').textContent = `€${total.toFixed(2)}`;
 
   // expose suppliesTotal for callers if needed
-  return { total: displayTotal, suppliesTotal };
+  return { total, suppliesTotal };
 }
 
 function initDatePicker() {
@@ -543,10 +534,9 @@ async function handleBookingSubmit(e) {
   submitBtn.innerHTML = '<span class="loading"></span>';
   
   try {
-    const priceInfo = updatePrice();
-    const totalAmount = priceInfo.total;
+    const totalAmount = updatePrice();
     let paymentIntentId = null;
-
+    
     if (stripe && cardElement) {
       try {
         const paymentResponse = await fetch('/api/create-payment-intent', {
