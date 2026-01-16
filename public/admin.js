@@ -311,6 +311,9 @@ function showBookingDetails(id) {
       <button class="btn btn-danger" onclick="rejectBooking(${booking.id}); closeModal('booking-modal');">
         <i class="fas fa-times"></i> ${A.reject || 'Reject'}
       </button>
+      <button class="btn btn-warning" onclick="manualPayBooking(${booking.id}); closeModal('booking-modal');">
+        <i class="fas fa-money-bill-wave"></i> Manual Pay
+      </button>
       <button class="btn btn-success" onclick="confirmBooking(${booking.id}); closeModal('booking-modal');">
         <i class="fas fa-check"></i> ${A.confirmAndCharge || 'Confirm & Charge'}
       </button>
@@ -334,21 +337,43 @@ function showBookingDetails(id) {
 
 async function confirmBooking(id) {
   if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
-  
+
   try {
     const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
       method: 'POST',
     });
-    
+
     if (response.ok) {
       alert((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingSuccess) || 'Booking confirmed successfully!');
       loadDashboardData();
     } else {
-      throw new Error((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingFailed) || 'Failed to confirm booking');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to confirm booking');
     }
   } catch (error) {
     console.error('Error confirming booking:', error);
-    alert('Failed to confirm booking. Please try again.');
+    alert(error.message || 'Failed to confirm booking. Please try again.');
+  }
+}
+
+async function manualPayBooking(id) {
+  if (!confirm('Mark this booking as manually paid and confirmed?')) return;
+
+  try {
+    const response = await fetch(`/api/admin/bookings/${id}/manual-pay`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      alert('Booking manually confirmed and marked as paid!');
+      loadDashboardData();
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to manually confirm booking');
+    }
+  } catch (error) {
+    console.error('Error manually confirming booking:', error);
+    alert(error.message || 'Failed to manually confirm booking. Please try again.');
   }
 }
 

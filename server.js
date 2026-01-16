@@ -411,7 +411,8 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
           }
         } catch (stripeError) {
           console.error('Stripe capture error:', stripeError);
-          return res.status(502).json({ error: 'Stripe capture failed' });
+          // Do not update booking status if capture fails
+          return res.status(502).json({ error: 'Stripe capture failed. Booking remains pending.' });
         }
       } else {
         // demo mode or no stripe configured - treat as succeeded for local/demo flows
@@ -423,7 +424,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
     }
 
     if (!captureSucceeded) {
-      return res.status(502).json({ error: 'Failed to capture payment' });
+      return res.status(502).json({ error: 'Failed to capture payment. Booking remains pending.' });
     }
 
     bookings[bookingIndex].status = 'confirmed';
@@ -553,6 +554,69 @@ app.post('/api/admin/bookings/:id/reject', async (req, res) => {
   } catch (error) {
     console.error('Error rejecting booking:', error);
     res.status(500).json({ error: 'Failed to reject booking' });
+  }
+});
+
+app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingIndex = bookings.findIndex(b => b.id == id);
+
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const booking = bookings[bookingIndex];
+
+    if (booking.status === 'confirmed') {
+      return res.status(400).json({ error: 'Booking is already confirmed' });
+    }
+
+    // Mark as manually paid and confirmed
+    bookings[bookingIndex].status = 'confirmed';
+    bookings[bookingIndex].stripe_status = 'manually_paid';
+    bookings[bookingIndex].updated_at = new Date().toISOString();
+    saveData(bookings, bookingsFilePath);
+
+    try {
+      const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+        ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+        : '';
+      const suppliesList = booking.supplies && booking.supplies.length > 0
+        ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+        : '';
+
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: booking.customer_email,
+        subject: 'Booking Confirmed - CasaClean',
+        html: `
+          <h2>Your booking is confirmed!</h2>
+          <p>Dear ${booking.customer_name},</p>
+          <p>Great news! Your cleaning service booking has been confirmed.</p>
+          <p><strong>Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+          </ul>
+          <p>Your payment has been processed.</p>
+          <p>Best regards,<br>CasaClean Team</p>
+        `
+      });
+    } catch (emailError) {
+      console.log('Email sending skipped:', emailError.message);
+    }
+
+    res.json({ success: true, message: 'Booking manually confirmed and marked as paid' });
+  } catch (error) {
+    console.error('Error manually confirming booking:', error);
+    res.status(500).json({ error: 'Failed to manually confirm booking' });
   }
 });
 
@@ -747,7 +811,8 @@ app.get('/api/admin/stats', (req, res) => {
 });
 
 app.get('/api/admin/check-session', (req, res) => {
-  res.json({ authenticated: !!req.session.adminId });
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  res.json({ authenticated: !!token && adminTokens.has(token) });
 });
 
 app.get('/', (req, res) => {

@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "id": 1,
+    "service_id": 1,
+    "city_id": 1,
+    "customer_name": "Test User",
+    "customer_email": "test@example.com",
+    "customer_phone": "+1234567890",
+    "street_name": "Test Street",
+    "house_number": "123",
+    "property_size": "100",
+    "doorbell_name": "",
+    "booking_date": "2024-12-25",
+    "booking_time": "10:00",
+    "hours": "2",
+    "cleaners": "1",
+    "total_amount": "37.8",
+    "payment_intent_id": "demo_test",
+    "notes": "",
+    "additional_services": [],
+    "supplies": [],
+    "status": "confirmed",
+    "stripe_status": "captured",
+    "created_at": "2026-01-16T20:52:48.764Z",
+    "updated_at": "2026-01-16T20:53:36.463Z"
+  }
+]
