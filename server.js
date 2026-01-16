@@ -294,15 +294,33 @@ app.post('/api/bookings', async (req, res) => {
     bookings.push(newBooking);
     saveData(bookings, bookingsFilePath);
 
+    // For demo mode, mark booking as confirmed immediately
+    let isConfirmed = false;
+    if (String(paymentIntentId).startsWith('demo_')) {
+      newBooking.status = 'confirmed';
+      newBooking.stripe_status = 'captured';
+      newBooking.updated_at = new Date().toISOString();
+      saveData(bookings, bookingsFilePath);
+      isConfirmed = true;
+    }
+
     try {
+      const subject = isConfirmed ? 'Booking Confirmed - CasaClean' : 'Booking Pending Confirmation - CasaClean';
+      const statusMessage = isConfirmed
+        ? 'Great news! Your cleaning service booking has been confirmed.'
+        : 'Your booking is pending confirmation. We will notify you once it\'s confirmed.';
+      const paymentMessage = isConfirmed
+        ? 'Your payment has been processed.'
+        : 'Your payment has been authorized and will only be charged upon confirmation.';
+
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: customerEmail,
-        subject: 'Booking Pending Confirmation - CasaClean',
+        subject: subject,
         html: `
-          <h2>Thank you for your booking!</h2>
+          <h2>${isConfirmed ? 'Your booking is confirmed!' : 'Thank you for your booking!'}</h2>
           <p>Dear ${customerName},</p>
-          <p>Your booking is pending confirmation. We will notify you once it's confirmed.</p>
+          <p>${statusMessage}</p>
           <p><strong>Details:</strong></p>
           <ul>
             <li>Date: ${bookingDate}</li>
@@ -310,7 +328,7 @@ app.post('/api/bookings', async (req, res) => {
             <li>Duration: ${hours} hours</li>
             <li>Total: €${totalAmount}</li>
           </ul>
-          <p>Your payment has been authorized and will only be charged upon confirmation.</p>
+          <p>${paymentMessage}</p>
           <p>Best regards,<br>CasaClean Team</p>
         `
       });
