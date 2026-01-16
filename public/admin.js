@@ -275,7 +275,7 @@ function showBookingDetails(id) {
       </div>
       <div class="detail-item full-width">
         <label>${'Address'}</label>
-        <span>${booking.customer_address}</span>
+        <span>${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</span>
       </div>
       <div class="detail-item">
         <label>${Ltable.date || 'Date'}</label>
