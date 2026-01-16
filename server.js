@@ -152,19 +152,6 @@ function saveData(array, filePath) {
 // Load data on startup
 loadData();
 
-app.get('/api/stripe/config', (req, res) => {
-  try {
-    const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
-    if (!publishableKey) {
-      return res.status(500).json({ error: 'Stripe publishable key not configured' });
-    }
-    res.json({ publishableKey });
-  } catch (error) {
-    console.error('Error getting Stripe config:', error);
-    res.status(500).json({ error: 'Failed to get Stripe config' });
-  }
-});
-
 app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
 });
@@ -861,4 +848,4 @@ if (process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
-}
+}  ეს არის ჩემი server.js
