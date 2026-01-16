@@ -543,9 +543,10 @@ async function handleBookingSubmit(e) {
   submitBtn.innerHTML = '<span class="loading"></span>';
   
   try {
-    const totalAmount = updatePrice();
+    const priceInfo = updatePrice();
+    const totalAmount = priceInfo.total;
     let paymentIntentId = null;
-    
+
     if (stripe && cardElement) {
       try {
         const paymentResponse = await fetch('/api/create-payment-intent', {
