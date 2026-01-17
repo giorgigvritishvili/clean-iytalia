@@ -32,18 +32,23 @@ const createPaymentIntent = async (req, res) => {
       return res.status(500).json({ error: 'Stripe is not configured' });
     }
 
+    // ვიღებთ თანხას Frontend-იდან
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
+    // მნიშვნელოვანი: რადგან შენი საიტიდან თანხა უკვე მოდის როგორც 380 (3.80-ის ნაცვლად),
+    // აქ მეორედ აღარ ვამრავლებთ 100-ზე.
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // € → cents
+      amount: Math.round(parseFloat(amount)), 
       currency: 'eur',
-      payment_method_types: ['card'], // აუცილებელია manual capture-სთვის
-      capture_method: 'manual', // authorize only
+      payment_method_types: ['card'],
+      capture_method: 'manual', // მხოლოდ ავტორიზაცია (ადმინმა უნდა დაადასტუროს)
     });
+
+    console.log(`Payment Intent created: ${paymentIntent.id} for amount: ${paymentIntent.amount} cents`);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
@@ -74,7 +79,7 @@ const capturePayment = async (req, res) => {
 
     res.json({
       status: paymentIntent.status,
-      amount: paymentIntent.amount / 100,
+      amount: paymentIntent.amount / 100, // ვაბრუნებთ ევროებში (დაყოფა 100-ზე)
     });
   } catch (error) {
     console.error('Stripe capturePayment ERROR:', error);
@@ -83,7 +88,7 @@ const capturePayment = async (req, res) => {
 };
 
 /**
- * STRIPE CHECKOUT SESSION (optional)
+ * STRIPE CHECKOUT SESSION
  */
 const createCheckoutSession = async (req, res) => {
   try {
@@ -91,25 +96,7 @@ const createCheckoutSession = async (req, res) => {
       return res.status(500).json({ error: 'Stripe is not configured' });
     }
 
-    const {
-      serviceId,
-      cityId,
-      customerName,
-      customerEmail,
-      customerPhone,
-      streetName,
-      houseNumber,
-      propertySize,
-      doorbellName,
-      bookingDate,
-      bookingTime,
-      hours,
-      cleaners,
-      totalAmount,
-      notes,
-      additionalServices,
-      supplies,
-    } = req.body;
+    const { totalAmount, customerEmail, hours, cleaners } = req.body;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -122,33 +109,15 @@ const createCheckoutSession = async (req, res) => {
               name: 'Cleaning Service Booking',
               description: `${hours} hours • ${cleaners} cleaner(s)`,
             },
-            unit_amount: Math.round(totalAmount * 100),
+            // აქაც იგივე ლოგიკა: ვიყენებთ პირდაპირ totalAmount-ს
+            unit_amount: Math.round(parseFloat(totalAmount)),
           },
           quantity: 1,
         },
       ],
-      success_url: `${req.protocol}://${req.get(
-        'host'
-      )}/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.protocol}://${req.get('host')}/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.protocol}://${req.get('host')}/stripe/cancel`,
       customer_email: customerEmail,
-      metadata: {
-        serviceId,
-        cityId,
-        customerName,
-        customerPhone,
-        streetName,
-        houseNumber,
-        propertySize,
-        doorbellName,
-        bookingDate,
-        bookingTime,
-        hours,
-        cleaners,
-        notes,
-        additionalServices,
-        supplies,
-      },
     });
 
     res.json({
