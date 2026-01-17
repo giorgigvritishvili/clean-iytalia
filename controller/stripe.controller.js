@@ -5,21 +5,16 @@ const createPaymentIntent = async (req, res) => {
     }
 
     let { amount } = req.body;
+
+    // გადაიყვანე რიცხვში
     let finalAmount = parseFloat(amount);
 
     if (!finalAmount || finalAmount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // ლოგიკა: თუ amount არის მაგალითად 37.80, გადაგვაქვს ცენტებში (3780)
-    // თუ amount უკვე არის 3780, ვტოვებთ როგორც არის.
-    // ევროპაში დასუფთავება 1000 ევროზე (100000 ცენტზე) მეტი იშვიათად ჯდება, 
-    // ამიტომ ეს ზღვარი იმუშავებს:
-    if (finalAmount < 1000) {
-        finalAmount = Math.round(finalAmount * 100);
-    } else {
-        finalAmount = Math.round(finalAmount);
-    }
+
+    finalAmount = Math.round(finalAmount * 100);
 
     console.log(`Final amount sent to Stripe: ${finalAmount} cents`);
 
