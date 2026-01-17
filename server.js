@@ -243,7 +243,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       amount: Math.round(amount * 100), // ცენტებში გადაყვანა
       currency,
       payment_method_types: ['card'],
-      capture_method: 'manual', 
+      capture_method: 'automatic',
     });
 
     console.log('Payment Intent created successfully:', paymentIntent.id);

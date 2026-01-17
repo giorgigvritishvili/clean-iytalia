@@ -733,7 +733,7 @@ async function handleBookingSubmit(e) {
       const paymentResponse = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Math.round(totalAmount * 100) }), // Convert to cents
+        body: JSON.stringify({ amount: totalAmount }), // Amount in euros
       });
 
       if (!paymentResponse.ok) {

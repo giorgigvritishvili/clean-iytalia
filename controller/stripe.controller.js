@@ -14,7 +14,7 @@ const createPaymentIntent = async (req, res) => {
     }
 
 
-    finalAmount = Math.round(finalAmount / 100);
+    finalAmount = Math.round(finalAmount * 1);
 
     console.log(`Final amount sent to Stripe: ${finalAmount} cents`);
 
