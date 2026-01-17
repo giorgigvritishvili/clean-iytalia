@@ -11,8 +11,7 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Data directory (use /tmp on Vercel for writable storage)
 const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
 
@@ -138,6 +137,8 @@ function loadData() {
     }
   } catch (err) {
     console.error('Failed to load admins:', err);
+    if (services.length === 0) saveData(services, servicesFilePath);
+  if (cities.length === 0) saveData(cities, citiesFilePath);
   }
 }
 
@@ -234,25 +235,26 @@ app.get('/api/available-slots', (req, res) => {
 
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
-    if (!stripe) {
-      return res.status(500).json({ error: 'Stripe is not configured' });
-    }
-
     const { amount, currency = 'eur' } = req.body;
 
+    console.log(`Attempting to create payment for: ${amount} ${currency}`);
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount * 100), // ცენტებში გადაყვანა
       currency,
-      capture_method: 'manual',
+      payment_method_types: ['card'],
+      capture_method: 'manual', 
     });
+
+    console.log('Payment Intent created successfully:', paymentIntent.id);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
-    res.status(500).json({ error: 'Failed to create payment intent' });
+    console.error('Stripe Error:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
