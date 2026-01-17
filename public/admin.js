@@ -793,21 +793,32 @@ function loadMyProjects() {
 }
 
 // Contact info management
-async function loadContactInfo() {
+async function saveContactInfo() {
+  const email = document.getElementById('contact-email').value;
+  const phone = document.getElementById('contact-phone').value;
+  const whatsapp = document.getElementById('contact-whatsapp').value;
+
   try {
-    const res = await fetch('/api/contact');
-    if (!res.ok) return;
-    const c = await res.json();
-    const emailInput = document.getElementById('contact-email');
-    const phoneInput = document.getElementById('contact-phone');
-    const waInput = document.getElementById('contact-whatsapp');
-    if (emailInput) emailInput.value = c.email || '';
-    if (phoneInput) phoneInput.value = c.phone || '';
-    if (waInput) waInput.value = c.whatsapp || '';
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone, whatsapp })
+    });
+
+    if (!res.ok) {
+      alert('Failed to save contact');
+      return;
+    }
+
+    // 🔥 ძალიან მნიშვნელოვანია — განვაახლოთ საიტზეც
+    updatePublicContactDisplay({ email, phone, whatsapp });
+
+    alert('Saved successfully!');
   } catch (e) {
-    console.error('Failed to load contact info', e);
+    console.error('Failed to save', e);
   }
 }
+
 
 async function saveContactInfo() {
   try {
@@ -824,7 +835,7 @@ async function saveContactInfo() {
 
     if (res.ok) {
       alert('Contact info saved');
-      // reload public-facing contact elements if admin page is visible
+      
       await loadContactInfo();
     } else {
       const txt = await res.text();
@@ -837,58 +848,57 @@ async function saveContactInfo() {
 }
 
 function filterMyProjects() {
-  // TODO: Filter projects by status
+ 
   loadMyProjects();
 }
 
 function loadAppointmentCalendar() {
-  // TODO: Load appointment calendar
+ 
   const calendar = document.getElementById('appointment-calendar');
   calendar.innerHTML = '<div class="calendar-placeholder"><p>La visualizzazione del calendario verrà implementata qui...</p></div>';
 }
 
 function changeCalendarView() {
-  // TODO: Change calendar view (month/week/day)
+
   loadAppointmentCalendar();
 }
 
 function loadMyAppointments() {
-  // TODO: Load user's appointments
+ 
   const table = document.getElementById('my-appointments-table');
   table.innerHTML = '<tr><td colspan="7" style="text-align: center;">I tuoi appuntamenti verranno caricati qui...</td></tr>';
 }
 
 function filterMyAppointments() {
-  // TODO: Filter appointments by status
+  
   loadMyAppointments();
 }
 
 function loadEarnings() {
-  // TODO: Load earnings data
-  // Update stats
+ 
   document.getElementById('total-earnings').textContent = '€0';
   document.getElementById('monthly-earnings').textContent = '€0';
   document.getElementById('pending-earnings').textContent = '€0';
   document.getElementById('commission-rate').textContent = '0%';
 
-  // Update earnings history
+ 
   const history = document.getElementById('earnings-history');
   history.innerHTML = '<tr><td colspan="5" style="text-align: center;">La cronologia delle entrate verrà caricata qui...</td></tr>';
 }
 
 function loadPayoutRequests() {
-  // TODO: Load payout requests
+
   const requests = document.getElementById('payout-requests');
   requests.innerHTML = '<tr><td colspan="6" style="text-align: center;">Le richieste di pagamento verranno caricate qui...</td></tr>';
 }
 
 function requestPayout() {
-  // TODO: Show payout request modal
+  
   alert((getAdminTranslations().messages && getAdminTranslations().messages.payoutPlaceholder) || 'La funzionalità di richiesta pagamento sarà implementata qui.');
 }
 
 function loadCommissionInvoices() {
-  // TODO: Load commission invoices
+ 
   const invoices = document.getElementById('commission-invoices');
   invoices.innerHTML = '<tr><td colspan="6" style="text-align: center;">Commission invoices will be loaded here...</td></tr>';
 }

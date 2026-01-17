@@ -6,7 +6,7 @@ const createPaymentIntent = async (req, res) => {
 
     let { amount } = req.body;
 
-    // გადაიყვანე რიცხვში
+   
     let finalAmount = parseFloat(amount);
 
     if (!finalAmount || finalAmount <= 0) {
@@ -14,7 +14,7 @@ const createPaymentIntent = async (req, res) => {
     }
 
 
-    finalAmount = Math.round(finalAmount * 100);
+    finalAmount = Math.round(finalAmount / 100);
 
     console.log(`Final amount sent to Stripe: ${finalAmount} cents`);
 

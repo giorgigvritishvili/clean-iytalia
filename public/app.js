@@ -5,7 +5,7 @@ let stripe = null;
 let cardElement = null;
 let cardComplete = false;
 
-// Embedded data for offline mode
+
 const embeddedServices = [
   {
     "id": 1,
