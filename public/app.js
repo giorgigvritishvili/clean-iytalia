@@ -4,10 +4,10 @@ let selectedService = null;
 let stripe = null;
 let cardElement = null;
 let cardComplete = false;
-let currentLanguage = 'en'; // 🔧 დაემატა default მნიშვნელობა
+let currentLanguage = 'en';
 
 // =======================
-// EMBEDDED DATA (იგივეა)
+// EMBEDDED DATA
 // =======================
 
 const embeddedServices = [
@@ -37,7 +37,6 @@ const embeddedServices = [
     "price_per_hour": 21.9,
     "enabled": true
   }
-  // ... დანარჩენი იგივეა
 ];
 
 const embeddedCities = [
@@ -131,14 +130,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =======================
-// LOAD SERVICES
+// LOAD SERVICES (FIXED)
 // =======================
 
 async function loadServices() {
   try {
     const response = await fetch('/api/services');
+
+    if (!response.ok) {
+      throw new Error('API failed');
+    }
+
     services = await response.json();
   } catch {
+    console.log('Using embedded services');
     services = embeddedServices;
   }
 
@@ -154,14 +159,20 @@ async function loadServices() {
 }
 
 // =======================
-// LOAD CITIES
+// LOAD CITIES (FIXED)
 // =======================
 
 async function loadCities() {
   try {
     const response = await fetch('/api/cities');
+
+    if (!response.ok) {
+      throw new Error('API failed');
+    }
+
     cities = await response.json();
   } catch {
+    console.log('Using embedded cities');
     cities = embeddedCities;
   }
 
@@ -177,6 +188,26 @@ async function loadCities() {
 }
 
 // =======================
+// NEW FIX: SERVICE CHANGE
+// =======================
+
+function onServiceChange(e) {
+  const serviceId = parseInt(e.target.value);
+
+  selectedService = services.find(s => s.id === serviceId) || null;
+
+  filterAddonsForService(selectedService);
+  updatePrice();
+}
+
+// =======================
+// PLACEHOLDER FUNCTIONS (რომ არ აგდოს შეცდომა)
+// =======================
+
+function onCityChange() {}
+function onDateChange() {}
+
+// =======================
 // DATE PICKER
 // =======================
 
@@ -189,11 +220,11 @@ function initDatePicker() {
 }
 
 // =======================
-// STRIPE (FIXED)
+// STRIPE
 // =======================
 
 function initStripe() {
-  const stripeKey = 'pk_test_YOUR_REAL_KEY_HERE'; // ❗ ჩასვი შენი რეალური key
+  const stripeKey = 'pk_test_YOUR_REAL_KEY_HERE';
 
   stripe = Stripe(stripeKey);
   const elements = stripe.elements();
@@ -214,7 +245,7 @@ function initStripe() {
 }
 
 // =======================
-// PRICE CALCULATION (FIXED)
+// PRICE CALCULATION
 // =======================
 
 function updatePrice() {
@@ -240,7 +271,7 @@ function updatePrice() {
 }
 
 // =======================
-// SUBMIT BOOKING (BIG FIX HERE)
+// SUBMIT BOOKING
 // =======================
 
 async function handleBookingSubmit(e) {
