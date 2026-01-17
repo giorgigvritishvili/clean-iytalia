@@ -569,7 +569,7 @@ async function handleBookingSubmit(e) {
       if (error) {
         throw new Error(error.message);
       }
-
+      
       // We are using capture_method: 'manual', so status will be 'requires_capture'
       if (paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'requires_capture') {
         throw new Error('Payment authorization failed: ' + paymentIntent.status);
