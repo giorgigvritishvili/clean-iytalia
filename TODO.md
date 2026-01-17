@@ -5,3 +5,4 @@
 - [x] Update admin.html to include the manual payment button
 - [x] Test payment flow to ensure bookings don't disappear on failed capture
 - [x] Test manual payment feature
+- [x] Fix "Failed to create payment intent" error by adding validation for amount and card details before payment processing

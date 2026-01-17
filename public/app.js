@@ -3,6 +3,7 @@ let cities = [];
 let selectedService = null;
 let stripe = null;
 let cardElement = null;
+let cardComplete = false;
 
 // Embedded data for offline mode
 const embeddedServices = [
@@ -474,8 +475,10 @@ function initStripe() {
       const displayError = document.getElementById('card-errors');
       if (event.error) {
         displayError.textContent = event.error.message;
+        cardComplete = false;
       } else {
         displayError.textContent = '';
+        cardComplete = event.complete;
       }
     });
   } catch (error) {
@@ -666,7 +669,17 @@ async function handleBookingSubmit(e) {
     const { total: totalAmount } = updatePrice();
     let paymentIntentId = null;
 
+    // Validate amount before proceeding
+    if (totalAmount <= 0) {
+      throw new Error(currentLanguage === 'it' ? 'Importo non valido. Seleziona un servizio e controlla i dettagli.' : 'Invalid amount. Please select a service and check the details.');
+    }
+
     if (stripe && cardElement) {
+      // Check if card details are complete
+      if (!cardComplete) {
+        throw new Error(currentLanguage === 'it' ? 'Dettagli della carta incompleti. Completa tutti i campi della carta.' : 'Card details incomplete. Please complete all card fields.');
+      }
+
       const paymentResponse = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
