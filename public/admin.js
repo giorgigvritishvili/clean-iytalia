@@ -151,7 +151,7 @@ async function loadBookings() {
 function renderRecentBookings() {
   const tbody = document.getElementById('recent-bookings');
   const recent = bookings.slice(0, 5);
-  
+
   tbody.innerHTML = recent.map(booking => `
     <tr onclick="showBookingDetails(${booking.id})" style="cursor: pointer;">
       <td>#${booking.id}</td>
@@ -163,7 +163,7 @@ function renderRecentBookings() {
       <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
     </tr>
   `).join('');
-  
+
   if (recent.length === 0) {
     const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsYet) || 'No bookings yet';
     tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
@@ -173,12 +173,12 @@ function renderRecentBookings() {
 function renderAllBookings() {
   const tbody = document.getElementById('all-bookings');
   const statusFilter = document.getElementById('status-filter').value;
-  
+
   let filtered = bookings;
   if (statusFilter) {
     filtered = bookings.filter(b => b.status === statusFilter);
   }
-  
+
   tbody.innerHTML = filtered.map(booking => `
     <tr>
       <td>#${booking.id}</td>
@@ -214,7 +214,7 @@ function renderAllBookings() {
       </td>
     </tr>
   `).join('');
-  
+
   if (filtered.length === 0) {
     const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsFound) || 'No bookings found';
     tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-light);">${msg}</td></tr>`;
@@ -228,7 +228,7 @@ function filterBookings() {
 function showBookingDetails(id) {
   const booking = bookings.find(b => b.id === id);
   if (!booking) return;
-  
+
   const details = document.getElementById('booking-details');
   const Ladmin = getAdminTranslations();
   const Ltable = Ladmin.table || {};
@@ -303,7 +303,7 @@ function showBookingDetails(id) {
       ` : ''}
     </div>
   `;
-  
+
   const actions = document.getElementById('booking-actions');
   if (booking.status === 'pending') {
     const A = getAdminTranslations().actions || {};
@@ -331,7 +331,7 @@ function showBookingDetails(id) {
       </a>
     `;
   }
-  
+
   document.getElementById('booking-modal').classList.add('active');
 }
 
@@ -379,12 +379,12 @@ async function manualPayBooking(id) {
 
 async function rejectBooking(id) {
   if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
-  
+
   try {
     const response = await fetch(`/api/admin/bookings/${id}/reject`, {
       method: 'POST',
     });
-    
+
     if (response.ok) {
       alert((getAdminTranslations().messages && getAdminTranslations().messages.rejectBookingSuccess) || 'Booking rejected. Payment released.');
       loadDashboardData();
@@ -409,7 +409,7 @@ async function loadCities() {
 
 function renderCities() {
   const grid = document.getElementById('cities-grid');
-  
+
   grid.innerHTML = cities.map(city => `
     <div class="admin-card">
       <h4>
@@ -461,17 +461,17 @@ async function addCity() {
   const nameIt = document.getElementById('city-name-it').value;
   const start = document.getElementById('city-start').value;
   const end = document.getElementById('city-end').value;
-  
+
   const checkedDays = [];
   document.querySelectorAll('#city-form .checkbox-group input:checked').forEach(cb => {
     checkedDays.push(cb.value);
   });
-  
+
   if (!name || !nameIt) {
     alert((getAdminTranslations().messages && getAdminTranslations().messages.pleaseFillFields) || 'Please fill in all required fields');
     return;
   }
-  
+
   try {
     const response = await fetch('/api/admin/cities', {
       method: 'POST',
@@ -484,7 +484,7 @@ async function addCity() {
         working_hours_end: end,
       }),
     });
-    
+
     if (response.ok) {
       closeModal('city-modal');
       loadCities();
@@ -761,7 +761,7 @@ function toggleSidebar() {
 document.addEventListener('click', function(e) {
   const sidebar = document.querySelector('.sidebar');
   const toggleBtn = document.querySelector('.mobile-sidebar-toggle');
-  
+
   // If sidebar is active and click is outside sidebar and not on toggle button
   if (sidebar.classList.contains('active') && 
       !sidebar.contains(e.target) && 

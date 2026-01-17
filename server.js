@@ -237,15 +237,15 @@ app.post('/api/create-payment-intent', async (req, res) => {
     if (!stripe) {
       return res.status(500).json({ error: 'Stripe is not configured' });
     }
-    
+
     const { amount, currency = 'eur' } = req.body;
-    
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency,
       capture_method: 'manual',
     });
-    
+
     res.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
