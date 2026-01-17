@@ -1,3 +1,4 @@
+let currentLanguage = 'en';
 let services = [];
 let cities = [];
 let selectedService = null;
@@ -318,20 +319,21 @@ function initDatePicker() {
 }
 
 function initStripe() {
-  const stripeKey = 'pk_test_placeholder'; // This will be replaced by the client if they have one
+  const stripeKey = 'pk_live_51On327KDzD216p6O8qTstfN5X8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7';
 
   try {
-    stripe = Stripe(stripeKey);
+    stripe = Stripe(stripeKey, {
+      locale: currentLanguage === 'ka' ? 'en' : currentLanguage
+    });
     const elements = stripe.elements();
-    // ...
 
     cardElement = elements.create('card', {
       style: {
         base: {
           fontSize: '16px',
-          color: '#5F6368', // warm grey
+          color: '#5F6368',
           '::placeholder': {
-            color: '#7A8C99', // dusty blue
+            color: '#7A8C99',
           },
         },
         invalid: {
@@ -542,11 +544,12 @@ async function handleBookingSubmit(e) {
       const paymentResponse = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Math.round(totalAmount * 100) }), // Convert to cents
+        body: JSON.stringify({ amount: totalAmount }),
       });
 
       if (!paymentResponse.ok) {
-        throw new Error('Failed to create payment intent');
+        const errorData = await paymentResponse.json();
+        throw new Error(errorData.error || 'Failed to create payment intent');
       }
 
       const { clientSecret, paymentIntentId: piId } = await paymentResponse.json();
@@ -567,11 +570,12 @@ async function handleBookingSubmit(e) {
         throw new Error(error.message);
       }
 
-      if (paymentIntent.status !== 'succeeded') {
-        throw new Error('Payment failed');
+      // We are using capture_method: 'manual', so status will be 'requires_capture'
+      if (paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'requires_capture') {
+        throw new Error('Payment authorization failed: ' + paymentIntent.status);
       }
     } else {
-      throw new Error('Stripe is not initialized. Please set up the Stripe integration.');
+      throw new Error('Stripe is not initialized. Please check your publishable key.');
     }
 
     // Collect additional services
