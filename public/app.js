@@ -1,9 +1,115 @@
-let currentLanguage = 'en';
 let services = [];
 let cities = [];
 let selectedService = null;
 let stripe = null;
 let cardElement = null;
+
+// Embedded data for offline mode
+const embeddedServices = [
+  {
+    "id": 1,
+    "name": "Regular Cleaning",
+    "name_it": "Pulizia Regolare",
+    "name_ru": "Регулярная уборка",
+    "name_ka": "რეგულარული დასუფავება",
+    "description": "Weekly or bi-weekly cleaning for homes",
+    "description_it": "Pulizia settimanale o bisettimanale per case",
+    "description_ru": "Еженедельная или двухнедельная уборка для домов",
+    "description_ka": "კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის",
+    "price_per_hour": 18.9,
+    "enabled": true
+  },
+  {
+    "id": 2,
+    "name": "One-time Cleaning",
+    "name_it": "Pulizia Una Tantum",
+    "name_ru": "Разовая уборка",
+    "name_ka": "ერთჯერადი დასუფავება",
+    "description": "Single deep clean for any occasion",
+    "description_it": "Una pulizia approfondita per qualsiasi occasione",
+    "description_ru": "Однократная глубокая уборка для любого случая",
+    "description_ka": "ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის",
+    "price_per_hour": 21.9,
+    "enabled": true
+  },
+  {
+    "id": 3,
+    "name": "Deep Cleaning",
+    "name_it": "Pulizia Profonda",
+    "name_ru": "Глубокая уборка",
+    "name_ka": "ღრმა დასუფავება",
+    "description": "Thorough cleaning including hard-to-reach areas",
+    "description_it": "Pulizia accurata incluse le aree difficili da raggiungere",
+    "description_ru": "Тщательная уборка, включая труднодоступные места",
+    "description_ka": "სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში",
+    "price_per_hour": 25.9,
+    "enabled": true
+  },
+  {
+    "id": 4,
+    "name": "Move-in/Move-out",
+    "name_it": "Trasloco",
+    "name_ru": "Въезд/выезд",
+    "name_ka": "შესვლა/გასვლა",
+    "description": "Complete cleaning for moving in or out",
+    "description_it": "Pulizia completa per traslochi",
+    "description_ru": "Полная уборка для въезда или выезда",
+    "description_ka": "სრული დასუფავება შესვლის ან გასვლისთვის",
+    "price_per_hour": 25.9,
+    "enabled": true
+  },
+  {
+    "id": 5,
+    "name": "Last-minute Cleaning",
+    "name_it": "Pulizia Last Minute",
+    "name_ru": "Срочная уборка",
+    "name_ka": "ბოლო წუთის დასუფავება",
+    "description": "Urgent cleaning service within 24 hours",
+    "description_it": "Servizio di pulizia urgente entro 24 ore",
+    "description_ru": "Срочная услуга уборки в течение 24 часов",
+    "description_ka": "სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში",
+    "price_per_hour": 31.9,
+    "enabled": true
+  },
+  {
+    "id": 6,
+    "name": "Business Cleaning",
+    "name_it": "Pulizia Uffici",
+    "name_ru": "Уборка офисов",
+    "name_ka": "დავალება ბიზნესისთვის",
+    "description": "Professional cleaning for offices and businesses",
+    "description_it": "Pulizia professionale per uffici e aziende",
+    "description_ru": "Профессиональная уборка для офисов и предприятий",
+    "description_ka": "პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის",
+    "price_per_hour": 35,
+    "enabled": true
+  }
+];
+
+const embeddedCities = [
+  {
+    "id": 1,
+    "name": "Rome",
+    "name_it": "Roma",
+    "name_ru": "Рим",
+    "name_ka": "რომი",
+    "enabled": true,
+    "working_days": "1,2,3,4,5,6,7",
+    "working_hours_start": "09:00",
+    "working_hours_end": "17:30"
+  },
+  {
+    "id": 2,
+    "name": "Milan",
+    "name_it": "Milano",
+    "name_ru": "Милан",
+    "name_ka": "მილანი",
+    "enabled": true,
+    "working_days": "1,2,3,4,5,6,7",
+    "working_hours_start": "09:00",
+    "working_hours_end": "17:30"
+  }
+];
 
 const serviceIcons = {
   'Regular Cleaning': 'fa-broom',
@@ -116,66 +222,87 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadServices() {
   try {
-    const response = await fetch('/api/services');
-    services = await response.json();
-    const select = document.getElementById('service-select');
-    const grid = document.getElementById('services-grid');
-    // clear existing before repopulating (allows language reload)
-    select.innerHTML = `<option value="" data-i18n="booking.selectService">Select a service</option>`;
-    grid.innerHTML = '';
-
-    // helper to pick localized fields from service objects (e.g. name_it, name_ru)
-    function getLocalizedField(obj, base, lang) {
-      if (!obj) return '';
-      const key = `${base}_${lang}`;
-      if (obj[key]) return obj[key];
-      // prefer English fallback when available
-      if (obj[base]) return obj[base];
-      // then Italian
-      if (obj[`${base}_it`]) return obj[`${base}_it`];
-      return '';
-    }
-
-    services.forEach(service => {
-      const option = document.createElement('option');
-      option.value = service.id;
-      option.textContent = getLocalizedField(service, 'name', currentLanguage);
-      option.dataset.price = service.price_per_hour;
-      select.appendChild(option);
-
-      const icon = serviceIcons[service.name] || 'fa-sparkles';
-      const card = document.createElement('div');
-      card.className = 'service-card';
-      card.dataset.id = service.id;
-      const serviceName = getLocalizedField(service, 'name', currentLanguage);
-      const serviceDescription = getLocalizedField(service, 'description', currentLanguage) || service.description || '';
-      const hourLabel = currentLanguage === 'it' ? '/ora' : '/hour';
-      card.innerHTML = `
-        <div class="service-icon">
-          <i class="fas ${icon}"></i>
-        </div>
-        <h3>${serviceName}</h3>
-        <p>${serviceDescription}</p>
-        <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span>${hourLabel}</span></div>
-      `;
-      card.addEventListener('click', () => selectServiceCard(service.id));
-      grid.appendChild(card);
-    });
-    // If a service is already selected (e.g., on language reload), apply addon filtering
-    const currentServiceId = document.getElementById('service-select')?.value;
-    if (currentServiceId) {
-      selectedService = services.find(s => s.id === parseInt(currentServiceId));
-      try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
+    let response;
+    try {
+      response = await fetch('/api/services');
+      services = await response.json();
+    } catch (apiError) {
+      console.warn('API fetch failed, loading from local file:', apiError);
+      try {
+        response = await fetch('data/services.json');
+        services = await response.json();
+      } catch (fileError) {
+        console.warn('Local file fetch failed, using embedded data:', fileError);
+        services = embeddedServices;
+      }
     }
   } catch (error) {
-    console.error('Error loading services:', error);
+    console.error('Error loading services, using embedded data:', error);
+    services = embeddedServices;
+  }
+
+  const select = document.getElementById('service-select');
+  const grid = document.getElementById('services-grid');
+  // clear existing before repopulating (allows language reload)
+  select.innerHTML = `<option value="" data-i18n="booking.selectService">Select a service</option>`;
+  grid.innerHTML = '';
+
+  // helper to pick localized fields from service objects (e.g. name_it, name_ru)
+  function getLocalizedField(obj, base, lang) {
+    if (!obj) return '';
+    const key = `${base}_${lang}`;
+    if (obj[key]) return obj[key];
+    // prefer English fallback when available
+    if (obj[base]) return obj[base];
+    // then Italian
+    if (obj[`${base}_it`]) return obj[`${base}_it`];
+    return '';
+  }
+
+  services.forEach(service => {
+    const option = document.createElement('option');
+    option.value = service.id;
+    option.textContent = getLocalizedField(service, 'name', currentLanguage);
+    option.dataset.price = service.price_per_hour;
+    select.appendChild(option);
+
+    const icon = serviceIcons[service.name] || 'fa-sparkles';
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.dataset.id = service.id;
+    const serviceName = getLocalizedField(service, 'name', currentLanguage);
+    const serviceDescription = getLocalizedField(service, 'description', currentLanguage) || service.description || '';
+    const hourLabel = currentLanguage === 'it' ? '/ora' : '/hour';
+    card.innerHTML = `
+      <div class="service-icon">
+        <i class="fas ${icon}"></i>
+      </div>
+      <h3>${serviceName}</h3>
+      <p>${serviceDescription}</p>
+      <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span>${hourLabel}</span></div>
+    `;
+    card.addEventListener('click', () => selectServiceCard(service.id));
+    grid.appendChild(card);
+  });
+  // If a service is already selected (e.g., on language reload), apply addon filtering
+  const currentServiceId = document.getElementById('service-select')?.value;
+  if (currentServiceId) {
+    selectedService = services.find(s => s.id === parseInt(currentServiceId));
+    try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
   }
 }
 
 async function loadCities() {
   try {
-    const response = await fetch('/api/cities');
-    cities = await response.json();
+    let response;
+    try {
+      response = await fetch('/api/cities');
+      cities = await response.json();
+    } catch (apiError) {
+      console.warn('API fetch failed, loading from local file:', apiError);
+      response = await fetch('data/cities.json');
+      cities = await response.json();
+    }
     const select = document.getElementById('city-select');
     // clear and repopulate so language changes take effect
     select.innerHTML = `<option value="" data-i18n="booking.selectCity">Select a city</option>`;
@@ -319,21 +446,20 @@ function initDatePicker() {
 }
 
 function initStripe() {
-  const stripeKey = 'pk_live_51On327KDzD216p6O8qTstfN5X8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7w8j7';
+  const stripeKey = 'pk_test_placeholder'; // This will be replaced by the client if they have one
 
   try {
-    stripe = Stripe(stripeKey, {
-      locale: currentLanguage === 'ka' ? 'en' : currentLanguage
-    });
+    stripe = Stripe(stripeKey);
     const elements = stripe.elements();
+    // ...
 
     cardElement = elements.create('card', {
       style: {
         base: {
           fontSize: '16px',
-          color: '#5F6368',
+          color: '#5F6368', // warm grey
           '::placeholder': {
-            color: '#7A8C99',
+            color: '#7A8C99', // dusty blue
           },
         },
         invalid: {
@@ -544,12 +670,11 @@ async function handleBookingSubmit(e) {
       const paymentResponse = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: totalAmount }),
+        body: JSON.stringify({ amount: Math.round(totalAmount * 100) }), // Convert to cents
       });
 
       if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json();
-        throw new Error(errorData.error || 'Failed to create payment intent');
+        throw new Error('Failed to create payment intent');
       }
 
       const { clientSecret, paymentIntentId: piId } = await paymentResponse.json();
@@ -569,13 +694,12 @@ async function handleBookingSubmit(e) {
       if (error) {
         throw new Error(error.message);
       }
-      
-      // We are using capture_method: 'manual', so status will be 'requires_capture'
-      if (paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'requires_capture') {
-        throw new Error('Payment authorization failed: ' + paymentIntent.status);
+
+      if (paymentIntent.status !== 'succeeded') {
+        throw new Error('Payment failed');
       }
     } else {
-      throw new Error('Stripe is not initialized. Please check your publishable key.');
+      throw new Error('Stripe is not initialized. Please set up the Stripe integration.');
     }
 
     // Collect additional services
