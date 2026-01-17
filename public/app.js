@@ -222,31 +222,88 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadServices() {
+    const select = document.getElementById('service-select');
+    const grid = document.getElementById('services-grid');
+    
+    try {
+        const response = await fetch('/api/services');
+        if (!response.ok) throw new Error('Backend not found');
+        services = await response.json();
+    } catch (error) {
+        console.warn('Using embedded services data');
+        services = embeddedServices; // ვიყენებთ ცვლადს, რომელიც ზემოთ გაქვთ აღწერილი
+    }
+
+    select.innerHTML = `<option value="" data-i18n="booking.selectService">Select a service</option>`;
+    grid.innerHTML = '';
+
+    services.forEach(service => {
+        const lang = typeof currentLanguage !== 'undefined' ? currentLanguage : 'en';
+        const name = service[`name_${lang}`] || service.name;
+        const desc = service[`description_${lang}`] || service.description;
+
+        // Option-ის დამატება სელექტში
+        const option = document.createElement('option');
+        option.value = service.id;
+        option.textContent = name;
+        option.dataset.price = service.price_per_hour;
+        select.appendChild(option);
+
+        // ბარათების დამატება გრიდში
+        const icon = serviceIcons[service.name] || 'fa-sparkles';
+        const card = document.createElement('div');
+        card.className = 'service-card';
+        card.dataset.id = service.id;
+        card.innerHTML = `
+            <div class="service-icon"><i class="fas ${icon}"></i></div>
+            <h3>${name}</h3>
+            <p>${desc}</p>
+            <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)}</div>
+        `;
+        card.addEventListener('click', () => selectServiceCard(service.id));
+        grid.appendChild(card);
+    });
+}
+
+async function loadCities() {
+  const select = document.getElementById('city-select');
+  if (!select) return;
+
   try {
     let response;
+    // ვცდილობთ სერვერიდან წამოღებას
     try {
-      response = await fetch('/api/services');
-      services = await response.json();
-    } catch (apiError) {
-      console.warn('API fetch failed, loading from local file:', apiError);
-      try {
-        response = await fetch('data/services.json');
-        services = await response.json();
-      } catch (fileError) {
-        console.warn('Local file fetch failed, using embedded data:', fileError);
-        services = embeddedServices;
+      response = await fetch('/api/cities');
+      if (response.ok) {
+        cities = await response.json();
+      } else {
+        throw new Error('Server error');
       }
+    } catch (apiError) {
+      // თუ სერვერი არ არის, ვიყენებთ ჩაშენებულ "embeddedCities"-ს
+      console.warn('API connection failed, using embedded city data');
+      cities = embeddedCities;
     }
-  } catch (error) {
-    console.error('Error loading services, using embedded data:', error);
-    services = embeddedServices;
-  }
 
-  const select = document.getElementById('service-select');
-  const grid = document.getElementById('services-grid');
-  // clear existing before repopulating (allows language reload)
-  select.innerHTML = `<option value="" data-i18n="booking.selectService">Select a service</option>`;
-  grid.innerHTML = '';
+    // სელექტის გასუფთავება და შევსება
+    select.innerHTML = `<option value="" data-i18n="booking.selectCity">Select a city</option>`;
+    
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city.id;
+      
+      // ენის მიხედვით სახელის შერჩევა (Fallback ლოგიკით)
+      const lang = (typeof currentLanguage !== 'undefined') ? currentLanguage : 'it';
+      const cityName = city[`name_${lang}`] || city.name_it || city.name || 'Unknown City';
+      
+      option.textContent = cityName;
+      select.appendChild(option);
+    });
+
+  } catch (error) {
+    console.error('Critical error in loadCities:', error);
+  }
+}
 
   // helper to pick localized fields from service objects (e.g. name_it, name_ru)
   function getLocalizedField(obj, base, lang) {
@@ -291,7 +348,7 @@ async function loadServices() {
     selectedService = services.find(s => s.id === parseInt(currentServiceId));
     try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
   }
-}
+
 
 async function loadCities() {
   try {
@@ -447,24 +504,18 @@ function initDatePicker() {
 }
 
 function initStripe() {
-  const stripeKey = 'pk_test_placeholder'; // This will be replaced by the client if they have one
+  // ვიყენებთ თქვენს რეალურ Public Key-ს
+  const stripeKey = 'pk_live_51SmjBDKEJbAqCpEexQl7XBODjKtclKaI2zZbZA1Uo1o7ERRtemy2EBwD7hc3rXxb6Zk803ER19oN45cSKvKxE6Ah00MiBtYW9g';
 
   try {
     stripe = Stripe(stripeKey);
     const elements = stripe.elements();
-    // ...
 
     cardElement = elements.create('card', {
       style: {
         base: {
           fontSize: '16px',
-          color: '#5F6368', // warm grey
-          '::placeholder': {
-            color: '#7A8C99', // dusty blue
-          },
-        },
-        invalid: {
-          color: '#EF4444',
+          color: '#32325d',
         },
       },
     });
@@ -482,10 +533,9 @@ function initStripe() {
       }
     });
   } catch (error) {
-    console.log('Stripe initialization skipped - will use demo mode');
+    console.error('Stripe initialization failed:', error);
   }
 }
-
 function nextStep(step) {
   const currentStep = document.querySelector('.form-step.active');
   const currentStepNum = parseInt(currentStep.id.split('-')[1]);
@@ -666,39 +716,43 @@ async function handleBookingSubmit(e) {
   submitBtn.innerHTML = '<span class="loading"></span>';
 
   try {
-    // Create payment intent
-const paymentRes = await fetch('/api/create-payment-intent', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ amount: Math.round(totalAmount * 100) })
-});
-const { clientSecret } = await paymentRes.json(); // ❌ აქ გაქვს შეცდომა
+    const { total: totalAmount } = updatePrice();
+    let paymentIntentId = null;
 
-// Confirm card payment
-const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-  payment_method: {
-    card: cardElement,
-    billing_details: {
-      name: document.getElementById('name-input').value,
-      email: document.getElementById('email-input').value,
+    // Validate amount before proceeding
+    if (totalAmount <= 0) {
+      throw new Error(currentLanguage === 'it' ? 'Importo non valido. Seleziona un servizio e controlla i dettagli.' : 'Invalid amount. Please select a service and check the details.');
     }
-  }
-});
 
-if (error) throw new Error(error.message);
-if (paymentIntent.status !== 'succeeded') throw new Error('Payment failed');
-
-// Send booking to backend
-const bookingData = {
-  serviceId: document.getElementById('service-select').value,
-  cityId: document.getElementById('city-select').value,
-  customerName: document.getElementById('name-input').value,
-  customerEmail: document.getElementById('email-input').value,
-  totalAmount: totalAmount,
-  paymentIntentId: paymentIntent.id // ✅ აქ უნდა გამოიყენო paymentIntent.id
-};
-
+    if (stripe && cardElement) {
+      // Check if card details are complete
+      if (!cardComplete) {
+        throw new Error(currentLanguage === 'it' ? 'Dettagli della carta incompleti. Completa tutti i campi della carta.' : 'Card details incomplete. Please complete all card fields.');
       }
+
+      const paymentResponse = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Math.round(totalAmount * 100) }), // Convert to cents
+      });
+
+      if (!paymentResponse.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const { clientSecret, paymentIntentId: piId } = await paymentResponse.json();
+      paymentIntentId = piId;
+
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: document.getElementById('name-input').value,
+            email: document.getElementById('email-input').value,
+            phone: document.getElementById('phone-input').value,
+          },
+        },
+      });
 
       if (error) {
         throw new Error(error.message);
