@@ -1,8 +1,18 @@
-- [x] Make backend Vercel-compatible: export Express app and add `api/index.js` + `vercel.json`.
-- [x] Fix /api/admin/bookings/:id/confirm to handle Stripe errors without updating booking status if capture fails
-- [x] Add new endpoint /api/admin/bookings/:id/manual-pay for admin to mark bookings as paid manually
-- [x] Update admin.js to add manual payment function and button
-- [x] Update admin.html to include the manual payment button
-- [x] Test payment flow to ensure bookings don't disappear on failed capture
-- [x] Test manual payment feature
-- [x] Fix "Failed to create payment intent" error by adding validation for amount and card details before payment processing
+# TODO List for Fixing Contact Info, Addon Restrictions, and Language Issues
+
+## 1. Create Public Contact API Endpoint
+- Add a route in `api/index.js` for `/api/contact` to serve contact info from `data/contact.json`.
+- This allows the main site to load contact info dynamically instead of using hardcoded values.
+
+## 2. Update Addon Filtering for One-Time Cleaning
+- Modify `filterAddonsForService` in `public/app.js` to display "Not available with One-Time Basic Cleaning" note for disabled addons when "One-time Cleaning" is selected.
+- Ensure users understand why addons are disabled and cannot select nothing.
+
+## 3. Add Missing Georgian Translations
+- Update `public/translations.js` to include Georgian translations for booking addons under 'ka'.booking.addons.
+- Ensure all data-i18n attributes in the booking form have corresponding Georgian translations to fix language switching issues.
+
+## 4. Test Changes
+- Verify contact info updates on the main site after admin changes.
+- Confirm addon restrictions and notes for "One-time Cleaning".
+- Test language switching to Georgian during booking to ensure all elements update properly.

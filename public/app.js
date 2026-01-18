@@ -173,6 +173,8 @@ function filterAddonsForService(service) {
       noteText = 'Not available with Regular Basic Cleaning';
     } else if (service.name === 'Business Cleaning' || service.name.toLowerCase().includes('business')) {
       noteText = 'Not available with Cleaning For Business';
+    } else if (service.name === 'One-time Cleaning' || service.name.toLowerCase().includes('one-time')) {
+      noteText = 'Not available with One-Time Basic Cleaning';
     }
   }
 
