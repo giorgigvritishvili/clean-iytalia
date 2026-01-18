@@ -759,11 +759,24 @@ async function handleBookingSubmit(e) {
       });
 
       if (error) {
-        throw new Error(error.message);
+        // Handle specific Stripe errors
+        if (error.type === 'card_error') {
+          if (error.code === 'card_declined') {
+            throw new Error(currentLanguage === 'it' ? 'La carta è stata rifiutata. Controlla i dettagli della carta o contatta la tua banca.' : 'Card was declined. Please check your card details or contact your bank.');
+          } else if (error.code === 'insufficient_funds') {
+            throw new Error(currentLanguage === 'it' ? 'Fondi insufficienti sulla carta. Verifica il saldo e riprova.' : 'Insufficient funds on the card. Please check your balance and try again.');
+          } else if (error.code === 'expired_card') {
+            throw new Error(currentLanguage === 'it' ? 'La carta è scaduta. Usa una carta valida.' : 'Card has expired. Please use a valid card.');
+          } else {
+            throw new Error(currentLanguage === 'it' ? 'Errore della carta: ' + error.message : 'Card error: ' + error.message);
+          }
+        } else {
+          throw new Error(error.message);
+        }
       }
 
       if (paymentIntent.status !== 'succeeded') {
-        throw new Error('Payment failed');
+        throw new Error(currentLanguage === 'it' ? 'Pagamento fallito. Riprova.' : 'Payment failed. Please try again.');
       }
     } else {
       throw new Error('Stripe is not initialized. Please set up the Stripe integration.');

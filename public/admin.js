@@ -1,6 +1,8 @@
 let bookings = [];
 let cities = [];
 let services = [];
+let bookingPollingInterval = null; // For real-time updates
+
 function saveLocalData() {
   localStorage.setItem('cities', JSON.stringify(cities));
   localStorage.setItem('services', JSON.stringify(services));
@@ -109,6 +111,7 @@ async function handleLogin(e) {
 async function logout() {
   try {
     await fetch('/api/admin/logout', { method: 'POST' });
+    stopBookingPolling(); // Stop polling on logout
     document.getElementById('login-page').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'none';
   } catch (error) {
@@ -120,6 +123,7 @@ function showDashboard() {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('dashboard').style.display = 'flex';
   loadDashboardData();
+  startBookingPolling(); // Start real-time updates
 }
 
 async function loadDashboardData() {

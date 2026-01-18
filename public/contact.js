@@ -1,3 +1,5 @@
+let contactPollingInterval = null; // For real-time contact updates
+
 async function loadContact() {
   try {
     const res = await fetch('/api/contact');
@@ -31,4 +33,19 @@ async function loadContact() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', loadContact);
+function startContactPolling() {
+  if (contactPollingInterval) return; // Already polling
+  contactPollingInterval = setInterval(loadContact, 10000); // Poll every 10 seconds
+}
+
+function stopContactPolling() {
+  if (contactPollingInterval) {
+    clearInterval(contactPollingInterval);
+    contactPollingInterval = null;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadContact();
+  startContactPolling(); // Start polling for real-time updates
+});

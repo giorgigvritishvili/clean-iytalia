@@ -1,18 +1,18 @@
-# TODO List for Fixing Contact Info, Addon Restrictions, and Language Issues
+# TODO: Payment and Admin Panel Improvements
 
-## 1. Create Public Contact API Endpoint
-- Add a route in `api/index.js` for `/api/contact` to serve contact info from `data/contact.json`.
-- This allows the main site to load contact info dynamically instead of using hardcoded values.
+## 1. Improve Payment Error Handling
+- [x] Edit `public/app.js` to handle specific Stripe errors (e.g., insufficient funds) and display clear error messages to the user.
+- [x] Ensure payment fails gracefully if funds are insufficient, preventing booking creation.
 
-## 2. Update Addon Filtering for One-Time Cleaning
-- Modify `filterAddonsForService` in `public/app.js` to display "Not available with One-Time Basic Cleaning" note for disabled addons when "One-time Cleaning" is selected.
-- Ensure users understand why addons are disabled and cannot select nothing.
+## 2. Real-Time Admin Panel Updates
+- [x] Edit `public/admin.js` to add polling mechanism to fetch bookings every few seconds.
+- [x] Ensure new bookings appear immediately in the admin panel after successful payment without manual refresh.
 
-## 3. Add Missing Georgian Translations
-- Update `public/translations.js` to include Georgian translations for booking addons under 'ka'.booking.addons.
-- Ensure all data-i18n attributes in the booking form have corresponding Georgian translations to fix language switching issues.
+## 3. Contact Info Updates Without Refresh
+- [ ] Edit `public/contact.js` to add a save function that updates contact info via API and shows success message without page refresh.
+- [ ] Prevent data loss by ensuring changes are saved immediately.
 
-## 4. Test Changes
-- Verify contact info updates on the main site after admin changes.
-- Confirm addon restrictions and notes for "One-time Cleaning".
-- Test language switching to Georgian during booking to ensure all elements update properly.
+## Testing
+- [ ] Test payment failure scenarios (e.g., insufficient funds).
+- [ ] Test successful payment and admin panel update.
+- [ ] Test contact info updates.
