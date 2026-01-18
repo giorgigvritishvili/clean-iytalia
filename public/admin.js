@@ -138,11 +138,14 @@ async function loadStats() {
     const response = await fetch('/api/admin/bookings', { credentials: 'include' });
     bookings = await response.json();
 
-    // 2️⃣ Compute stats
+    // 2️⃣ Compute stats safely
     const totalBookings = bookings.length;
     const pendingBookings = bookings.filter(b => b.status === 'pending').length;
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-    const totalRevenue = bookings.reduce((sum, b) => sum + parseFloat(b.total_amount || 0), 0);
+    const totalRevenue = bookings.reduce((sum, b) => {
+      const amount = parseFloat(b.total_amount);
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
     // 3️⃣ Update UI
     document.getElementById('stat-total').textContent = totalBookings;
