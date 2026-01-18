@@ -124,7 +124,9 @@ const serviceIcons = {
 // Mapping of which additional-service checkboxes are allowed per main service name.
 // Keys use the English service names returned by the /api/services objects (service.name).
 const addonMapping = {
-  'One-time Cleaning': [],
+  'One-time Cleaning': [
+    'limescale-removal','dishwashing','ironing','balcony-cleaning','window-cleaning','laundry-service'
+  ],
   'Regular Cleaning': [
     'fridge-cleaning','limescale-removal','dishwashing','ironing','balcony-cleaning',
     'window-cleaning','laundry-service','gardening','carpet-cleaning'
