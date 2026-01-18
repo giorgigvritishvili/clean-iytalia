@@ -279,6 +279,11 @@ function showBookingDetails(id) {
   const Lbooking = (translations[ADMIN_LANG] && translations[ADMIN_LANG].booking) || {};
   const Lcontact = (translations[ADMIN_LANG] && translations[ADMIN_LANG].contact) || {};
 
+  // ✅ --- IMPORTANT: სუფთა ტელეფონის ნომერი (ახალი ხაზი) ---
+  const cleanPhone = booking.customer_phone
+    ? booking.customer_phone.replace(/[^0-9]/g, '')
+    : '';
+
   details.innerHTML = `
     <div class="detail-grid">
       <div class="detail-item">
@@ -306,7 +311,7 @@ function showBookingDetails(id) {
         <span>${booking.service_name_it || booking.service_name}</span>
       </div>
       <div class="detail-item full-width">
-        <label>${'Address'}</label>
+        <label>Address</label>
         <span>${booking.customer_address}</span>
       </div>
       <div class="detail-item">
@@ -319,7 +324,7 @@ function showBookingDetails(id) {
       </div>
       <div class="detail-item">
         <label>${Ltable.duration || 'Duration'}</label>
-        <span>${booking.hours} ${(Lbooking.hoursOptions ? 'hours' : 'hours')}</span>
+        <span>${booking.hours} hours</span>
       </div>
       <div class="detail-item">
         <label>${Lbooking.cleaners || 'Cleaners'}</label>
@@ -327,7 +332,9 @@ function showBookingDetails(id) {
       </div>
       <div class="detail-item">
         <label>${Ltable.amount || 'Total Amount'}</label>
-        <span style="font-size: 1.25rem; font-weight: 600; color: var(--primary);">€${parseFloat(booking.total_amount).toFixed(2)}</span>
+        <span style="font-size: 1.25rem; font-weight: 600; color: var(--primary);">
+          €${parseFloat(booking.total_amount).toFixed(2)}
+        </span>
       </div>
       <div class="detail-item">
         <label>${Ltable.payment || 'Payment Status'}</label>
@@ -335,8 +342,10 @@ function showBookingDetails(id) {
       </div>
       ${booking.payment_intent_id ? `
         <div class="detail-item full-width">
-          <label>${'Payment Intent ID'}</label>
-          <span style="font-size: 0.85rem; word-break: break-all;">${booking.payment_intent_id}</span>
+          <label>Payment Intent ID</label>
+          <span style="font-size: 0.85rem; word-break: break-all;">
+            ${booking.payment_intent_id}
+          </span>
         </div>
       ` : ''}
       ${booking.notes ? `
@@ -349,6 +358,7 @@ function showBookingDetails(id) {
   `;
 
   const actions = document.getElementById('booking-actions');
+
   if (booking.status === 'pending') {
     const A = getAdminTranslations().actions || {};
     actions.innerHTML = `
@@ -363,14 +373,15 @@ function showBookingDetails(id) {
       </button>
     `;
   } else {
+    // ✅ --- აქ შევცვალეთ ტელეფონი → cleanPhone ---
     actions.innerHTML = `
       <a href="mailto:${booking.customer_email}" class="btn btn-secondary">
         <i class="fas fa-envelope"></i> Email
       </a>
-      <a href="tel:${booking.customer_phone}" class="btn btn-secondary">
+      <a href="tel:${cleanPhone}" class="btn btn-secondary">
         <i class="fas fa-phone"></i> Call
       </a>
-      <a href="https://wa.me/${booking.customer_phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-success">
+      <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn btn-success">
         <i class="fab fa-whatsapp"></i> WhatsApp
       </a>
     `;
@@ -379,47 +390,6 @@ function showBookingDetails(id) {
   document.getElementById('booking-modal').classList.add('active');
 }
 
-async function confirmBooking(id) {
-  if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmConfirmBooking) || 'Confirm this booking and charge the customer?')) return;
-
-  try {
-    const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
-      method: 'POST',
-    });
-
-    if (response.ok) {
-      alert((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingSuccess) || 'Booking confirmed successfully!');
-      loadDashboardData();
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to confirm booking');
-    }
-  } catch (error) {
-    console.error('Error confirming booking:', error);
-    alert(error.message || 'Failed to confirm booking. Please try again.');
-  }
-}
-
-async function manualPayBooking(id) {
-  if (!confirm('Mark this booking as manually paid and confirmed?')) return;
-
-  try {
-    const response = await fetch(`/api/admin/bookings/${id}/manual-pay`, {
-      method: 'POST',
-    });
-
-    if (response.ok) {
-      alert('Booking manually confirmed and marked as paid!');
-      loadDashboardData();
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to manually confirm booking');
-    }
-  } catch (error) {
-    console.error('Error manually confirming booking:', error);
-    alert(error.message || 'Failed to manually confirm booking. Please try again.');
-  }
-}
 
 async function rejectBooking(id) {
   if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
