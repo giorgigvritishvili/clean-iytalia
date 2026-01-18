@@ -279,10 +279,10 @@ function showBookingDetails(id) {
   const Lbooking = (translations[ADMIN_LANG] && translations[ADMIN_LANG].booking) || {};
   const Lcontact = (translations[ADMIN_LANG] && translations[ADMIN_LANG].contact) || {};
 
-  // ✅ --- IMPORTANT: სუფთა ტელეფონის ნომერი (ახალი ხაზი) ---
   const cleanPhone = booking.customer_phone
-    ? booking.customer_phone.replace(/[^0-9]/g, '')
-    : '';
+  ? booking.customer_phone.replace(/[^0-9+]/g, '').replace(/^00/, '+')
+  : booking.customer_phone || '';
+
 
   details.innerHTML = `
     <div class="detail-grid">
