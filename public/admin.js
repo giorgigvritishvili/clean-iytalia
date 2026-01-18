@@ -134,33 +134,55 @@ async function loadDashboardData() {
 
 async function loadStats() {
   try {
-    // 1️⃣ Load bookings
-    const response = await fetch('/api/admin/bookings', { credentials: 'include' });
+    // 1️⃣ Load bookings (WITHOUT CACHE)
+    const response = await fetch('/api/admin/bookings', {
+      credentials: 'include',
+      cache: "no-store"   // 🔥 ძალიან მნიშვნელოვანია
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to load bookings');
+    }
+
     bookings = await response.json();
 
     // 2️⃣ Compute stats safely
     const totalBookings = bookings.length;
     const pendingBookings = bookings.filter(b => b.status === 'pending').length;
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-    const totalRevenue = bookings.reduce((sum, b) => {
-      const amount = parseFloat(b.total_amount);
-      return sum + (isNaN(amount) ? 0 : amount);
-    }, 0);
+
+    // 🔥 Revenue = მხოლოდ CONFIRMED / PAID bookings
+    const totalRevenue = bookings
+      .filter(b => b.status === 'confirmed' || b.status === 'paid')
+      .reduce((sum, b) => {
+        const amount = parseFloat(b.total_amount);
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
 
     // 3️⃣ Update UI
     document.getElementById('stat-total').textContent = totalBookings;
     document.getElementById('stat-pending').textContent = pendingBookings;
     document.getElementById('stat-confirmed').textContent = confirmedBookings;
     document.getElementById('stat-revenue').textContent = `€${totalRevenue.toFixed(2)}`;
+
   } catch (error) {
     console.error('Failed to load stats:', error);
   }
 }
 
 
+
 async function loadBookings() {
   try {
-    const response = await fetch('/api/admin/bookings', { credentials: 'include' });
+    const response = await fetch('/api/admin/bookings', {
+      credentials: 'include',
+      cache: "no-store"   // 🔥 მნიშვნელოვანია
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch bookings');
+    }
+
     bookings = await response.json();
 
     renderRecentBookings();
@@ -421,13 +443,20 @@ async function rejectBooking(id) {
 
 async function loadCities() {
   try {
-    const response = await fetch('/api/admin/cities', { credentials: 'include' });
+    const response = await fetch('/api/admin/cities', {
+      credentials: 'include',
+      cache: "no-store"
+    });
+
+    if (!response.ok) throw new Error("Failed to load cities");
+
     cities = await response.json();
     renderCities();
   } catch (error) {
     console.error('Failed to load cities:', error);
   }
 }
+
 
 function renderCities() {
   const grid = document.getElementById('cities-grid');
@@ -457,7 +486,9 @@ function formatWorkingDays(days) {
 async function toggleCity(id, enabled) {
   try {
     const city = cities.find(c => c.id === id);
-    await fetch(`/api/admin/cities/${id}`, {
+    if (!city) throw new Error("City not found");
+
+    const res = await fetch(`/api/admin/cities/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -466,16 +497,24 @@ async function toggleCity(id, enabled) {
         working_hours_start: city.working_hours_start,
         working_hours_end: city.working_hours_end,
       }),
+      cache: "no-store" // 🔥 ძალიან მნიშვნელოვანია
     });
 
-    // ✅ Update local state instead of refetching
-    city.enabled = enabled;
-    renderCities(); // re-render using updated array
+    if (!res.ok) {
+      throw new Error('Server update failed');
+    }
+
+    // ✅ ყოველთვის თავიდან ვტვირთავთ რეალურ მონაცემებს
+    await loadCities();
+
   } catch (error) {
     console.error('Failed to update city:', error);
     alert('Failed to update city. Please try again.');
+    await loadCities(); // შეცდომის შემთხვევაში დავაბრუნოთ სწორ მდგომარეობაზე
   }
 }
+
+
 
 function showAddCityModal() {
   document.getElementById('city-form').reset();
@@ -497,6 +536,7 @@ async function addCity() {
 
   try {
     const response = await fetch('/api/admin/cities', {
+      cache: "no-store",
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -515,6 +555,11 @@ async function addCity() {
       cities.push(newCity);
       renderCities();
       closeModal('city-modal');
+      if (response.ok) {
+  await loadCities(); // 🔥 თავიდან ვტვირთავთ server-იდან
+  closeModal('city-modal');
+}
+
     } else {
       throw new Error('Failed to add city');
     }
@@ -526,13 +571,23 @@ async function addCity() {
 
 async function loadServices() {
   try {
-    const response = await fetch('/api/admin/services');
+    const response = await fetch('/api/admin/services', {
+      credentials: 'include',   // 🔥 დაამატე ეს (თუ admin auth გაქვს)
+      cache: "no-store"         // 🔥 სწორია — დატოვე
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch services');
+    }
+
     services = await response.json();
     renderServices();
   } catch (error) {
     console.error('Failed to load services:', error);
   }
 }
+
+
 
 function renderServices() {
   const grid = document.getElementById('services-grid');
@@ -572,23 +627,31 @@ function renderServices() {
 async function toggleService(id, enabled) {
   try {
     const service = services.find(s => s.id === id);
-    await fetch(`/api/admin/services/${id}`, {
+    if (!service) throw new Error("Service not found");
+
+    const res = await fetch(`/api/admin/services/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      cache: "no-store",
       body: JSON.stringify({
         enabled,
         price_per_hour: service.price_per_hour,
       }),
     });
 
-    // ✅ Update local state
-    service.enabled = enabled;
-    renderServices();
+    if (!res.ok) throw new Error("Server update failed");
+
+    // 🔥 სწორია — თავიდან ვტვირთავთ რეალურ მონაცემებს
+    await loadServices();
+
   } catch (error) {
     console.error('Failed to update service:', error);
     alert('Failed to update service. Please try again.');
+    await loadServices(); // შეცდომის შემთხვევაში დავაბრუნოთ სწორ მდგომარეობაზე
   }
 }
+
 
 
 function showAddServiceModal() {
@@ -662,9 +725,12 @@ async function deleteService(id) {
   if (!confirm('Sei sicuro di voler eliminare questo servizio? Questa azione è irreversibile.')) return;
 
   try {
-    const response = await fetch(`/api/admin/services/${id}`, {
-      method: 'DELETE',
-    });
+ const response = await fetch(`/api/admin/services/${id}`, {
+  method: 'DELETE',
+  credentials: 'include',
+  cache: "no-store"
+});
+
 
     if (response.ok) {
       loadServices();
@@ -825,31 +891,7 @@ function loadMyProjects() {
 }
 
 // Contact info management
-async function saveContactInfo() {
-  const email = document.getElementById('contact-email').value;
-  const phone = document.getElementById('contact-phone').value;
-  const whatsapp = document.getElementById('contact-whatsapp').value;
 
-  try {
-    const res = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, phone, whatsapp })
-    });
-
-    if (!res.ok) {
-      alert('Failed to save contact');
-      return;
-    }
-
-    // 🔥 ძალიან მნიშვნელოვანია — განვაახლოთ საიტზეც
-    updatePublicContactDisplay({ email, phone, whatsapp });
-
-    alert('Saved successfully!');
-  } catch (e) {
-    console.error('Failed to save', e);
-  }
-}
 
 
 async function saveContactInfo() {
