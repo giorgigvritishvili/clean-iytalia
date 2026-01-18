@@ -1,6 +1,16 @@
 let bookings = [];
 let cities = [];
 let services = [];
+function saveLocalData() {
+  localStorage.setItem('cities', JSON.stringify(cities));
+  localStorage.setItem('services', JSON.stringify(services));
+}
+
+function loadLocalData() {
+  cities = JSON.parse(localStorage.getItem('cities') || '[]');
+  services = JSON.parse(localStorage.getItem('services') || '[]');
+}
+
 
 // Admin language override: always use Italian translations for the admin UI
 const ADMIN_LANG = 'it';
@@ -445,9 +455,13 @@ async function toggleCity(id, enabled) {
         working_hours_end: city.working_hours_end,
       }),
     });
+
+    // ✅ Update local state instead of refetching
+    city.enabled = enabled;
+    renderCities(); // re-render using updated array
   } catch (error) {
     console.error('Failed to update city:', error);
-    loadCities();
+    alert('Failed to update city. Please try again.');
   }
 }
 
@@ -461,14 +475,11 @@ async function addCity() {
   const nameIt = document.getElementById('city-name-it').value;
   const start = document.getElementById('city-start').value;
   const end = document.getElementById('city-end').value;
-
-  const checkedDays = [];
-  document.querySelectorAll('#city-form .checkbox-group input:checked').forEach(cb => {
-    checkedDays.push(cb.value);
-  });
+  const checkedDays = Array.from(document.querySelectorAll('#city-form .checkbox-group input:checked'))
+                            .map(cb => cb.value);
 
   if (!name || !nameIt) {
-    alert((getAdminTranslations().messages && getAdminTranslations().messages.pleaseFillFields) || 'Please fill in all required fields');
+    alert('Please fill in all required fields');
     return;
   }
 
@@ -486,14 +497,18 @@ async function addCity() {
     });
 
     if (response.ok) {
+      const newCity = await response.json();
+
+      // ✅ Add to local state
+      cities.push(newCity);
+      renderCities();
       closeModal('city-modal');
-      loadCities();
     } else {
       throw new Error('Failed to add city');
     }
   } catch (error) {
     console.error('Failed to add city:', error);
-    alert((getAdminTranslations().messages && getAdminTranslations().messages.failedAddCity) || 'Failed to add city. Please try again.');
+    alert('Failed to add city. Please try again.');
   }
 }
 
@@ -553,11 +568,16 @@ async function toggleService(id, enabled) {
         price_per_hour: service.price_per_hour,
       }),
     });
+
+    // ✅ Update local state
+    service.enabled = enabled;
+    renderServices();
   } catch (error) {
     console.error('Failed to update service:', error);
-    loadServices();
+    alert('Failed to update service. Please try again.');
   }
 }
+
 
 function showAddServiceModal() {
   document.getElementById('service-modal-title').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.addServiceTitle) || 'Add New Service';
