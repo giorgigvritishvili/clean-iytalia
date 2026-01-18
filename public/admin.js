@@ -131,6 +131,25 @@ async function loadDashboardData() {
     loadContactInfo(),
   ]);
 }
+async function loadContactInfo() {
+  try {
+    const res = await fetch('/api/admin/contact', {
+      credentials: 'include',
+      cache: "no-store"
+    });
+
+    if (!res.ok) return;
+
+    const c = await res.json();
+
+    document.getElementById('contact-email').value = c.email || '';
+    document.getElementById('contact-phone').value = c.phone || '';
+    document.getElementById('contact-whatsapp').value = c.whatsapp || '';
+
+  } catch (e) {
+    console.error('Failed to load contact info', e);
+  }
+}
 
 async function loadStats() {
   try {
@@ -866,30 +885,34 @@ function loadMyProjects() {
 
 async function saveContactInfo() {
   try {
-    const email = (document.getElementById('contact-email') || {}).value || '';
-    const phone = (document.getElementById('contact-phone') || {}).value || '';
-    const whatsapp = (document.getElementById('contact-whatsapp') || {}).value || '';
+    const email = document.getElementById('contact-email')?.value || '';
+    const phone = document.getElementById('contact-phone')?.value || '';
+    const whatsapp = document.getElementById('contact-whatsapp')?.value || '';
 
     const res = await fetch('/api/admin/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
+      cache: "no-store",
       body: JSON.stringify({ email, phone, whatsapp }),
     });
 
+    // 🔥 ძალიან მნიშვნელოვანია — 204 წარმატებაც უნდა მივიღოთ!
     if (res.ok) {
-      alert('Contact info saved');
-      
-      await loadContactInfo();
-    } else {
-      const txt = await res.text();
-      throw new Error(txt || 'Save failed');
+      alert('Contact info saved ✅');
+      await loadContactInfo(); // თავიდან ვტვირთავთ სერვერიდან
+      return;
     }
+
+    const txt = await res.text();
+    throw new Error(txt || 'Save failed');
+
   } catch (e) {
     console.error('Failed to save contact info', e);
-    alert('Failed to save contact info');
+    alert('Failed to save contact info ❌');
   }
 }
+
 
 function filterMyProjects() {
  
