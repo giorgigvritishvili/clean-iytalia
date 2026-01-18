@@ -134,17 +134,26 @@ async function loadDashboardData() {
 
 async function loadStats() {
   try {
-    const response = await fetch('/api/admin/stats', { credentials: 'include' });
-    const stats = await response.json();
+    // 1️⃣ Load bookings
+    const response = await fetch('/api/admin/bookings', { credentials: 'include' });
+    bookings = await response.json();
 
-    document.getElementById('stat-total').textContent = stats.totalBookings;
-    document.getElementById('stat-pending').textContent = stats.pendingBookings;
-    document.getElementById('stat-confirmed').textContent = stats.confirmedBookings;
-    document.getElementById('stat-revenue').textContent = `€${stats.totalRevenue.toFixed(2)}`;
+    // 2️⃣ Compute stats
+    const totalBookings = bookings.length;
+    const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+    const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
+    const totalRevenue = bookings.reduce((sum, b) => sum + parseFloat(b.total_amount || 0), 0);
+
+    // 3️⃣ Update UI
+    document.getElementById('stat-total').textContent = totalBookings;
+    document.getElementById('stat-pending').textContent = pendingBookings;
+    document.getElementById('stat-confirmed').textContent = confirmedBookings;
+    document.getElementById('stat-revenue').textContent = `€${totalRevenue.toFixed(2)}`;
   } catch (error) {
     console.error('Failed to load stats:', error);
   }
 }
+
 
 async function loadBookings() {
   try {
