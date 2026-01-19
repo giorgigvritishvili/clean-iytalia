@@ -27,6 +27,7 @@ window.onLanguageChange = function(lang) {
   try {
     renderServices();
     renderCities();
+    renderWorkers();
     renderRecentBookings();
     renderAllBookings();
     // update modal button texts if modal present
@@ -515,17 +516,24 @@ function showAddCityModal() {
 }
 
 async function addCity() {
-  const name = document.getElementById('city-name').value;
-  const nameIt = document.getElementById('city-name-it').value;
+  const name = document.getElementById('city-name').value.trim();
+  const nameIt = document.getElementById('city-name-it').value.trim();
+  const nameKa = document.getElementById('city-name-ka').value.trim();
+  const nameRu = document.getElementById('city-name-ru').value.trim();
   const start = document.getElementById('city-start').value;
   const end = document.getElementById('city-end').value;
   const checkedDays = Array.from(document.querySelectorAll('#city-form .checkbox-group input:checked'))
                             .map(cb => cb.value);
 
-  if (!name || !nameIt) {
-    alert('Please fill in all required fields');
+  if (!name) {
+    alert('Please fill in the English name');
     return;
   }
+
+  // Fill empty localized fields with English name as fallback
+  const finalNameIt = nameIt || name;
+  const finalNameKa = nameKa || name;
+  const finalNameRu = nameRu || name;
 
   try {
     const response = await fetch('/api/admin/cities', {
@@ -534,7 +542,9 @@ async function addCity() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name,
-        name_it: nameIt,
+        name_it: finalNameIt,
+        name_ka: finalNameKa,
+        name_ru: finalNameRu,
         working_days: checkedDays.join(','),
         working_hours_start: start,
         working_hours_end: end,
@@ -542,17 +552,8 @@ async function addCity() {
     });
 
     if (response.ok) {
-      const newCity = await response.json();
-
-      // ✅ Add to local state
-      cities.push(newCity);
-      renderCities();
+      await loadCities(); // Reload from server to get updated data
       closeModal('city-modal');
-      if (response.ok) {
-  await loadCities(); // 🔥 თავიდან ვტვირთავთ server-იდან
-  closeModal('city-modal');
-}
-
     } else {
       throw new Error('Failed to add city');
     }
@@ -662,8 +663,12 @@ function showEditServiceModal(id) {
   document.getElementById('service-modal-title').textContent = (getAdminTranslations().actions && getAdminTranslations().actions.editService) || 'Edit Service';
   document.getElementById('service-name').value = service.name;
   document.getElementById('service-name-it').value = service.name_it;
+  document.getElementById('service-name-ka').value = service.name_ka || '';
+  document.getElementById('service-name-ru').value = service.name_ru || '';
   document.getElementById('service-description').value = service.description;
   document.getElementById('service-description-it').value = service.description_it;
+  document.getElementById('service-description-ka').value = service.description_ka || '';
+  document.getElementById('service-description-ru').value = service.description_ru || '';
   document.getElementById('service-price').value = service.price_per_hour;
   document.getElementById('service-enabled').value = service.enabled.toString();
 
@@ -673,17 +678,29 @@ function showEditServiceModal(id) {
 }
 
 async function saveService(id = null) {
-  const name = document.getElementById('service-name').value;
-  const nameIt = document.getElementById('service-name-it').value;
-  const description = document.getElementById('service-description').value;
-  const descriptionIt = document.getElementById('service-description-it').value;
+  const name = document.getElementById('service-name').value.trim();
+  const nameIt = document.getElementById('service-name-it').value.trim();
+  const nameKa = document.getElementById('service-name-ka').value.trim();
+  const nameRu = document.getElementById('service-name-ru').value.trim();
+  const description = document.getElementById('service-description').value.trim();
+  const descriptionIt = document.getElementById('service-description-it').value.trim();
+  const descriptionKa = document.getElementById('service-description-ka').value.trim();
+  const descriptionRu = document.getElementById('service-description-ru').value.trim();
   const price = parseFloat(document.getElementById('service-price').value);
   const enabled = document.getElementById('service-enabled').value === 'true';
 
-  if (!name || !nameIt || !description || !descriptionIt || isNaN(price)) {
-    alert((getAdminTranslations().messages && getAdminTranslations().messages.pleaseFillFields) || 'Please fill in all required fields');
+  if (!name || !description || isNaN(price)) {
+    alert('Please fill in the English name, description, and price');
     return;
   }
+
+  // Fill empty localized fields with English as fallback
+  const finalNameIt = nameIt || name;
+  const finalNameKa = nameKa || name;
+  const finalNameRu = nameRu || name;
+  const finalDescriptionIt = descriptionIt || description;
+  const finalDescriptionKa = descriptionKa || description;
+  const finalDescriptionRu = descriptionRu || description;
 
   try {
     const method = id ? 'PUT' : 'POST';
@@ -694,9 +711,13 @@ async function saveService(id = null) {
       credentials: 'include',
       body: JSON.stringify({
         name,
-        name_it: nameIt,
+        name_it: finalNameIt,
+        name_ka: finalNameKa,
+        name_ru: finalNameRu,
         description,
-        description_it: descriptionIt,
+        description_it: finalDescriptionIt,
+        description_ka: finalDescriptionKa,
+        description_ru: finalDescriptionRu,
         price_per_hour: price,
         enabled,
       }),
@@ -708,9 +729,9 @@ async function saveService(id = null) {
     } else {
       throw new Error('Failed to save service');
     }
-    } catch (error) {
+  } catch (error) {
     console.error('Failed to save service:', error);
-    alert((getAdminTranslations().messages && getAdminTranslations().messages.failedSaveService) || 'Failed to save service. Please try again.');
+    alert('Failed to save service. Please try again.');
   }
 }
 
@@ -997,10 +1018,51 @@ function generateCommissionReport() {
   alert((getAdminTranslations().messages && getAdminTranslations().messages.commissionReportPlaceholder) || 'La generazione del rapporto delle commissioni sarà implementata qui.');
 }
 
-function loadWorkers() {
-  // TODO: Load workers data
+async function loadWorkers() {
+  try {
+    const response = await fetch('/api/admin/workers', {
+      credentials: 'include',
+      cache: "no-store"
+    });
+
+    if (!response.ok) throw new Error("Failed to load workers");
+
+    workers = await response.json();
+    renderWorkers();
+  } catch (error) {
+    console.error('Failed to load workers:', error);
+  }
+}
+
+function renderWorkers() {
   const grid = document.getElementById('workers-grid');
-  grid.innerHTML = '<div class="admin-card"><p>Workers will be loaded here...</p></div>';
+
+  grid.innerHTML = workers.map(worker => `
+    <div class="admin-card">
+      <h4>
+        ${worker.name}
+        <div class="card-actions">
+          <button class="btn btn-sm btn-secondary" onclick="showEditWorkerModal(${worker.id})" title="${getAdminTranslations().actions?.editWorker || 'Edit Worker'}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteWorker(${worker.id})" title="${getAdminTranslations().actions?.deleteWorker || 'Delete'}">
+            <i class="fas fa-trash"></i>
+          </button>
+          <label class="toggle-switch">
+            <input type="checkbox" ${worker.active ? 'checked' : ''} onchange="toggleWorker(${worker.id}, this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </h4>
+      <div class="card-details">
+        <p><i class="fas fa-envelope"></i> ${worker.email}</p>
+        <p><i class="fas fa-phone"></i> ${worker.phone}</p>
+        <p><i class="fas fa-star"></i> Rating: ${worker.rating}/5.0</p>
+        <p><i class="fas fa-check-circle"></i> Completed Jobs: ${worker.completed_jobs}</p>
+        <p><i class="fas fa-tools"></i> Specialties: ${worker.specialties.join(', ')}</p>
+      </div>
+    </div>
+  `).join('');
 }
 
 function showAddProjectModal() {
@@ -1009,6 +1071,148 @@ function showAddProjectModal() {
 }
 
 function showAddWorkerModal() {
-  // TODO: Show add worker modal
-  alert((getAdminTranslations().messages && getAdminTranslations().messages.addWorkerPlaceholder) || 'La finestra per aggiungere un operatore sarà implementata qui.');
+  document.getElementById('worker-modal-title').textContent = 'Add New Worker';
+  document.getElementById('worker-form').reset();
+  document.getElementById('worker-submit-btn').textContent = 'Add Worker';
+  document.getElementById('worker-submit-btn').onclick = saveWorker;
+  document.getElementById('worker-modal').classList.add('active');
+}
+
+function showEditWorkerModal(id) {
+  const worker = workers.find(w => w.id === id);
+  if (!worker) return;
+
+  document.getElementById('worker-modal-title').textContent = 'Edit Worker';
+  document.getElementById('worker-name').value = worker.name;
+  document.getElementById('worker-email').value = worker.email;
+  document.getElementById('worker-phone').value = worker.phone;
+  document.getElementById('worker-rating').value = worker.rating;
+  document.getElementById('worker-jobs').value = worker.completed_jobs;
+  document.getElementById('worker-active').value = worker.active.toString();
+
+  // Populate specialties
+  const container = document.getElementById('specialties-container');
+  container.innerHTML = '';
+  worker.specialties.forEach(specialty => {
+    addSpecialty(specialty);
+  });
+
+  document.getElementById('worker-submit-btn').textContent = 'Update Worker';
+  document.getElementById('worker-submit-btn').onclick = () => saveWorker(id);
+  document.getElementById('worker-modal').classList.add('active');
+}
+
+function addSpecialty(value = '') {
+  const container = document.getElementById('specialties-container');
+  const item = document.createElement('div');
+  item.className = 'specialty-item';
+  item.innerHTML = `
+    <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning" value="${value}">
+    <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
+  `;
+  container.appendChild(item);
+}
+
+function removeSpecialty(button) {
+  button.parentElement.remove();
+}
+
+async function saveWorker(id = null) {
+  const name = document.getElementById('worker-name').value;
+  const email = document.getElementById('worker-email').value;
+  const phone = document.getElementById('worker-phone').value;
+  const rating = parseFloat(document.getElementById('worker-rating').value);
+  const completedJobs = parseInt(document.getElementById('worker-jobs').value);
+  const active = document.getElementById('worker-active').value === 'true';
+
+  // Get specialties
+  const specialtyInputs = document.querySelectorAll('.specialty-input');
+  const specialties = Array.from(specialtyInputs).map(input => input.value.trim()).filter(val => val);
+
+  if (!name || !email || !phone || specialties.length === 0) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/admin/workers/${id}` : '/api/admin/workers';
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        specialties,
+        rating,
+        completed_jobs: completedJobs,
+        active,
+      }),
+    });
+
+    if (response.ok) {
+      closeModal('worker-modal');
+      loadWorkers();
+    } else {
+      throw new Error('Failed to save worker');
+    }
+  } catch (error) {
+    console.error('Failed to save worker:', error);
+    alert('Failed to save worker. Please try again.');
+  }
+}
+
+async function deleteWorker(id) {
+  if (!confirm('Are you sure you want to delete this worker? This action cannot be undone.')) return;
+
+  try {
+    const response = await fetch(`/api/admin/workers/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      cache: "no-store"
+    });
+
+    if (response.ok) {
+      loadWorkers();
+    } else {
+      throw new Error('Failed to delete worker');
+    }
+  } catch (error) {
+    console.error('Failed to delete worker:', error);
+    alert('Failed to delete worker. Please try again.');
+  }
+}
+
+async function toggleWorker(id, active) {
+  try {
+    const worker = workers.find(w => w.id === id);
+    if (!worker) throw new Error("Worker not found");
+
+    const res = await fetch(`/api/admin/workers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      cache: "no-store",
+      body: JSON.stringify({
+        active,
+        name: worker.name,
+        email: worker.email,
+        phone: worker.phone,
+        specialties: worker.specialties,
+        rating: worker.rating,
+        completed_jobs: worker.completed_jobs,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Server update failed");
+
+    await loadWorkers();
+
+  } catch (error) {
+    console.error('Failed to update worker:', error);
+    alert('Failed to update worker. Please try again.');
+    await loadWorkers();
+  }
 }

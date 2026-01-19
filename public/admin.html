@@ -588,12 +588,20 @@
       </div>
       <form id="city-form" class="modal-body">
         <div class="form-group">
-          <label>City Name (English)</label>
-          <input type="text" id="city-name" required placeholder="e.g., Florence">
+          <label data-i18n="admin.form.cityNameEn">City Name (English)</label>
+          <input type="text" id="city-name" required data-i18n-placeholder="admin.form.cityNameEnPlaceholder" placeholder="e.g., Florence">
         </div>
         <div class="form-group">
-          <label>City Name (Italian)</label>
-          <input type="text" id="city-name-it" required placeholder="e.g., Firenze">
+          <label data-i18n="admin.form.cityNameIt">City Name (Italian)</label>
+          <input type="text" id="city-name-it" required data-i18n-placeholder="admin.form.cityNameItPlaceholder" placeholder="e.g., Firenze">
+        </div>
+        <div class="form-group">
+          <label data-i18n="admin.form.cityNameKa">City Name (Georgian)</label>
+          <input type="text" id="city-name-ka" required data-i18n-placeholder="admin.form.cityNameKaPlaceholder" placeholder="e.g., ფლორენცია">
+        </div>
+        <div class="form-group">
+          <label data-i18n="admin.form.cityNameRu">City Name (Russian)</label>
+          <input type="text" id="city-name-ru" required data-i18n-placeholder="admin.form.cityNameRuPlaceholder" placeholder="e.g., Флоренция">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -641,12 +649,28 @@
           <input type="text" id="service-name-it" required data-i18n-placeholder="admin.form.serviceNameItPlaceholder" placeholder="e.g., Pulizia Regolare">
         </div>
         <div class="form-group">
+          <label data-i18n="admin.form.serviceNameKa">Service Name (Georgian)</label>
+          <input type="text" id="service-name-ka" required data-i18n-placeholder="admin.form.serviceNameKaPlaceholder" placeholder="e.g., რეგულარული დასუფავება">
+        </div>
+        <div class="form-group">
+          <label data-i18n="admin.form.serviceNameRu">Service Name (Russian)</label>
+          <input type="text" id="service-name-ru" required data-i18n-placeholder="admin.form.serviceNameRuPlaceholder" placeholder="e.g., Регулярная уборка">
+        </div>
+        <div class="form-group">
           <label data-i18n="admin.form.descriptionEn">Description (English)</label>
           <textarea id="service-description" required data-i18n-placeholder="admin.form.descriptionEnPlaceholder" placeholder="Describe the service in English"></textarea>
         </div>
         <div class="form-group">
           <label data-i18n="admin.form.descriptionIt">Description (Italian)</label>
           <textarea id="service-description-it" required data-i18n-placeholder="admin.form.descriptionItPlaceholder" placeholder="Descrivi il servizio in italiano"></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="admin.form.descriptionKa">Description (Georgian)</label>
+          <textarea id="service-description-ka" required data-i18n-placeholder="admin.form.descriptionKaPlaceholder" placeholder="აღწერეთ სერვისი ქართულად"></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="admin.form.descriptionRu">Description (Russian)</label>
+          <textarea id="service-description-ru" required data-i18n-placeholder="admin.form.descriptionRuPlaceholder" placeholder="Опишите услугу на русском"></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -665,6 +689,60 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('service-modal')" data-i18n="admin.actions.cancel">Cancel</button>
         <button class="btn btn-primary" id="service-submit-btn" onclick="saveService()" data-i18n="admin.actions.addService">Add Service</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="worker-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="worker-modal-title">Add New Worker</h3>
+        <button class="modal-close" onclick="closeModal('worker-modal')">&times;</button>
+      </div>
+      <form id="worker-form" class="modal-body">
+        <div class="form-group">
+          <label>Worker Name</label>
+          <input type="text" id="worker-name" required placeholder="e.g., Mario Rossi">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="worker-email" required placeholder="mario@example.com">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="worker-phone" required placeholder="+39 123 456 789">
+        </div>
+        <div class="form-group">
+          <label>Specialties</label>
+          <div id="specialties-container">
+            <div class="specialty-item">
+              <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning">
+              <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="addSpecialty()">Add Specialty</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Rating</label>
+            <input type="number" id="worker-rating" min="0" max="5" step="0.1" value="4.5">
+          </div>
+          <div class="form-group">
+            <label>Completed Jobs</label>
+            <input type="number" id="worker-jobs" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="worker-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('worker-modal')">Cancel</button>
+        <button class="btn btn-primary" id="worker-submit-btn" onclick="saveWorker()">Add Worker</button>
       </div>
     </div>
   </div>

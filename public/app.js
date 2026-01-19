@@ -228,9 +228,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadServices() {
     const select = document.getElementById('service-select');
     const grid = document.getElementById('services-grid');
-    
+
     try {
-        const response = await fetch('/api/services');
+        const response = await fetch('/api/services', { cache: "no-store" });
         if (!response.ok) throw new Error('Backend not found');
         services = await response.json();
     } catch (error) {
@@ -275,7 +275,6 @@ async function loadCities() {
 
   try {
     let response;
-    // ვცდილობთ სერვერიდან წამოღებას
     try {
       response = await fetch('/api/cities');
       if (response.ok) {
@@ -284,22 +283,19 @@ async function loadCities() {
         throw new Error('Server error');
       }
     } catch (apiError) {
-      // თუ სერვერი არ არის, ვიყენებთ ჩაშენებულ "embeddedCities"-ს
       console.warn('API connection failed, using embedded city data');
       cities = embeddedCities;
     }
 
-    // სელექტის გასუფთავება და შევსება
     select.innerHTML = `<option value="" data-i18n="booking.selectCity">Select a city</option>`;
-    
+
     cities.forEach(city => {
       const option = document.createElement('option');
       option.value = city.id;
-      
-      // ენის მიხედვით სახელის შერჩევა (Fallback ლოგიკით)
-      const lang = (typeof currentLanguage !== 'undefined') ? currentLanguage : 'it';
-      const cityName = city[`name_${lang}`] || city.name_it || city.name || 'Unknown City';
-      
+
+      const lang = (typeof currentLanguage !== 'undefined') ? currentLanguage : 'en';
+      const cityName = city[`name_${lang}`] || city.name || city.name_it || city.name_ka || city.name_ru || 'Unknown City';
+
       option.textContent = cityName;
       select.appendChild(option);
     });
@@ -309,76 +305,7 @@ async function loadCities() {
   }
 }
 
-  // helper to pick localized fields from service objects (e.g. name_it, name_ru)
-  function getLocalizedField(obj, base, lang) {
-    if (!obj) return '';
-    const key = `${base}_${lang}`;
-    if (obj[key]) return obj[key];
-    // prefer English fallback when available
-    if (obj[base]) return obj[base];
-    // then Italian
-    if (obj[`${base}_it`]) return obj[`${base}_it`];
-    return '';
-  }
 
-  services.forEach(service => {
-    const option = document.createElement('option');
-    option.value = service.id;
-    option.textContent = getLocalizedField(service, 'name', currentLanguage);
-    option.dataset.price = service.price_per_hour;
-    select.appendChild(option);
-
-    const icon = serviceIcons[service.name] || 'fa-sparkles';
-    const card = document.createElement('div');
-    card.className = 'service-card';
-    card.dataset.id = service.id;
-    const serviceName = getLocalizedField(service, 'name', currentLanguage);
-    const serviceDescription = getLocalizedField(service, 'description', currentLanguage) || service.description || '';
-    const hourLabel = currentLanguage === 'it' ? '/ora' : '/hour';
-    card.innerHTML = `
-      <div class="service-icon">
-        <i class="fas ${icon}"></i>
-      </div>
-      <h3>${serviceName}</h3>
-      <p>${serviceDescription}</p>
-      <div class="service-price">€${parseFloat(service.price_per_hour).toFixed(2)} <span>${hourLabel}</span></div>
-    `;
-    card.addEventListener('click', () => selectServiceCard(service.id));
-    grid.appendChild(card);
-  });
-  // If a service is already selected (e.g., on language reload), apply addon filtering
-  const currentServiceId = document.getElementById('service-select')?.value;
-  if (currentServiceId) {
-    selectedService = services.find(s => s.id === parseInt(currentServiceId));
-    try { filterAddonsForService(selectedService); } catch (e) { console.warn('filterAddonsForService error', e); }
-  }
-
-
-async function loadCities() {
-  try {
-    let response;
-    try {
-      response = await fetch('/api/cities');
-      cities = await response.json();
-    } catch (apiError) {
-      console.warn('API fetch failed, loading from local file:', apiError);
-      response = await fetch('data/cities.json');
-      cities = await response.json();
-    }
-    const select = document.getElementById('city-select');
-    // clear and repopulate so language changes take effect
-    select.innerHTML = `<option value="" data-i18n="booking.selectCity">Select a city</option>`;
-    cities.forEach(city => {
-      const option = document.createElement('option');
-      option.value = city.id;
-      const nameKey = `name_${currentLanguage}`;
-      option.textContent = city[nameKey] || city.name || city.name_it || '';
-      select.appendChild(option);
-    });
-  } catch (error) {
-    console.error('Error loading cities:', error);
-  }
-}
 
 // Called by translations.js when language changes
 window.onLanguageChange = function(lang) {
@@ -874,6 +801,13 @@ function toggleFaq(button) {
   const item = button.closest('.faq-item');
   item.classList.toggle('active');
 }
+
+window.onLanguageChange = function(lang) {
+  loadCities();
+  loadServices();
+  updateBookingFormLabels();
+  updatePrice();
+};
 
 function initCookieBanner() {
   const consent = localStorage.getItem('cookieConsent');

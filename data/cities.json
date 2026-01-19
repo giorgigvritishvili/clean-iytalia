@@ -20,5 +20,34 @@
     "working_days": "1,2,3,4,5,6,7",
     "working_hours_start": "09:00",
     "working_hours_end": "17:30"
+  },
+  {
+    "id": 3,
+    "name": "e.g florence",
+    "name_it": "e.g florence",
+    "enabled": false,
+    "working_days": "1,2,3,4,5",
+    "working_hours_start": "08:00",
+    "working_hours_end": "18:00"
+  },
+  {
+    "id": 4,
+    "name": "e.g florence",
+    "name_it": "e.g florence",
+    "enabled": false,
+    "working_days": "1,2,3,4,5",
+    "working_hours_start": "08:00",
+    "working_hours_end": "18:00"
+  },
+  {
+    "id": 5,
+    "name": "tbilisi",
+    "name_it": "tbilisi",
+    "name_ka": "თბილისი",
+    "name_ru": "е.д., Флоренция",
+    "enabled": false,
+    "working_days": "1,2,3,4,5",
+    "working_hours_start": "08:00",
+    "working_hours_end": "18:00"
   }
 ]

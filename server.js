@@ -21,6 +21,7 @@ const citiesFilePath = path.join(dataDir, 'data', 'cities.json');
 const bookingsFilePath = path.join(dataDir, 'data', 'bookings.json');
 const blockedSlotsFilePath = path.join(dataDir, 'data', 'blockedSlots.json');
 const adminsFilePath = path.join(dataDir, 'data', 'admins.json');
+const workersFilePath = path.join(dataDir, 'data', 'workers.json');
 
 // Load data from files
 let services = [];
@@ -28,6 +29,7 @@ let cities = [];
 let bookings = [];
 let blockedSlots = [];
 let admins = [];
+let workers = [];
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -139,6 +141,40 @@ function loadData() {
     console.error('Failed to load admins:', err);
     if (services.length === 0) saveData(services, servicesFilePath);
   if (cities.length === 0) saveData(cities, citiesFilePath);
+  }
+
+  try {
+    if (fs.existsSync(workersFilePath)) {
+      workers = JSON.parse(fs.readFileSync(workersFilePath, 'utf8'));
+    } else {
+      workers = [
+        {
+          "id": 1,
+          "name": "Mario Rossi",
+          "email": "mario@example.com",
+          "phone": "+39 123 456 789",
+          "specialties": ["Regular Cleaning", "Deep Cleaning"],
+          "rating": 4.8,
+          "completed_jobs": 45,
+          "active": true,
+          "created_at": "2024-01-15"
+        },
+        {
+          "id": 2,
+          "name": "Giulia Bianchi",
+          "email": "giulia@example.com",
+          "phone": "+39 987 654 321",
+          "specialties": ["Move-in/Move-out", "Regular Cleaning"],
+          "rating": 4.9,
+          "completed_jobs": 32,
+          "active": true,
+          "created_at": "2024-02-01"
+        }
+      ];
+      saveData(workers, workersFilePath);
+    }
+  } catch (err) {
+    console.error('Failed to load workers:', err);
   }
 }
 
@@ -634,13 +670,17 @@ app.get('/api/admin/cities', (req, res) => {
 app.put('/api/admin/cities/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { enabled, working_days, working_hours_start, working_hours_end } = req.body;
+    const { name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end } = req.body;
 
     const cityIndex = cities.findIndex(c => c.id == id);
     if (cityIndex === -1) {
       return res.status(404).json({ error: 'City not found' });
     }
 
+    if (name !== undefined) cities[cityIndex].name = name;
+    if (name_it !== undefined) cities[cityIndex].name_it = name_it;
+    if (name_ka !== undefined) cities[cityIndex].name_ka = name_ka;
+    if (name_ru !== undefined) cities[cityIndex].name_ru = name_ru;
     cities[cityIndex].enabled = enabled;
     cities[cityIndex].working_days = working_days;
     cities[cityIndex].working_hours_start = working_hours_start;
@@ -656,13 +696,15 @@ app.put('/api/admin/cities/:id', (req, res) => {
 
 app.post('/api/admin/cities', (req, res) => {
   try {
-    const { name, name_it, working_days, working_hours_start, working_hours_end } = req.body;
+    const { name, name_it, name_ka, name_ru, working_days, working_hours_start, working_hours_end } = req.body;
 
     const newId = Math.max(...cities.map(c => c.id)) + 1;
     const newCity = {
       id: newId,
       name,
       name_it,
+      name_ka,
+      name_ru,
       enabled: true,
       working_days: working_days || '1,2,3,4,5',
       working_hours_start: working_hours_start || '08:00',
@@ -690,7 +732,7 @@ app.get('/api/admin/services', (req, res) => {
 app.put('/api/admin/services/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
+    const { name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled } = req.body;
 
     const serviceIndex = services.findIndex(s => s.id == id);
     if (serviceIndex === -1) {
@@ -699,8 +741,12 @@ app.put('/api/admin/services/:id', (req, res) => {
 
     services[serviceIndex].name = name;
     services[serviceIndex].name_it = name_it;
+    if (name_ka !== undefined) services[serviceIndex].name_ka = name_ka;
+    if (name_ru !== undefined) services[serviceIndex].name_ru = name_ru;
     services[serviceIndex].description = description;
     services[serviceIndex].description_it = description_it;
+    if (description_ka !== undefined) services[serviceIndex].description_ka = description_ka;
+    if (description_ru !== undefined) services[serviceIndex].description_ru = description_ru;
     services[serviceIndex].price_per_hour = price_per_hour;
     services[serviceIndex].enabled = enabled;
     saveData(services, servicesFilePath);
@@ -714,15 +760,19 @@ app.put('/api/admin/services/:id', (req, res) => {
 
 app.post('/api/admin/services', (req, res) => {
   try {
-    const { name, name_it, description, description_it, price_per_hour, enabled } = req.body;
+    const { name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled } = req.body;
 
     const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
     const newService = {
       id: newId,
       name,
       name_it,
+      name_ka,
+      name_ru,
       description,
       description_it,
+      description_ka,
+      description_ru,
       price_per_hour: parseFloat(price_per_hour),
       enabled: enabled !== undefined ? enabled : true
     };
