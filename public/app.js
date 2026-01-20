@@ -702,7 +702,7 @@ async function handleBookingSubmit(e) {
         }
       }
 
-      if (paymentIntent.status !== 'succeeded') {
+      if (paymentIntent.status !== 'requires_capture') {
         throw new Error(currentLanguage === 'it' ? 'Pagamento fallito. Riprova.' : 'Payment failed. Please try again.');
       }
     } else {

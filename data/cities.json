@@ -45,7 +45,7 @@
     "name_it": "tbilisi",
     "name_ka": "თბილისი",
     "name_ru": "е.д., Флоренция",
-    "enabled": false,
+    "enabled": true,
     "working_days": "1,2,3,4,5",
     "working_hours_start": "08:00",
     "working_hours_end": "18:00"

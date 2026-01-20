@@ -6,11 +6,13 @@ let bookingPollingInterval = null; // For real-time updates
 function saveLocalData() {
   localStorage.setItem('cities', JSON.stringify(cities));
   localStorage.setItem('services', JSON.stringify(services));
+  localStorage.setItem('workers', JSON.stringify(workers));
 }
 
 function loadLocalData() {
   cities = JSON.parse(localStorage.getItem('cities') || '[]');
   services = JSON.parse(localStorage.getItem('services') || '[]');
+  workers = JSON.parse(localStorage.getItem('workers') || '[]');
 }
 
 

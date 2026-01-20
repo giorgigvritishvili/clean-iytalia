@@ -25,3 +25,10 @@
 - [x] Workers data saved to data/workers.json
 - [x] Cities and services data properly reloaded on language change
 - [x] All changes persist after site refresh
+
+## New Tasks to Fix Issues
+- [ ] Add missing worker API routes in server.js (GET, POST, PUT, DELETE /api/admin/workers)
+- [ ] Modify booking confirmation to not auto-capture payment
+- [ ] Add localStorage backup for cities/services in admin panel
+- [ ] Ensure bookings persistence (they should already be persistent)
+- [ ] Test all fixes
