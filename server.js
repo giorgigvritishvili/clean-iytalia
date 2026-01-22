@@ -11,7 +11,14 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+try {
+  if (process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+} catch (error) {
+  console.warn('Stripe not configured:', error.message);
+}
 // Data directory (use /tmp on Vercel for writable storage)
 const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
 
@@ -303,14 +310,25 @@ app.post('/api/bookings', async (req, res) => {
       totalAmount, paymentIntentId, notes, additionalServices, supplies
     } = req.body;
 
+    // Ensure service_id and city_id are numbers
+    const service_id = parseInt(serviceId, 10);
+    const city_id = parseInt(cityId, 10);
+
+    // Ensure total_amount is a number
+    const total_amount = typeof totalAmount === 'object' && totalAmount.total ? parseFloat(totalAmount.total) : parseFloat(totalAmount);
+
+    // Combine address fields
+    const customer_address = `${streetName} ${houseNumber}${doorbellName ? ', ' + doorbellName : ''}`.trim();
+
     const newId = bookings.length > 0 ? Math.max(...bookings.map(b => b.id)) + 1 : 1;
     const newBooking = {
       id: newId,
-      service_id: serviceId,
-      city_id: cityId,
+      service_id,
+      city_id,
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
+      customer_address,
       street_name: streetName,
       house_number: houseNumber,
       property_size: propertySize,
@@ -319,7 +337,7 @@ app.post('/api/bookings', async (req, res) => {
       booking_time: bookingTime,
       hours,
       cleaners,
-      total_amount: totalAmount,
+      total_amount,
       payment_intent_id: paymentIntentId,
       notes,
       additional_services: additionalServices || [],
@@ -407,14 +425,15 @@ function requireAdmin(req, res, next) {
 app.get('/api/admin/bookings', (req, res) => {
   try {
     const bookingsWithDetails = bookings.map(booking => {
-      const service = services.find(s => s.id === booking.service_id);
-      const city = cities.find(c => c.id === booking.city_id);
+      const service = services.find(s => s.id == booking.service_id);
+      const city = cities.find(c => c.id == booking.city_id);
       return {
         ...booking,
         service_name: service ? service.name : '',
         service_name_it: service ? service.name_it : '',
         city_name: city ? city.name : '',
-        city_name_it: city ? city.name_it : ''
+        city_name_it: city ? city.name_it : '',
+        customer_address: booking.customer_address || `${booking.street_name || ''} ${booking.house_number || ''}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}`.trim()
       };
     });
     res.json(bookingsWithDetails);
@@ -879,7 +898,7 @@ if (process.env.VERCEL) {
   // When running on Vercel, export the Express app as the serverless handler.
   module.exports = app;
 } else {
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, 'localhost', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
