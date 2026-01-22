@@ -11,20 +11,33 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "stripe": "^12.0.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
-    "body-parser": "^1.20.2",
+    "express": "^4.22.1",
+    "express-session": "^1.17.3",
     "nodemailer": "^6.9.1",
     "pg": "^8.11.0",
-    "bcryptjs": "^2.4.3",
-    "express-session": "^1.17.3"
+    "stripe": "^12.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
   },
-  "keywords": ["cleaning", "booking", "stripe", "italy"],
+  "keywords": [
+    "cleaning",
+    "booking",
+    "stripe",
+    "italy"
+  ],
   "author": "Clear Italia",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giorgigvritishvili/clean-iytalia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/giorgigvritishvili/clean-iytalia/issues"
+  },
+  "homepage": "https://github.com/giorgigvritishvili/clean-iytalia#readme"
 }

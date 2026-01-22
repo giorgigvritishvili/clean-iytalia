@@ -11,14 +11,7 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-let stripe;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  }
-} catch (error) {
-  console.warn('Stripe not configured:', error.message);
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Data directory (use /tmp on Vercel for writable storage)
 const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
 
@@ -186,15 +179,56 @@ function loadData() {
 }
 
 function saveData(array, filePath) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
-  } catch (err) {
-    console.error('Failed to save data to', filePath, err);
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+  fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
 }
 
 // Load data on startup
 loadData();
+
+// Cancel expired pending bookings at startup and every hour
+const cancelExpiredBookings = async () => {
+  const now = new Date();
+  const expiredBookings = bookings.filter(booking => {
+    if (booking.status === 'pending' && booking.created_at) {
+      const createdAt = new Date(booking.created_at);
+      const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+      return hoursDiff > 24;
+    }
+    return false;
+  });
+
+  for (const booking of expiredBookings) {
+    const index = bookings.findIndex(b => b.id === booking.id);
+    if (booking.payment_intent_id && stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+      try {
+        await stripe.paymentIntents.cancel(booking.payment_intent_id);
+        bookings[index].status = 'cancelled';
+        bookings[index].stripe_status = 'expired';
+        bookings[index].updated_at = new Date().toISOString();
+        console.log(`Cancelled expired booking ${booking.id}`);
+      } catch (error) {
+        console.error('Error cancelling expired booking:', error);
+      }
+    } else {
+      bookings[index].status = 'cancelled';
+      bookings[index].stripe_status = 'expired';
+      bookings[index].updated_at = new Date().toISOString();
+    }
+  }
+
+  if (expiredBookings.length > 0) {
+    saveData(bookings, bookingsFilePath);
+  }
+};
+
+cancelExpiredBookings();
+
+// Check for expired pending bookings every hour
+setInterval(cancelExpiredBookings, 60 * 60 * 1000);
 
 app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
@@ -310,25 +344,14 @@ app.post('/api/bookings', async (req, res) => {
       totalAmount, paymentIntentId, notes, additionalServices, supplies
     } = req.body;
 
-    // Ensure service_id and city_id are numbers
-    const service_id = parseInt(serviceId, 10);
-    const city_id = parseInt(cityId, 10);
-
-    // Ensure total_amount is a number
-    const total_amount = typeof totalAmount === 'object' && totalAmount.total ? parseFloat(totalAmount.total) : parseFloat(totalAmount);
-
-    // Combine address fields
-    const customer_address = `${streetName} ${houseNumber}${doorbellName ? ', ' + doorbellName : ''}`.trim();
-
     const newId = bookings.length > 0 ? Math.max(...bookings.map(b => b.id)) + 1 : 1;
     const newBooking = {
       id: newId,
-      service_id,
-      city_id,
+      service_id: serviceId,
+      city_id: cityId,
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
-      customer_address,
       street_name: streetName,
       house_number: houseNumber,
       property_size: propertySize,
@@ -337,7 +360,7 @@ app.post('/api/bookings', async (req, res) => {
       booking_time: bookingTime,
       hours,
       cleaners,
-      total_amount,
+      total_amount: totalAmount,
       payment_intent_id: paymentIntentId,
       notes,
       additional_services: additionalServices || [],
@@ -425,15 +448,14 @@ function requireAdmin(req, res, next) {
 app.get('/api/admin/bookings', (req, res) => {
   try {
     const bookingsWithDetails = bookings.map(booking => {
-      const service = services.find(s => s.id == booking.service_id);
-      const city = cities.find(c => c.id == booking.city_id);
+      const service = services.find(s => s.id === booking.service_id);
+      const city = cities.find(c => c.id === booking.city_id);
       return {
         ...booking,
         service_name: service ? service.name : '',
         service_name_it: service ? service.name_it : '',
         city_name: city ? city.name : '',
-        city_name_it: city ? city.name_it : '',
-        customer_address: booking.customer_address || `${booking.street_name || ''} ${booking.house_number || ''}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}`.trim()
+        city_name_it: city ? city.name_it : ''
       };
     });
     res.json(bookingsWithDetails);
@@ -886,6 +908,88 @@ app.get('/api/admin/check-session', (req, res) => {
   res.json({ authenticated: !!token && adminTokens.has(token) });
 });
 
+// Worker management endpoints
+app.get('/api/admin/workers', requireAdmin, (req, res) => {
+  try {
+    res.json(workers);
+  } catch (error) {
+    console.error('Error fetching workers:', error);
+    res.status(500).json({ error: 'Failed to fetch workers' });
+  }
+});
+
+app.post('/api/admin/workers', requireAdmin, (req, res) => {
+  try {
+    const { name, email, phone, specialties, rating, completed_jobs, active } = req.body;
+
+    const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+    const newWorker = {
+      id: newId,
+      name,
+      email,
+      phone,
+      specialties: specialties || [],
+      rating: parseFloat(rating) || 0,
+      completed_jobs: parseInt(completed_jobs) || 0,
+      active: active !== undefined ? active : true,
+      created_at: new Date().toISOString()
+    };
+
+    workers.push(newWorker);
+    saveData(workers, workersFilePath);
+    res.json(newWorker);
+  } catch (error) {
+    console.error('Error adding worker:', error);
+    res.status(500).json({ error: 'Failed to add worker' });
+  }
+});
+
+app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, specialties, rating, completed_jobs, active } = req.body;
+
+    const workerIndex = workers.findIndex(w => w.id == id);
+    if (workerIndex === -1) {
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    workers[workerIndex] = {
+      ...workers[workerIndex],
+      name,
+      email,
+      phone,
+      specialties: specialties || [],
+      rating: parseFloat(rating) || 0,
+      completed_jobs: parseInt(completed_jobs) || 0,
+      active: active !== undefined ? active : workers[workerIndex].active
+    };
+
+    saveData(workers, workersFilePath);
+    res.json(workers[workerIndex]);
+  } catch (error) {
+    console.error('Error updating worker:', error);
+    res.status(500).json({ error: 'Failed to update worker' });
+  }
+});
+
+app.delete('/api/admin/workers/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const workerIndex = workers.findIndex(w => w.id == id);
+    if (workerIndex === -1) {
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    workers.splice(workerIndex, 1);
+    saveData(workers, workersFilePath);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting worker:', error);
+    res.status(500).json({ error: 'Failed to delete worker' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -898,7 +1002,7 @@ if (process.env.VERCEL) {
   // When running on Vercel, export the Express app as the serverless handler.
   module.exports = app;
 } else {
-  app.listen(PORT, 'localhost', () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

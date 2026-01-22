@@ -1,18 +1,19 @@
 let bookings = [];
 let cities = [];
 let services = [];
+let workers = [];
+
 let bookingPollingInterval = null; // For real-time updates
 
 function saveLocalData() {
   localStorage.setItem('cities', JSON.stringify(cities));
   localStorage.setItem('services', JSON.stringify(services));
-  localStorage.setItem('workers', JSON.stringify(workers));
+ 
 }
-
 function loadLocalData() {
   cities = JSON.parse(localStorage.getItem('cities') || '[]');
   services = JSON.parse(localStorage.getItem('services') || '[]');
-  workers = JSON.parse(localStorage.getItem('workers') || '[]');
+  
 }
 
 
@@ -136,6 +137,7 @@ async function loadDashboardData() {
     loadCities(),
     loadServices(),
     loadContactInfo(),
+    loadWorkers()
   ]);
 }
 async function loadContactInfo() {
@@ -309,6 +311,11 @@ function showBookingDetails(id) {
   ? booking.customer_phone.replace(/[^0-9+]/g, '').replace(/^00/, '+')
   : booking.customer_phone || '';
 
+  // Find service and city names if not already included
+  const service = services.find(s => s.id === booking.service_id);
+  const city = cities.find(c => c.id === booking.city_id);
+  const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'Unknown Service');
+  const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'Unknown City');
 
   details.innerHTML = `
     <div class="detail-grid">
@@ -334,11 +341,15 @@ function showBookingDetails(id) {
       </div>
       <div class="detail-item">
         <label>${Ltable.service || 'Service'}</label>
-        <span>${booking.service_name_it || booking.service_name}</span>
+        <span>${serviceName}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.city || 'City'}</label>
+        <span>${cityName}</span>
       </div>
       <div class="detail-item full-width">
         <label>Address</label>
-        <span>${booking.customer_address}</span>
+        <span>${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</span>
       </div>
       <div class="detail-item">
         <label>${Ltable.date || 'Date'}</label>
@@ -1061,7 +1072,21 @@ function renderWorkers() {
         <p><i class="fas fa-phone"></i> ${worker.phone}</p>
         <p><i class="fas fa-star"></i> Rating: ${worker.rating}/5.0</p>
         <p><i class="fas fa-check-circle"></i> Completed Jobs: ${worker.completed_jobs}</p>
-        <p><i class="fas fa-tools"></i> Specialties: ${worker.specialties.join(', ')}</p>
+        <p>
+  <i class="fas fa-tools"></i>
+  Specialties: ${(Array.isArray(worker.specialties) ? worker.specialties : []).join(', ')}
+</p>
+if (workers.length === 0) {
+  grid.innerHTML = `
+    <div class="admin-card">
+      <p style="text-align:center; color:var(--text-light)">
+        No workers added yet
+      </p>
+    </div>
+  `;
+}
+
+
       </div>
     </div>
   `).join('');
@@ -1123,8 +1148,9 @@ async function saveWorker(id = null) {
   const name = document.getElementById('worker-name').value;
   const email = document.getElementById('worker-email').value;
   const phone = document.getElementById('worker-phone').value;
-  const rating = parseFloat(document.getElementById('worker-rating').value);
-  const completedJobs = parseInt(document.getElementById('worker-jobs').value);
+  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
+const completedJobs = parseInt(document.getElementById('worker-jobs').value) || 0;
+
   const active = document.getElementById('worker-active').value === 'true';
 
   // Get specialties

@@ -435,7 +435,7 @@ function initDatePicker() {
 }
 
 function initStripe() {
-  // ვიყენებთ ახალ რეალურ Public Key-ს
+  // ვიყენებთ თქვენს რეალურ Public Key-ს
   const stripeKey = 'pk_live_51SmjBDKEJbAqCpEexQl7XBODjKtclKaI2zZbZA1Uo1o7ERRtemy2EBwD7hc3rXxb6Zk803ER19oN45cSKvKxE6Ah00MiBtYW9g';
 
   try {
