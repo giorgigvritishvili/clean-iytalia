@@ -1047,18 +1047,32 @@ async function loadWorkers() {
   }
 }
 
-function renderWorkers() {
+
+
+
+    function renderWorkers() {
   const grid = document.getElementById('workers-grid');
+
+  if (workers.length === 0) {
+    grid.innerHTML = `
+      <div class="admin-card">
+        <p style="text-align:center; color:var(--text-light)">
+          No workers added yet
+        </p>
+      </div>
+    `;
+    return;
+  }
 
   grid.innerHTML = workers.map(worker => `
     <div class="admin-card">
       <h4>
         ${worker.name}
         <div class="card-actions">
-          <button class="btn btn-sm btn-secondary" onclick="showEditWorkerModal(${worker.id})" title="${getAdminTranslations().actions?.editWorker || 'Edit Worker'}">
+          <button class="btn btn-sm btn-secondary" onclick="showEditWorkerModal(${worker.id})">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteWorker(${worker.id})" title="${getAdminTranslations().actions?.deleteWorker || 'Delete'}">
+          <button class="btn btn-sm btn-danger" onclick="deleteWorker(${worker.id})">
             <i class="fas fa-trash"></i>
           </button>
           <label class="toggle-switch">
@@ -1067,30 +1081,21 @@ function renderWorkers() {
           </label>
         </div>
       </h4>
+
       <div class="card-details">
         <p><i class="fas fa-envelope"></i> ${worker.email}</p>
         <p><i class="fas fa-phone"></i> ${worker.phone}</p>
         <p><i class="fas fa-star"></i> Rating: ${worker.rating}/5.0</p>
         <p><i class="fas fa-check-circle"></i> Completed Jobs: ${worker.completed_jobs}</p>
         <p>
-  <i class="fas fa-tools"></i>
-  Specialties: ${(Array.isArray(worker.specialties) ? worker.specialties : []).join(', ')}
-</p>
-if (workers.length === 0) {
-  grid.innerHTML = `
-    <div class="admin-card">
-      <p style="text-align:center; color:var(--text-light)">
-        No workers added yet
-      </p>
-    </div>
-  `;
-}
-
-
+          <i class="fas fa-tools"></i>
+          Specialties: ${(Array.isArray(worker.specialties) ? worker.specialties : []).join(', ')}
+        </p>
       </div>
     </div>
   `).join('');
 }
+
 
 function showAddProjectModal() {
   // TODO: Show add project modal
