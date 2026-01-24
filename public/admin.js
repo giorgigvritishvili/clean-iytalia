@@ -1319,57 +1319,52 @@ function removeSpecialty(button) {
   button.parentElement.remove();
 }
 
-async function saveWorker(id = null) {
+async function saveWorker() {
   const token = localStorage.getItem('adminToken');
 
+  // ვიღებთ მნიშვნელობებს ფორმიდან
   const name = document.getElementById('worker-name').value.trim();
   const email = document.getElementById('worker-email').value.trim();
   const phone = document.getElementById('worker-phone').value.trim();
-  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
-  const completed_jobs = parseInt(document.getElementById('worker-jobs').value) || 0;
-  const active = document.getElementById('worker-active').value === 'true';
+  const enabled = document.getElementById('worker-enabled').checked;
 
-  const specialties = Array.from(document.querySelectorAll('.specialty-input'))
-    .map(i => i.value.trim())
-    .filter(Boolean);
-
-  if (!name || !email || !phone || specialties.length === 0) {
-    alert('Fill all fields');
+  if (!name || !email) {
+    alert('Name and email are required');
     return;
   }
 
   try {
     const res = await fetch('/api/admin/workers', {
-      method: id ? 'PUT' : 'POST',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // 🔥 აუცილებელია
+        'Authorization': `Bearer ${token}`
       },
-      cache: 'no-store',
+      cache: 'no-store', 
       body: JSON.stringify({
         name,
         email,
         phone,
-        rating,
-        completed_jobs,
-        active,
-        specialties
+        enabled
       })
     });
 
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(t || 'Request failed');
+    if (res.ok) {
+      alert('Worker added ✅');
+      loadWorkers(); 
+      document.getElementById('worker-form').reset();
+      closeModal('worker-modal');
+    } else {
+      const text = await res.text();
+      throw new Error(text || 'Failed to add worker');
     }
 
-    closeModal('worker-modal');
-    await loadWorkers();
-
   } catch (e) {
-    console.error('Add worker failed', e);
-    alert('Failed add worker ❌');
+    console.error('Failed add worker ❌', e);
+    alert('Failed add worker ❌: ' + e.message);
   }
 }
+
 
 async function deleteWorker(id) {
   if (!confirm('Are you sure you want to delete this worker? This action cannot be undone.')) return;
