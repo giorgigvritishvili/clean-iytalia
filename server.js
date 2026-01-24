@@ -22,6 +22,7 @@ const bookingsFilePath = path.join(dataDir, 'data', 'bookings.json');
 const blockedSlotsFilePath = path.join(dataDir, 'data', 'blockedSlots.json');
 const adminsFilePath = path.join(dataDir, 'data', 'admins.json');
 const workersFilePath = path.join(dataDir, 'data', 'workers.json');
+const tokensFilePath = path.join(dataDir, 'data', 'tokens.json');
 
 // Load data from files
 let services = [];
@@ -45,8 +46,7 @@ app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(express.static('public'));
 
-// Simple token-based auth for serverless compatibility
-const adminTokens = new Map(); // token -> adminId
+let adminTokens = {}; // token -> adminId
 
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -175,6 +175,17 @@ function loadData() {
     }
   } catch (err) {
     console.error('Failed to load workers:', err);
+  }
+
+  try {
+    if (fs.existsSync(tokensFilePath)) {
+      adminTokens = JSON.parse(fs.readFileSync(tokensFilePath, 'utf8'));
+    } else {
+      adminTokens = {};
+      saveData(adminTokens, tokensFilePath);
+    }
+  } catch (err) {
+    console.error('Failed to load tokens:', err);
   }
 }
 
@@ -421,7 +432,8 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    adminTokens.set(token, admin.id);
+    adminTokens[token] = admin.id;
+    saveData(adminTokens, tokensFilePath);
     res.json({ success: true, message: 'Login successful', token });
   } catch (error) {
     console.error('Error during login:', error);
@@ -432,14 +444,15 @@ app.post('/api/admin/login', async (req, res) => {
 app.post('/api/admin/logout', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token) {
-    adminTokens.delete(token);
+    delete adminTokens[token];
+    saveData(adminTokens, tokensFilePath);
   }
   res.json({ success: true });
 });
 
 function requireAdmin(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token || !adminTokens.has(token)) {
+  if (!token || !adminTokens[token]) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -899,7 +912,7 @@ app.get('/api/admin/stats', (req, res) => {
 
 app.get('/api/admin/check-session', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  res.json({ authenticated: !!token && adminTokens.has(token) });
+  res.json({ authenticated: !!token && adminTokens[token] });
 });
 
 // Worker management endpoints
@@ -995,7 +1008,7 @@ app.get('/admin', (req, res) => {
 app.get('/api/admin/check-session', (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  if (token && adminTokens.has(token)) {
+  if (token && adminTokens[token]) {
     res.json({ authenticated: true });
   } else {
     res.json({ authenticated: false });
