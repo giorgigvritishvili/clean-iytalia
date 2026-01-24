@@ -1272,99 +1272,93 @@ function showAddProjectModal() {
   alert((getAdminTranslations().messages && getAdminTranslations().messages.addProjectPlaceholder) || 'La finestra per aggiungere un progetto sarà implementata qui.');
 }
 
-function showAddWorkerModal() {
-  document.getElementById('worker-modal-title').textContent = 'Add New Worker';
-  document.getElementById('worker-form').reset();
-  document.getElementById('worker-submit-btn').textContent = 'Add Worker';
-  document.getElementById('worker-submit-btn').onclick = saveWorker;
-  document.getElementById('worker-modal').classList.add('active');
+// =========================
+// Workers Data
+// =========================
+let workers = [];
+
+// Load workers from localStorage
+function loadWorkers() {
+  workers = JSON.parse(localStorage.getItem('workers') || '[]');
+  renderWorkers();
 }
 
-function showEditWorkerModal(id) {
-  const worker = workers.find(w => w.id === id);
-  if (!worker) return;
+// Render workers on dashboard
+function renderWorkers() {
+  const container = document.getElementById('workers-grid');
+  container.innerHTML = ''; // Clear previous
 
-  document.getElementById('worker-modal-title').textContent = 'Edit Worker';
-  document.getElementById('worker-name').value = worker.name;
-  document.getElementById('worker-email').value = worker.email;
-  document.getElementById('worker-phone').value = worker.phone;
-  document.getElementById('worker-rating').value = worker.rating;
-  document.getElementById('worker-jobs').value = worker.completed_jobs;
-  document.getElementById('worker-active').value = worker.active.toString();
-
-  // Populate specialties
-  const container = document.getElementById('specialties-container');
-  container.innerHTML = '';
-  worker.specialties.forEach(specialty => {
-    addSpecialty(specialty);
-  });
-
-  document.getElementById('worker-submit-btn').textContent = 'Update Worker';
-  document.getElementById('worker-submit-btn').onclick = () => saveWorker(id);
-  document.getElementById('worker-modal').classList.add('active');
-}
-
-// სპეციალობების გამოსაღება ფორმიდან
-function getSpecialties() {
-  const inputs = document.querySelectorAll('.specialty-input');
-  return Array.from(inputs)
-    .map(input => input.value.trim())
-    .filter(val => val.length > 0);
-}
-
-// worker-ის შენახვის ფუნქცია
-async function saveWorker() {
-  // Optional: admin token ან user/pass check
-  const token = localStorage.getItem('adminToken'); // თუ შენს სისტემაში token-ია
-
-  const name = document.getElementById('worker-name').value.trim();
-  const email = document.getElementById('worker-email').value.trim();
-  const phone = document.getElementById('worker-phone').value.trim();
-  const specialties = getSpecialties();
-  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
-  const jobs = parseInt(document.getElementById('worker-jobs').value) || 0;
-  const active = document.getElementById('worker-active').value === "true";
-
-  if (!name || !email) {
-    alert('Name and Email are required');
+  if (workers.length === 0) {
+    container.innerHTML = '<p>No workers added yet.</p>';
     return;
   }
 
-  try {
-    const response = await fetch('/api/admin/workers', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      cache: 'no-store', // 304-ის თავიდან ასაცილებლად
-      body: JSON.stringify({
-        name,
-        email,
-        phone,
-        specialties,
-        rating,
-        jobs,
-        active
-      })
-    });
-
-    if (response.ok) {
-      alert('Worker added ✅');
-      document.getElementById('worker-form').reset(); // ფორმის გასუფთავება
-      closeModal('worker-modal'); // მოდალის დახურვა
-      loadWorkers(); // ფუნქცია რომელიც workers-ებს იტვირთავს გვერდზე
-    } else {
-      const text = await response.text();
-      throw new Error(text || 'Failed add worker ❌');
-    }
-  } catch (err) {
-    console.error('Failed add worker ❌', err);
-    alert('Failed add worker ❌: ' + err.message);
-  }
+  workers.forEach((worker, index) => {
+    const card = document.createElement('div');
+    card.className = 'worker-card';
+    card.innerHTML = `
+      <h4>${worker.name}</h4>
+      <p>Email: ${worker.email}</p>
+      <p>Phone: ${worker.phone}</p>
+      <p>Rating: ${worker.rating}</p>
+      <p>Jobs Completed: ${worker.jobs}</p>
+      <p>Status: ${worker.active ? 'Active' : 'Inactive'}</p>
+      <p>Specialties: ${worker.specialties.join(', ')}</p>
+      <button class="btn btn-sm btn-danger" onclick="deleteWorker(${index})">Delete</button>
+    `;
+    container.appendChild(card);
+  });
 }
 
-// სპეციალობის დამატება
+// Save Worker
+function saveWorker() {
+  const name = document.getElementById('worker-name').value.trim();
+  const email = document.getElementById('worker-email').value.trim();
+  const phone = document.getElementById('worker-phone').value.trim();
+  const rating = parseFloat(document.getElementById('worker-rating').value);
+  const jobs = parseInt(document.getElementById('worker-jobs').value);
+  const active = document.getElementById('worker-active').value === 'true';
+
+  // Specialties
+  const specialtiesInputs = document.querySelectorAll('#specialties-container .specialty-input');
+  const specialties = [];
+  specialtiesInputs.forEach(input => {
+    const val = input.value.trim();
+    if (val) specialties.push(val);
+  });
+
+  if (!name || !email || !phone) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  const newWorker = { name, email, phone, rating, jobs, active, specialties };
+
+  workers.push(newWorker);
+  localStorage.setItem('workers', JSON.stringify(workers));
+
+  closeModal('worker-modal');
+  renderWorkers();
+
+  // Clear form
+  document.getElementById('worker-form').reset();
+  document.getElementById('specialties-container').innerHTML = `
+    <div class="specialty-item">
+      <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning">
+      <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
+    </div>
+  `;
+}
+
+// Delete worker
+function deleteWorker(index) {
+  if (!confirm('Are you sure you want to delete this worker?')) return;
+  workers.splice(index, 1);
+  localStorage.setItem('workers', JSON.stringify(workers));
+  renderWorkers();
+}
+
+// Add Specialty input
 function addSpecialty() {
   const container = document.getElementById('specialties-container');
   const div = document.createElement('div');
@@ -1376,61 +1370,22 @@ function addSpecialty() {
   container.appendChild(div);
 }
 
-// სპეციალობის წაშლა
+// Remove Specialty input
 function removeSpecialty(button) {
   button.parentElement.remove();
 }
 
-
-async function deleteWorker(id) {
-  if (!confirm('Are you sure you want to delete this worker? This action cannot be undone.')) return;
-
-  try {
-    const response = await fetch(`/api/admin/workers/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      cache: "no-store"
-    });
-
-    if (response.ok) {
-      loadWorkers();
-    } else {
-      throw new Error('Failed to delete worker');
-    }
-  } catch (error) {
-    console.error('Failed to delete worker:', error);
-    alert('Failed to delete worker. Please try again.');
-  }
+// Show worker modal
+function showAddWorkerModal() {
+  document.getElementById('worker-modal').style.display = 'block';
 }
 
-async function toggleWorker(id, active) {
-  try {
-    const worker = workers.find(w => w.id === id);
-    if (!worker) throw new Error("Worker not found");
-
-    const res = await fetch(`/api/admin/workers/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      cache: "no-store",
-      body: JSON.stringify({
-        active,
-        name: worker.name,
-        email: worker.email,
-        phone: worker.phone,
-        specialties: worker.specialties,
-        rating: worker.rating,
-        completed_jobs: worker.completed_jobs,
-      }),
-    });
-
-    if (!res.ok) throw new Error("Server update failed");
-
-    await loadWorkers();
-
-  } catch (error) {
-    console.error('Failed to update worker:', error);
-    alert('Failed to update worker. Please try again.');
-    await loadWorkers();
-  }
+// Close modal
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
 }
+
+// Init
+window.onload = () => {
+  loadWorkers();
+};
