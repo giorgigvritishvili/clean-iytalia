@@ -1320,59 +1320,54 @@ function removeSpecialty(button) {
 }
 
 async function saveWorker(id = null) {
-  const name = document.getElementById('worker-name').value;
-  const email = document.getElementById('worker-email').value;
-  const phone = document.getElementById('worker-phone').value;
-  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
-  const completedJobs = parseInt(document.getElementById('worker-jobs').value) || 0;
+  const token = localStorage.getItem('adminToken');
 
+  const name = document.getElementById('worker-name').value.trim();
+  const email = document.getElementById('worker-email').value.trim();
+  const phone = document.getElementById('worker-phone').value.trim();
+  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
+  const completed_jobs = parseInt(document.getElementById('worker-jobs').value) || 0;
   const active = document.getElementById('worker-active').value === 'true';
 
-  // Get specialties
-  const specialtyInputs = document.querySelectorAll('.specialty-input');
-  const specialties = Array.from(specialtyInputs).map(input => input.value.trim()).filter(val => val);
+  const specialties = Array.from(document.querySelectorAll('.specialty-input'))
+    .map(i => i.value.trim())
+    .filter(Boolean);
 
   if (!name || !email || !phone || specialties.length === 0) {
-    alert('Please fill in all required fields');
-    return;
-  }
-
-  const token = localStorage.getItem('adminToken');
-  if (!token) {
-    alert('Session expired. Please login again.');
+    alert('Fill all fields');
     return;
   }
 
   try {
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/admin/workers/${id}` : '/api/admin/workers';
-    const response = await fetch(url, {
-      method,
+    const res = await fetch('/api/admin/workers', {
+      method: id ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}` // 🔥 აუცილებელია
       },
-      credentials: 'include',
+      cache: 'no-store',
       body: JSON.stringify({
         name,
         email,
         phone,
-        specialties,
         rating,
-        completed_jobs: completedJobs,
+        completed_jobs,
         active,
-      }),
+        specialties
+      })
     });
 
-    if (response.ok) {
-      closeModal('worker-modal');
-      loadWorkers();
-    } else {
-      throw new Error('Failed to save worker');
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(t || 'Request failed');
     }
-  } catch (error) {
-    console.error('Failed to save worker:', error);
-    alert('Failed to save worker. Please try again.');
+
+    closeModal('worker-modal');
+    await loadWorkers();
+
+  } catch (e) {
+    console.error('Add worker failed', e);
+    alert('Failed add worker ❌');
   }
 }
 
