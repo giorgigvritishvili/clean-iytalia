@@ -992,62 +992,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Admin Worker management
-app.post('/api/admin/workers', requireAdmin, (req, res) => {
-  try {
-    const { name, email, phone, specialties, rating, active } = req.body;
-    const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
-    const newWorker = {
-      id: newId,
-      name,
-      email,
-      phone,
-      specialties: specialties || [],
-      rating: rating || 5.0,
-      completed_jobs: 0,
-      active: active !== undefined ? active : true,
-      created_at: new Date().toISOString().split('T')[0]
-    };
-    workers.push(newWorker);
-    saveData(workers, workersFilePath);
-    res.json(newWorker);
-  } catch (err) {
-    console.error('Failed to add worker:', err);
-    res.status(500).json({ error: 'Failed to add worker' });
-  }
-});
-
-app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
-  try {
-    const { id } = req.params;
-    const index = workers.findIndex(w => w.id == id);
-    if (index === -1) return res.status(404).json({ error: 'Worker not found' });
-    
-    workers[index] = { ...workers[index], ...req.body };
-    saveData(workers, workersFilePath);
-    res.json(workers[index]);
-  } catch (err) {
-    console.error('Failed to update worker:', err);
-    res.status(500).json({ error: 'Failed to update worker' });
-  }
-});
-
-app.delete('/api/admin/workers/:id', requireAdmin, (req, res) => {
-  try {
-    const { id } = req.params;
-    workers = workers.filter(w => w.id != id);
-    saveData(workers, workersFilePath);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Failed to delete worker:', err);
-    res.status(500).json({ error: 'Failed to delete worker' });
-  }
-});
-
-app.get('/api/admin/workers', requireAdmin, (req, res) => {
-  res.json(workers);
-});
-
 app.get('/api/admin/check-session', (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;

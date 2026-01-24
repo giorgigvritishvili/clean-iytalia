@@ -1009,9 +1009,113 @@ function filterMyProjects() {
 }
 
 function loadAppointmentCalendar() {
-
   const calendar = document.getElementById('appointment-calendar');
-  calendar.innerHTML = '<div class="calendar-placeholder"><p>La visualizzazione del calendario verrà implementata qui...</p></div>';
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Get bookings for current month
+  const monthBookings = bookings.filter(booking => {
+    const bookingDate = new Date(booking.booking_date);
+    return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+  });
+
+  // Group bookings by date
+  const bookingsByDate = {};
+  monthBookings.forEach(booking => {
+    const dateKey = booking.booking_date;
+    if (!bookingsByDate[dateKey]) {
+      bookingsByDate[dateKey] = [];
+    }
+    bookingsByDate[dateKey].push(booking);
+  });
+
+  // Generate calendar HTML
+  const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+  let calendarHTML = `
+    <div class="calendar-header">
+      <h3>${monthNames[currentMonth]} ${currentYear}</h3>
+    </div>
+    <div class="calendar-grid">
+  `;
+
+  // Get first day of month and total days
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // Day headers
+  const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  calendarHTML += '<div class="calendar-day-header">';
+  dayNames.forEach(day => {
+    calendarHTML += `<div class="day-name">${day}</div>`;
+  });
+  calendarHTML += '</div>';
+
+  // Calendar days
+  calendarHTML += '<div class="calendar-days">';
+
+  // Empty cells for days before first day of month
+  for (let i = 0; i < firstDay; i++) {
+    calendarHTML += '<div class="calendar-day empty"></div>';
+  }
+
+  // Days of the month
+  for (let day = 1; day <= totalDays; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayBookings = bookingsByDate[dateStr] || [];
+    const isToday = day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear();
+
+    calendarHTML += `
+      <div class="calendar-day ${isToday ? 'today' : ''} ${dayBookings.length > 0 ? 'has-bookings' : ''}" onclick="showDayBookings('${dateStr}')">
+        <div class="day-number">${day}</div>
+        ${dayBookings.length > 0 ? `<div class="booking-count">${dayBookings.length}</div>` : ''}
+      </div>
+    `;
+  }
+
+  calendarHTML += '</div></div>';
+
+  calendar.innerHTML = calendarHTML;
+}
+
+function showDayBookings(dateStr) {
+  const dayBookings = bookings.filter(booking => booking.booking_date === dateStr);
+
+  if (dayBookings.length === 0) {
+    alert('Nessuna prenotazione per questa data');
+    return;
+  }
+
+  const bookingList = dayBookings.map(booking => `
+    <div class="day-booking-item">
+      <div class="booking-time">${booking.booking_time}</div>
+      <div class="booking-details">
+        <div class="booking-customer">${booking.customer_name}</div>
+        <div class="booking-service">${booking.service_name_it || booking.service_name}</div>
+        <div class="booking-status">
+          <span class="status-badge ${booking.status}">${booking.status}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal active';
+  modal.innerHTML = `
+    <div class="modal-content calendar-modal">
+      <div class="modal-header">
+        <h3>Prenotazioni per ${formatDate(dateStr)}</h3>
+        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        ${bookingList}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
 }
 
 function changeCalendarView() {
@@ -1101,7 +1205,7 @@ async function loadWorkers() {
 
 
 
-    function renderWorkers() {
+function renderWorkers() {
   const grid = document.getElementById('workers-grid');
 
   if (workers.length === 0) {
@@ -1205,7 +1309,7 @@ async function saveWorker(id = null) {
   const email = document.getElementById('worker-email').value;
   const phone = document.getElementById('worker-phone').value;
   const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
-const completedJobs = parseInt(document.getElementById('worker-jobs').value) || 0;
+  const completedJobs = parseInt(document.getElementById('worker-jobs').value) || 0;
 
   const active = document.getElementById('worker-active').value === 'true';
 
@@ -1218,12 +1322,21 @@ const completedJobs = parseInt(document.getElementById('worker-jobs').value) || 
     return;
   }
 
+  const token = localStorage.getItem('adminToken');
+  if (!token) {
+    alert('Session expired. Please login again.');
+    return;
+  }
+
   try {
     const method = id ? 'PUT' : 'POST';
     const url = id ? `/api/admin/workers/${id}` : '/api/admin/workers';
     const response = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       credentials: 'include',
       body: JSON.stringify({
         name,
