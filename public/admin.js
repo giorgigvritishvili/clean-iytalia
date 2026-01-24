@@ -941,7 +941,7 @@ function switchTab(tab) {
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+  document.getElementById(id).style.display = 'none';
 }
 
 function toggleSidebar() {
@@ -1201,89 +1201,13 @@ function generateCommissionReport() {
   alert((getAdminTranslations().messages && getAdminTranslations().messages.commissionReportPlaceholder) || 'La generazione del rapporto delle commissioni sarà implementata qui.');
 }
 
-async function loadWorkers() {
-  try {
-    const response = await fetch('/api/admin/workers', {
-      credentials: 'include',
-      cache: "no-store"
-    });
-
-    if (!response.ok) throw new Error("Failed to load workers");
-
-    workers = await response.json();
-    renderWorkers();
-  } catch (error) {
-    console.error('Failed to load workers:', error);
-  }
-}
-
-
-
-
-function renderWorkers() {
-  const grid = document.getElementById('workers-grid');
-
-  if (workers.length === 0) {
-    grid.innerHTML = `
-      <div class="admin-card">
-        <p style="text-align:center; color:var(--text-light)">
-          No workers added yet
-        </p>
-      </div>
-    `;
-    return;
-  }
-
-  grid.innerHTML = workers.map(worker => `
-    <div class="admin-card">
-      <h4>
-        ${worker.name}
-        <div class="card-actions">
-          <button class="btn btn-sm btn-secondary" onclick="showEditWorkerModal(${worker.id})">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteWorker(${worker.id})">
-            <i class="fas fa-trash"></i>
-          </button>
-          <label class="toggle-switch">
-            <input type="checkbox" ${worker.active ? 'checked' : ''} onchange="toggleWorker(${worker.id}, this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </h4>
-
-      <div class="card-details">
-        <p><i class="fas fa-envelope"></i> ${worker.email}</p>
-        <p><i class="fas fa-phone"></i> ${worker.phone}</p>
-        <p><i class="fas fa-star"></i> Rating: ${worker.rating}/5.0</p>
-        <p><i class="fas fa-check-circle"></i> Completed Jobs: ${worker.completed_jobs}</p>
-        <p>
-          <i class="fas fa-tools"></i>
-          Specialties: ${(Array.isArray(worker.specialties) ? worker.specialties : []).join(', ')}
-        </p>
-      </div>
-    </div>
-  `).join('');
-}
-
-
-function showAddProjectModal() {
-  // TODO: Show add project modal
-  alert((getAdminTranslations().messages && getAdminTranslations().messages.addProjectPlaceholder) || 'La finestra per aggiungere un progetto sarà implementata qui.');
-}
-
-// =========================
-// Workers Data
-// =========================
-let workers = [];
-
-// Load workers from localStorage
 function loadWorkers() {
   workers = JSON.parse(localStorage.getItem('workers') || '[]');
   renderWorkers();
 }
 
-// Render workers on dashboard
+
+
 function renderWorkers() {
   const container = document.getElementById('workers-grid');
   container.innerHTML = ''; // Clear previous
@@ -1310,7 +1234,47 @@ function renderWorkers() {
   });
 }
 
-// Save Worker
+function showAddProjectModal() {
+  // TODO: Show add project modal
+  alert((getAdminTranslations().messages && getAdminTranslations().messages.addProjectPlaceholder) || 'La finestra per aggiungere un progetto sarà implementata qui.');
+}
+
+function showAddWorkerModal() {
+  document.getElementById('worker-modal').style.display = 'block';
+}
+
+function showEditWorkerModal(id) {
+  const worker = workers.find(w => w.id === id);
+  if (!worker) return;
+
+  document.getElementById('worker-modal-title').textContent = 'Edit Worker';
+  document.getElementById('worker-name').value = worker.name;
+  document.getElementById('worker-email').value = worker.email;
+  document.getElementById('worker-phone').value = worker.phone;
+  document.getElementById('worker-rating').value = worker.rating;
+  document.getElementById('worker-jobs').value = worker.completed_jobs;
+  document.getElementById('worker-active').value = worker.active.toString();
+
+  // Populate specialties
+  const container = document.getElementById('specialties-container');
+  container.innerHTML = '';
+  worker.specialties.forEach(specialty => {
+    addSpecialty(specialty);
+  });
+
+  document.getElementById('worker-submit-btn').textContent = 'Update Worker';
+  document.getElementById('worker-submit-btn').onclick = () => saveWorker(id);
+  document.getElementById('worker-modal').classList.add('active');
+}
+
+// სპეციალობების გამოსაღება ფორმიდან
+function getSpecialties() {
+  const inputs = document.querySelectorAll('.specialty-input');
+  return Array.from(inputs)
+    .map(input => input.value.trim())
+    .filter(val => val.length > 0);
+}
+
 function saveWorker() {
   const name = document.getElementById('worker-name').value.trim();
   const email = document.getElementById('worker-email').value.trim();
@@ -1349,16 +1313,7 @@ function saveWorker() {
     </div>
   `;
 }
-
-// Delete worker
-function deleteWorker(index) {
-  if (!confirm('Are you sure you want to delete this worker?')) return;
-  workers.splice(index, 1);
-  localStorage.setItem('workers', JSON.stringify(workers));
-  renderWorkers();
-}
-
-// Add Specialty input
+// სპეციალობის დამატება
 function addSpecialty() {
   const container = document.getElementById('specialties-container');
   const div = document.createElement('div');
@@ -1370,22 +1325,50 @@ function addSpecialty() {
   container.appendChild(div);
 }
 
-// Remove Specialty input
+// სპეციალობის წაშლა
 function removeSpecialty(button) {
   button.parentElement.remove();
 }
 
-// Show worker modal
-function showAddWorkerModal() {
-  document.getElementById('worker-modal').style.display = 'block';
+
+function deleteWorker(index) {
+  if (!confirm('Are you sure you want to delete this worker?')) return;
+  workers.splice(index, 1);
+  localStorage.setItem('workers', JSON.stringify(workers));
+  renderWorkers();
 }
 
-// Close modal
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-}
+async function toggleWorker(id, active) {
+  try {
+    const worker = workers.find(w => w.id === id);
+    if (!worker) throw new Error("Worker not found");
 
-// Init
+    const res = await fetch(`/api/admin/workers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      cache: "no-store",
+      body: JSON.stringify({
+        active,
+        name: worker.name,
+        email: worker.email,
+        phone: worker.phone,
+        specialties: worker.specialties,
+        rating: worker.rating,
+        completed_jobs: worker.completed_jobs,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Server update failed");
+
+    await loadWorkers();
+
+  } catch (error) {
+    console.error('Failed to update worker:', error);
+    alert('Failed to update worker. Please try again.');
+    await loadWorkers();
+  }
+}
 window.onload = () => {
   loadWorkers();
 };
