@@ -1304,65 +1304,81 @@ function showEditWorkerModal(id) {
   document.getElementById('worker-modal').classList.add('active');
 }
 
-function addSpecialty(value = '') {
-  const container = document.getElementById('specialties-container');
-  const item = document.createElement('div');
-  item.className = 'specialty-item';
-  item.innerHTML = `
-    <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning" value="${value}">
-    <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
-  `;
-  container.appendChild(item);
+// სპეციალობების გამოსაღება ფორმიდან
+function getSpecialties() {
+  const inputs = document.querySelectorAll('.specialty-input');
+  return Array.from(inputs)
+    .map(input => input.value.trim())
+    .filter(val => val.length > 0);
 }
 
-function removeSpecialty(button) {
-  button.parentElement.remove();
-}
-
+// worker-ის შენახვის ფუნქცია
 async function saveWorker() {
-  const token = localStorage.getItem('adminToken');
+  // Optional: admin token ან user/pass check
+  const token = localStorage.getItem('adminToken'); // თუ შენს სისტემაში token-ია
 
-  // ვიღებთ მნიშვნელობებს ფორმიდან
   const name = document.getElementById('worker-name').value.trim();
   const email = document.getElementById('worker-email').value.trim();
   const phone = document.getElementById('worker-phone').value.trim();
-  const enabled = document.getElementById('worker-enabled').checked;
+  const specialties = getSpecialties();
+  const rating = parseFloat(document.getElementById('worker-rating').value) || 0;
+  const jobs = parseInt(document.getElementById('worker-jobs').value) || 0;
+  const active = document.getElementById('worker-active').value === "true";
 
   if (!name || !email) {
-    alert('Name and email are required');
+    alert('Name and Email are required');
     return;
   }
 
   try {
-    const res = await fetch('/api/admin/workers', {
+    const response = await fetch('/api/admin/workers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': token ? `Bearer ${token}` : ''
       },
-      cache: 'no-store', 
+      cache: 'no-store', // 304-ის თავიდან ასაცილებლად
       body: JSON.stringify({
         name,
         email,
         phone,
-        enabled
+        specialties,
+        rating,
+        jobs,
+        active
       })
     });
 
-    if (res.ok) {
+    if (response.ok) {
       alert('Worker added ✅');
-      loadWorkers(); 
-      document.getElementById('worker-form').reset();
-      closeModal('worker-modal');
+      document.getElementById('worker-form').reset(); // ფორმის გასუფთავება
+      closeModal('worker-modal'); // მოდალის დახურვა
+      loadWorkers(); // ფუნქცია რომელიც workers-ებს იტვირთავს გვერდზე
     } else {
-      const text = await res.text();
-      throw new Error(text || 'Failed to add worker');
+      const text = await response.text();
+      throw new Error(text || 'Failed add worker ❌');
     }
-
-  } catch (e) {
-    console.error('Failed add worker ❌', e);
-    alert('Failed add worker ❌: ' + e.message);
+  } catch (err) {
+    console.error('Failed add worker ❌', err);
+    alert('Failed add worker ❌: ' + err.message);
   }
+}
+
+// სპეციალობის დამატება
+function addSpecialty() {
+  const container = document.getElementById('specialties-container');
+  const div = document.createElement('div');
+  div.className = 'specialty-item';
+  div.innerHTML = `
+    <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning">
+    <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
+  `;
+  container.appendChild(div);
+}
+
+// სპეციალობის წაშლა
+function removeSpecialty(button) {
+  button.parentElement.remove();
 }
 
 
