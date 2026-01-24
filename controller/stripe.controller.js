@@ -4,33 +4,39 @@ const createPaymentIntent = async (req, res) => {
       return res.status(500).json({ error: 'Stripe is not configured' });
     }
 
-    let { amount } = req.body;
+    const { amount } = req.body;
 
-   
-    let finalAmount = parseFloat(amount);
+    // ვალიდაცია
+    if (amount === undefined || amount === null) {
+      return res.status(400).json({ error: 'Amount is required' });
+    }
 
-    if (!finalAmount || finalAmount <= 0) {
+    const parsedAmount = Number(amount);
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-
-    finalAmount = Math.round(finalAmount * 1);
+    // ევრო → ცენტებში გადაყვანა
+    const finalAmount = Math.round(parsedAmount * 100);
 
     console.log(`Final amount sent to Stripe: ${finalAmount} cents`);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: finalAmount,
+      amount: finalAmount, // აუცილებლად integer (ცენტები)
       currency: 'eur',
       payment_method_types: ['card'],
-      capture_method: 'manual',
+      capture_method: 'manual', // ავტორიზაცია, არა ავტომატური ჩამოჭრა
     });
 
-    res.json({
+    return res.status(200).json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
     });
   } catch (error) {
-    console.error('Stripe Error:', error.message);
-    res.status(500).json({ error: error.message });
+    console.error('Stripe Error:', error);
+    return res.status(500).json({
+      error: 'PaymentIntent creation failed',
+    });
   }
 };

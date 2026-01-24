@@ -76,23 +76,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function checkSession() {
   const token = localStorage.getItem('adminToken');
-  if (!token) return;
+
+  // ❗ თუ ტოკენი არ არის — აუცილებლად ლოგინი
+  if (!token) {
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    return;
+  }
 
   try {
     const response = await fetch('/api/admin/check-session', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
+
+    if (!response.ok) throw new Error('Invalid session');
+
     const data = await response.json();
 
     if (data.authenticated) {
       showDashboard();
     } else {
-      localStorage.removeItem('adminToken');
+      throw new Error('Not authenticated');
     }
+
   } catch (error) {
     console.error('Session check failed:', error);
+    localStorage.removeItem('adminToken');
+
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
   }
 }
+
 
 async function handleLogin(e) {
   e.preventDefault();
