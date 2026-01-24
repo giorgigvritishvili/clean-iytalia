@@ -478,24 +478,18 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
 
     // Attempt to capture the PaymentIntent when Stripe is configured
     let captureSucceeded = false;
-    if (booking.payment_intent_id) {
-      if (stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
-        try {
-          const captured = await stripe.paymentIntents.capture(booking.payment_intent_id);
-          // consider capture successful when Stripe returns a succeeded/captured status
-          if (captured && (captured.status === 'succeeded' || captured.status === 'requires_capture' || captured.status === 'captured')) {
-            captureSucceeded = true;
-          } else {
-            console.error('Unexpected Stripe capture status:', captured && captured.status);
-          }
-        } catch (stripeError) {
-          console.error('Stripe capture error:', stripeError);
-          // Do not update booking status if capture fails
-          return res.status(502).json({ error: 'Stripe capture failed. Booking remains pending.' });
+    if (booking.payment_intent_id && stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
+      try {
+        const captured = await stripe.paymentIntents.capture(booking.payment_intent_id);
+        if (captured && captured.status === 'succeeded') {
+          captureSucceeded = true;
+        } else {
+          console.error('Unexpected Stripe capture status:', captured && captured.status);
+          return res.status(502).json({ error: 'Stripe capture failed. Status: ' + (captured ? captured.status : 'unknown') });
         }
-      } else {
-        // demo mode or no stripe configured - treat as succeeded for local/demo flows
-        captureSucceeded = true;
+      } catch (stripeError) {
+        console.error('Stripe capture error:', stripeError);
+        return res.status(502).json({ error: 'Stripe capture failed: ' + stripeError.message });
       }
     } else {
       // No payment intent attached - treat as confirmed without payment
@@ -996,6 +990,72 @@ app.get('/', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Admin Worker management
+app.post('/api/admin/workers', requireAdmin, (req, res) => {
+  try {
+    const { name, email, phone, specialties, rating, active } = req.body;
+    const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id)) + 1 : 1;
+    const newWorker = {
+      id: newId,
+      name,
+      email,
+      phone,
+      specialties: specialties || [],
+      rating: rating || 5.0,
+      completed_jobs: 0,
+      active: active !== undefined ? active : true,
+      created_at: new Date().toISOString().split('T')[0]
+    };
+    workers.push(newWorker);
+    saveData(workers, workersFilePath);
+    res.json(newWorker);
+  } catch (err) {
+    console.error('Failed to add worker:', err);
+    res.status(500).json({ error: 'Failed to add worker' });
+  }
+});
+
+app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const index = workers.findIndex(w => w.id == id);
+    if (index === -1) return res.status(404).json({ error: 'Worker not found' });
+    
+    workers[index] = { ...workers[index], ...req.body };
+    saveData(workers, workersFilePath);
+    res.json(workers[index]);
+  } catch (err) {
+    console.error('Failed to update worker:', err);
+    res.status(500).json({ error: 'Failed to update worker' });
+  }
+});
+
+app.delete('/api/admin/workers/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    workers = workers.filter(w => w.id != id);
+    saveData(workers, workersFilePath);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to delete worker:', err);
+    res.status(500).json({ error: 'Failed to delete worker' });
+  }
+});
+
+app.get('/api/admin/workers', requireAdmin, (req, res) => {
+  res.json(workers);
+});
+
+app.get('/api/admin/check-session', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (token && adminTokens.has(token)) {
+    res.json({ authenticated: true });
+  } else {
+    res.json({ authenticated: false });
+  }
 });
 
 if (process.env.VERCEL) {

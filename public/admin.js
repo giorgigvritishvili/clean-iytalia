@@ -8,12 +8,12 @@ let bookingPollingInterval = null; // For real-time updates
 function saveLocalData() {
   localStorage.setItem('cities', JSON.stringify(cities));
   localStorage.setItem('services', JSON.stringify(services));
- 
+
 }
 function loadLocalData() {
   cities = JSON.parse(localStorage.getItem('cities') || '[]');
   services = JSON.parse(localStorage.getItem('services') || '[]');
-  
+
 }
 
 
@@ -75,12 +75,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkSession() {
+  const token = localStorage.getItem('adminToken');
+  if (!token) return;
+
   try {
-    const response = await fetch('/api/admin/check-session', { credentials: 'include' });
+    const response = await fetch('/api/admin/check-session', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     const data = await response.json();
 
     if (data.authenticated) {
       showDashboard();
+    } else {
+      localStorage.removeItem('adminToken');
     }
   } catch (error) {
     console.error('Session check failed:', error);
@@ -97,24 +104,30 @@ async function handleLogin(e) {
     const response = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ username, password }),
     });
 
-    if (response.ok) {
+    const data = await response.json();
+    if (response.ok && data.token) {
+      localStorage.setItem('adminToken', data.token);
       showDashboard();
     } else {
       alert((getAdminTranslations().messages && getAdminTranslations().messages.invalidCredentials) || 'Invalid credentials');
     }
   } catch (error) {
     console.error('Login failed:', error);
-      alert((getAdminTranslations().messages && getAdminTranslations().messages.loginFailedTry) || 'Login failed. Please try again.');
+    alert((getAdminTranslations().messages && getAdminTranslations().messages.loginFailedTry) || 'Login failed. Please try again.');
   }
 }
 
 async function logout() {
+  const token = localStorage.getItem('adminToken');
   try {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    await fetch('/api/admin/logout', { 
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    localStorage.removeItem('adminToken');
     stopBookingPolling(); // Stop polling on logout
     document.getElementById('login-page').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'none';
@@ -141,9 +154,10 @@ async function loadDashboardData() {
   ]);
 }
 async function loadContactInfo() {
+  const token = localStorage.getItem('adminToken');
   try {
     const res = await fetch('/api/admin/contact', {
-      credentials: 'include',
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store"
     });
 
@@ -161,10 +175,11 @@ async function loadContactInfo() {
 }
 
 async function loadStats() {
+  const token = localStorage.getItem('adminToken');
   try {
     // 1️⃣ Load bookings (WITHOUT CACHE)
     const response = await fetch('/api/admin/bookings', {
-      credentials: 'include',
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store"   // 🔥 ძალიან მნიშვნელოვანია
     });
 
@@ -201,9 +216,10 @@ async function loadStats() {
 
 
 async function loadBookings() {
+  const token = localStorage.getItem('adminToken');
   try {
     const response = await fetch('/api/admin/bookings', {
-      credentials: 'include',
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store"   // 🔥 მნიშვნელოვანია
     });
 
@@ -428,12 +444,37 @@ function showBookingDetails(id) {
 }
 
 
+async function confirmBooking(id) {
+  const token = localStorage.getItem('adminToken');
+  if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmChargeBooking) || 'Confirm this booking and charge the customer?')) return;
+
+  try {
+    const response = await fetch(`/api/admin/bookings/${id}/confirm`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      alert((getAdminTranslations().messages && getAdminTranslations().messages.confirmBookingSuccess) || 'Booking confirmed and payment captured.');
+      loadDashboardData();
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to confirm booking');
+    }
+  } catch (error) {
+    console.error('Error confirming booking:', error);
+    alert('Failed to confirm booking: ' + error.message);
+  }
+}
+
 async function rejectBooking(id) {
+  const token = localStorage.getItem('adminToken');
   if (!confirm((getAdminTranslations().messages && getAdminTranslations().messages.confirmRejectBooking) || 'Reject this booking? The payment authorization will be released.')) return;
 
   try {
     const response = await fetch(`/api/admin/bookings/${id}/reject`, {
       method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (response.ok) {
@@ -449,9 +490,10 @@ async function rejectBooking(id) {
 }
 
 async function loadCities() {
+  const token = localStorage.getItem('adminToken');
   try {
     const response = await fetch('/api/admin/cities', {
-      credentials: 'include',
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store"
     });
 
@@ -491,13 +533,17 @@ function formatWorkingDays(days) {
 }
 
 async function toggleCity(id, enabled) {
+  const token = localStorage.getItem('adminToken');
   try {
     const city = cities.find(c => c.id === id);
     if (!city) throw new Error("City not found");
 
     const res = await fetch(`/api/admin/cities/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         enabled,
         working_days: city.working_days,
@@ -529,6 +575,7 @@ function showAddCityModal() {
 }
 
 async function addCity() {
+  const token = localStorage.getItem('adminToken');
   const name = document.getElementById('city-name').value.trim();
   const nameIt = document.getElementById('city-name-it').value.trim();
   const nameKa = document.getElementById('city-name-ka').value.trim();
@@ -552,7 +599,10 @@ async function addCity() {
     const response = await fetch('/api/admin/cities', {
       cache: "no-store",
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         name,
         name_it: finalNameIt,
@@ -577,9 +627,10 @@ async function addCity() {
 }
 
 async function loadServices() {
+  const token = localStorage.getItem('adminToken');
   try {
     const response = await fetch('/api/admin/services', {
-      credentials: 'include',   // 🔥 დაამატე ეს (თუ admin auth გაქვს)
+      headers: { 'Authorization': `Bearer ${token}` },
       cache: "no-store"         // 🔥 სწორია — დატოვე
     });
 
@@ -953,12 +1004,12 @@ async function saveContactInfo() {
 
 
 function filterMyProjects() {
- 
+
   loadMyProjects();
 }
 
 function loadAppointmentCalendar() {
- 
+
   const calendar = document.getElementById('appointment-calendar');
   calendar.innerHTML = '<div class="calendar-placeholder"><p>La visualizzazione del calendario verrà implementata qui...</p></div>';
 }
@@ -969,24 +1020,24 @@ function changeCalendarView() {
 }
 
 function loadMyAppointments() {
- 
+
   const table = document.getElementById('my-appointments-table');
   table.innerHTML = '<tr><td colspan="7" style="text-align: center;">I tuoi appuntamenti verranno caricati qui...</td></tr>';
 }
 
 function filterMyAppointments() {
-  
+
   loadMyAppointments();
 }
 
 function loadEarnings() {
- 
+
   document.getElementById('total-earnings').textContent = '€0';
   document.getElementById('monthly-earnings').textContent = '€0';
   document.getElementById('pending-earnings').textContent = '€0';
   document.getElementById('commission-rate').textContent = '0%';
 
- 
+
   const history = document.getElementById('earnings-history');
   history.innerHTML = '<tr><td colspan="5" style="text-align: center;">La cronologia delle entrate verrà caricata qui...</td></tr>';
 }
@@ -998,12 +1049,12 @@ function loadPayoutRequests() {
 }
 
 function requestPayout() {
-  
+
   alert((getAdminTranslations().messages && getAdminTranslations().messages.payoutPlaceholder) || 'La funzionalità di richiesta pagamento sarà implementata qui.');
 }
 
 function loadCommissionInvoices() {
- 
+
   const invoices = document.getElementById('commission-invoices');
   invoices.innerHTML = '<tr><td colspan="6" style="text-align: center;">Commission invoices will be loaded here...</td></tr>';
 }
