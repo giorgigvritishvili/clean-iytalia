@@ -48,7 +48,16 @@ function showLoginForm() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await checkSession();
+  // Clear any existing session to force fresh login if requested
+  // await checkSession(); 
+
+  const token = localStorage.getItem('adminToken');
+  if (!token) {
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+  } else {
+    await checkSession();
+  }
 
   document.getElementById('login-form').addEventListener('submit', handleLogin);
 
@@ -235,17 +244,33 @@ async function loadBookings() {
   try {
     const response = await fetch('/api/admin/bookings', {
       headers: { 'Authorization': `Bearer ${token}` },
-      cache: "no-store"   // 🔥 მნიშვნელოვანია
+      cache: "no-store"
     });
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        logout();
+        return;
+      }
       throw new Error('Failed to fetch bookings');
     }
 
-    bookings = await response.json();
+    const newBookings = await response.json();
+    
+    // Sort by date and time (descending) to keep newest at top
+    newBookings.sort((a, b) => {
+      const dateA = new Date(`${a.booking_date}T${a.booking_time}`);
+      const dateB = new Date(`${b.booking_date}T${b.booking_time}`);
+      return dateB - dateA;
+    });
+
+    bookings = newBookings;
 
     renderRecentBookings();
     renderAllBookings();
+    if (document.getElementById('appointment-calendar-tab')?.classList.contains('active')) {
+      loadAppointmentCalendar();
+    }
   } catch (error) {
     console.error('Failed to load bookings:', error);
   }
