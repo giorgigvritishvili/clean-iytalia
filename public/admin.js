@@ -1103,13 +1103,21 @@ function showDayBookings(dateStr) {
     return;
   }
 
+  // Sort bookings by time
+  dayBookings.sort((a, b) => a.booking_time.localeCompare(b.booking_time));
+
   const bookingList = dayBookings.map(booking => `
-    <div class="day-booking-item">
-      <div class="booking-time">${booking.booking_time}</div>
+    <div class="day-booking-item" style="border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 4px;">
+      <div class="booking-time" style="font-weight: bold; color: var(--primary); font-size: 1.1rem; margin-bottom: 5px;">
+        <i class="fas fa-clock"></i> ${booking.booking_time}
+      </div>
       <div class="booking-details">
-        <div class="booking-customer">${booking.customer_name}</div>
-        <div class="booking-service">${booking.service_name_it || booking.service_name}</div>
-        <div class="booking-status">
+        <div class="booking-customer" style="font-weight: 600;">${booking.customer_name}</div>
+        <div class="booking-service" style="font-size: 0.9rem; color: #666;">${booking.service_name_it || booking.service_name}</div>
+        <div class="booking-address" style="font-size: 0.85rem; color: #888; margin-top: 3px;">
+          <i class="fas fa-map-marker-alt"></i> ${booking.street_name} ${booking.house_number}
+        </div>
+        <div class="booking-status" style="margin-top: 8px;">
           <span class="status-badge ${booking.status}">${booking.status}</span>
         </div>
       </div>
@@ -1119,12 +1127,12 @@ function showDayBookings(dateStr) {
   const modal = document.createElement('div');
   modal.className = 'modal active';
   modal.innerHTML = `
-    <div class="modal-content calendar-modal">
+    <div class="modal-content calendar-modal" style="max-width: 500px;">
       <div class="modal-header">
         <h3>Prenotazioni per ${formatDate(dateStr)}</h3>
         <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 15px;">
         ${bookingList}
       </div>
     </div>
@@ -1330,6 +1338,47 @@ function removeSpecialty(button) {
   button.parentElement.remove();
 }
 
+
+function startBookingPolling() {
+  if (bookingPollingInterval) return;
+  bookingPollingInterval = setInterval(async () => {
+    await loadBookings();
+    await loadStats();
+  }, 30000); // Poll every 30 seconds
+}
+
+function stopBookingPolling() {
+  if (bookingPollingInterval) {
+    clearInterval(bookingPollingInterval);
+    bookingPollingInterval = null;
+  }
+}
+
+async function manualPayBooking(id) {
+  const token = localStorage.getItem('adminToken');
+  if (!confirm('Mark this booking as manually paid?')) return;
+
+  try {
+    const response = await fetch(`/api/admin/bookings/${id}/pay`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      alert('Booking marked as paid.');
+      loadDashboardData();
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update booking');
+    }
+  } catch (error) {
+    console.error('Error updating booking:', error);
+    alert('Failed to update booking: ' + error.message);
+  }
+}
 
 function deleteWorker(index) {
   if (!confirm('Are you sure you want to delete this worker?')) return;
