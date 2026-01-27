@@ -48,14 +48,13 @@ function showLoginForm() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Clear any existing session to force fresh login if requested
-  // await checkSession(); 
-
   const token = localStorage.getItem('adminToken');
-  if (!token) {
-    document.getElementById('login-page').style.display = 'flex';
-    document.getElementById('dashboard').style.display = 'none';
-  } else {
+  
+  // Hide dashboard by default until authenticated
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+
+  if (token) {
     await checkSession();
   }
 
@@ -1062,76 +1061,70 @@ function filterMyProjects() {
   loadMyProjects();
 }
 
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
 function loadAppointmentCalendar() {
   const calendar = document.getElementById('appointment-calendar');
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+  if (!calendar) return;
 
-  // Get bookings for current month
-  const monthBookings = bookings.filter(booking => {
-    const bookingDate = new Date(booking.booking_date);
-    return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
-  });
+  const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+    "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+  ];
 
-  // Group bookings by date
-  const bookingsByDate = {};
-  monthBookings.forEach(booking => {
-    const dateKey = booking.booking_date;
-    if (!bookingsByDate[dateKey]) {
-      bookingsByDate[dateKey] = [];
-    }
-    bookingsByDate[dateKey].push(booking);
-  });
-
-  // Generate calendar HTML
-  const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-                     'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const startingDay = firstDay === 0 ? 6 : firstDay - 1;
 
   let calendarHTML = `
     <div class="calendar-header">
+      <button class="btn btn-sm btn-secondary" onclick="changeMonth(-1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
       <h3>${monthNames[currentMonth]} ${currentYear}</h3>
+      <button class="btn btn-sm btn-secondary" onclick="changeMonth(1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
     </div>
     <div class="calendar-grid">
+      <div class="calendar-day-header">
+        <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
+      </div>
+      <div class="calendar-days">
   `;
 
-  // Get first day of month and total days
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-  // Day headers
-  const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-  calendarHTML += '<div class="calendar-day-header">';
-  dayNames.forEach(day => {
-    calendarHTML += `<div class="day-name">${day}</div>`;
-  });
-  calendarHTML += '</div>';
-
-  // Calendar days
-  calendarHTML += '<div class="calendar-days">';
-
-  // Empty cells for days before first day of month
-  for (let i = 0; i < firstDay; i++) {
+  for (let i = 0; i < startingDay; i++) {
     calendarHTML += '<div class="calendar-day empty"></div>';
   }
 
-  // Days of the month
-  for (let day = 1; day <= totalDays; day++) {
+  const today = new Date();
+  for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayBookings = bookingsByDate[dateStr] || [];
-    const isToday = day === currentDate.getDate() && currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear();
+    const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+    const isToday = today.getDate() === day && today.getMonth() === currentMonth && today.getFullYear() === currentYear;
 
     calendarHTML += `
       <div class="calendar-day ${isToday ? 'today' : ''} ${dayBookings.length > 0 ? 'has-bookings' : ''}" onclick="showDayBookings('${dateStr}')">
-        <div class="day-number">${day}</div>
+        <span class="day-number">${day}</span>
         ${dayBookings.length > 0 ? `<div class="booking-count">${dayBookings.length}</div>` : ''}
       </div>
     `;
   }
 
   calendarHTML += '</div></div>';
-
   calendar.innerHTML = calendarHTML;
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+  loadAppointmentCalendar();
 }
 
 function showDayBookings(dateStr) {
@@ -1150,8 +1143,19 @@ function showDayBookings(dateStr) {
     const city = cities.find(c => c.id === booking.city_id);
     const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
     const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
-    const paymentStatus = booking.stripe_status === 'succeeded' ? 'Pagato' : (booking.status === 'paid' ? 'Pagato (Manuale)' : 'In attesa');
-    const paymentColor = (booking.stripe_status === 'succeeded' || booking.status === 'paid') ? '#2ecc71' : '#f39c12';
+    
+    // Determine payment status and date
+    let paymentInfo = '';
+    if (booking.stripe_status === 'succeeded' || booking.status === 'paid') {
+      const payDate = booking.updated_at ? formatDate(booking.updated_at) : formatDate(booking.booking_date);
+      paymentInfo = `<div style="font-size: 0.8rem; color: #27ae60; margin-top: 4px;">
+        <i class="fas fa-check-circle"></i> Pagato il: ${payDate}
+      </div>`;
+    } else {
+      paymentInfo = `<div style="font-size: 0.8rem; color: #e67e22; margin-top: 4px;">
+        <i class="fas fa-clock"></i> In attesa di pagamento
+      </div>`;
+    }
 
     return `
       <div class="day-booking-item" style="border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
@@ -1159,23 +1163,15 @@ function showDayBookings(dateStr) {
           <div class="booking-time" style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">
             <i class="fas fa-clock"></i> ${booking.booking_time}
           </div>
-          <div style="font-size: 0.85rem; padding: 4px 8px; border-radius: 4px; background: ${paymentColor}22; color: ${paymentColor}; font-weight: 600;">
-            <i class="fas fa-credit-card"></i> ${paymentStatus}
-          </div>
+          <div class="status-badge ${booking.status}" style="font-size: 0.75rem;">${booking.status}</div>
         </div>
         <div class="booking-details">
-          <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-             <span style="font-weight: 600; color: var(--text-dark);">${booking.customer_name}</span>
-             <span style="color: #888; font-size: 0.9rem;">#${booking.id}</span>
-          </div>
-          <div style="font-size: 0.9rem; color: #444; margin-bottom: 3px;">
+          <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">${booking.customer_name}</div>
+          <div style="font-size: 0.9rem; color: #444;">
             <strong>${serviceName}</strong> @ ${cityName}
           </div>
-          <div class="booking-address" style="font-size: 0.85rem; color: #666; margin-top: 3px;">
-            <i class="fas fa-map-marker-alt"></i> ${booking.street_name} ${booking.house_number}
-          </div>
-          <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <span class="status-badge ${booking.status}">${booking.status}</span>
+          ${paymentInfo}
+          <div style="margin-top: 10px; text-align: right;">
             <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal').remove(); showBookingDetails(${booking.id})">
               <i class="fas fa-eye"></i> Dettagli
             </button>
@@ -1270,9 +1266,54 @@ function generateCommissionReport() {
   alert((getAdminTranslations().messages && getAdminTranslations().messages.commissionReportPlaceholder) || 'La generazione del rapporto delle commissioni sarà implementata qui.');
 }
 
-function loadWorkers() {
-  workers = JSON.parse(localStorage.getItem('workers') || '[]');
-  renderWorkers();
+async function loadWorkers() {
+  const token = localStorage.getItem('adminToken');
+  try {
+    const response = await fetch('/api/admin/workers', {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error('Failed to fetch workers');
+    workers = await response.json();
+    renderWorkers();
+  } catch (error) {
+    console.error('Failed to load workers:', error);
+    // Fallback if API not ready
+    workers = JSON.parse(localStorage.getItem('workers') || '[]');
+    renderWorkers();
+  }
+}
+
+async function addWorker() {
+  const token = localStorage.getItem('adminToken');
+  const name = document.getElementById('worker-name').value;
+  const email = document.getElementById('worker-email').value;
+  const phone = document.getElementById('worker-phone').value;
+
+  const workerData = { name, email, phone, rating: 5.0, status: 'active' };
+
+  try {
+    const response = await fetch('/api/admin/workers', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(workerData)
+    });
+
+    if (response.ok) {
+      alert('Worker added successfully');
+      closeModal('worker-modal');
+      await loadWorkers();
+    } else {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to add worker to server');
+    }
+  } catch (error) {
+    console.error('Worker API error:', error);
+    alert('Error adding worker: ' + error.message);
+  }
 }
 
 
@@ -1294,10 +1335,13 @@ function renderWorkers() {
       <p>Email: ${worker.email}</p>
       <p>Phone: ${worker.phone}</p>
       <p>Rating: ${worker.rating}</p>
-      <p>Jobs Completed: ${worker.jobs}</p>
+      <p>Jobs Completed: ${worker.jobs || 0}</p>
       <p>Status: ${worker.active ? 'Active' : 'Inactive'}</p>
-      <p>Specialties: ${worker.specialties.join(', ')}</p>
-      <button class="btn btn-sm btn-danger" onclick="deleteWorker(${index})">Delete</button>
+      <div class="action-btns" style="margin-top: 10px;">
+        <button class="btn btn-sm btn-danger" onclick="deleteWorker(${worker.id})">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
     `;
     container.appendChild(card);
   });
@@ -1441,11 +1485,27 @@ async function manualPayBooking(id) {
   }
 }
 
-function deleteWorker(index) {
-  if (!confirm('Are you sure you want to delete this worker?')) return;
-  workers.splice(index, 1);
-  localStorage.setItem('workers', JSON.stringify(workers));
-  renderWorkers();
+async function deleteWorker(id) {
+  const token = localStorage.getItem('adminToken');
+  if (!confirm('Eliminare questo collaboratore?')) return;
+
+  try {
+    const response = await fetch(`/api/admin/workers/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      alert('Collaboratore eliminato.');
+      await loadWorkers();
+    } else {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to delete worker');
+    }
+  } catch (error) {
+    console.error('Delete worker error:', error);
+    alert('Errore: ' + error.message);
+  }
 }
 
 async function toggleWorker(id, active) {
