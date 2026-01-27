@@ -255,17 +255,24 @@ function renderRecentBookings() {
   const tbody = document.getElementById('recent-bookings');
   const recent = bookings.slice(0, 5);
 
-  tbody.innerHTML = recent.map(booking => `
-    <tr onclick="showBookingDetails(${booking.id})" style="cursor: pointer;">
-      <td>#${booking.id}</td>
-      <td>${booking.customer_name}</td>
-      <td>${booking.service_name_it || booking.service_name}</td>
-      <td>${booking.city_name_it || booking.city_name}</td>
-      <td>${formatDate(booking.booking_date)}</td>
-      <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
-      <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = recent.map(booking => {
+    const service = services.find(s => s.id === booking.service_id);
+    const city = cities.find(c => c.id === booking.city_id);
+    const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
+    const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
+    
+    return `
+      <tr onclick="showBookingDetails(${booking.id})" style="cursor: pointer;">
+        <td>#${booking.id}</td>
+        <td>${booking.customer_name}</td>
+        <td>${serviceName}</td>
+        <td>${cityName}</td>
+        <td>${formatDate(booking.booking_date)}</td>
+        <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
+        <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
 
   if (recent.length === 0) {
     const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsYet) || 'No bookings yet';
@@ -282,41 +289,48 @@ function renderAllBookings() {
     filtered = bookings.filter(b => b.status === statusFilter);
   }
 
-  tbody.innerHTML = filtered.map(booking => `
-    <tr>
-      <td>#${booking.id}</td>
-      <td>${booking.customer_name}</td>
-      <td>
-        <div style="font-size: 0.85rem;">${booking.customer_email}</div>
-        <div style="font-size: 0.8rem; color: var(--text-light);">${booking.customer_phone}</div>
-      </td>
-      <td>${booking.service_name_it || booking.service_name}</td>
-      <td>${booking.city_name_it || booking.city_name}</td>
-      <td>
-        <div>${formatDate(booking.booking_date)}</div>
-        <div style="font-size: 0.85rem; color: var(--text-light);">${booking.booking_time}</div>
-      </td>
-      <td>${booking.hours}h x ${booking.cleaners}</td>
-      <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
-      <td><span class="status-badge ${booking.stripe_status}">${booking.stripe_status}</span></td>
-      <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn btn-sm btn-secondary" onclick="showBookingDetails(${booking.id})">
-            <i class="fas fa-eye"></i>
-          </button>
-          ${booking.status === 'pending' ? `
-            <button class="btn btn-sm btn-success" onclick="confirmBooking(${booking.id})">
-              <i class="fas fa-check"></i>
+  tbody.innerHTML = filtered.map(booking => {
+    const service = services.find(s => s.id === booking.service_id);
+    const city = cities.find(c => c.id === booking.city_id);
+    const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
+    const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
+
+    return `
+      <tr>
+        <td>#${booking.id}</td>
+        <td>${booking.customer_name}</td>
+        <td>
+          <div style="font-size: 0.85rem;">${booking.customer_email}</div>
+          <div style="font-size: 0.8rem; color: var(--text-light);">${booking.customer_phone}</div>
+        </td>
+        <td>${serviceName}</td>
+        <td>${cityName}</td>
+        <td>
+          <div>${formatDate(booking.booking_date)}</div>
+          <div style="font-size: 0.85rem; color: var(--text-light);">${booking.booking_time}</div>
+        </td>
+        <td>${booking.hours}h x ${booking.cleaners}</td>
+        <td>€${parseFloat(booking.total_amount).toFixed(2)}</td>
+        <td><span class="status-badge ${booking.stripe_status}">${booking.stripe_status}</span></td>
+        <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="btn btn-sm btn-secondary" onclick="showBookingDetails(${booking.id})">
+              <i class="fas fa-eye"></i>
             </button>
-            <button class="btn btn-sm btn-danger" onclick="rejectBooking(${booking.id})">
-              <i class="fas fa-times"></i>
-            </button>
-          ` : ''}
-        </div>
-      </td>
-    </tr>
-  `).join('');
+            ${booking.status === 'pending' ? `
+              <button class="btn btn-sm btn-success" onclick="confirmBooking(${booking.id})">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="rejectBooking(${booking.id})">
+                <i class="fas fa-times"></i>
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   if (filtered.length === 0) {
     const msg = (getAdminTranslations().messages && getAdminTranslations().messages.noBookingsFound) || 'No bookings found';
@@ -1106,33 +1120,55 @@ function showDayBookings(dateStr) {
   // Sort bookings by time
   dayBookings.sort((a, b) => a.booking_time.localeCompare(b.booking_time));
 
-  const bookingList = dayBookings.map(booking => `
-    <div class="day-booking-item" style="border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 4px;">
-      <div class="booking-time" style="font-weight: bold; color: var(--primary); font-size: 1.1rem; margin-bottom: 5px;">
-        <i class="fas fa-clock"></i> ${booking.booking_time}
-      </div>
-      <div class="booking-details">
-        <div class="booking-customer" style="font-weight: 600;">${booking.customer_name}</div>
-        <div class="booking-service" style="font-size: 0.9rem; color: #666;">${booking.service_name_it || booking.service_name}</div>
-        <div class="booking-address" style="font-size: 0.85rem; color: #888; margin-top: 3px;">
-          <i class="fas fa-map-marker-alt"></i> ${booking.street_name} ${booking.house_number}
+  const bookingList = dayBookings.map(booking => {
+    const service = services.find(s => s.id === booking.service_id);
+    const city = cities.find(c => c.id === booking.city_id);
+    const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
+    const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
+    const paymentStatus = booking.stripe_status === 'succeeded' ? 'Pagato' : (booking.status === 'paid' ? 'Pagato (Manuale)' : 'In attesa');
+    const paymentColor = (booking.stripe_status === 'succeeded' || booking.status === 'paid') ? '#2ecc71' : '#f39c12';
+
+    return `
+      <div class="day-booking-item" style="border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div class="booking-time" style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">
+            <i class="fas fa-clock"></i> ${booking.booking_time}
+          </div>
+          <div style="font-size: 0.85rem; padding: 4px 8px; border-radius: 4px; background: ${paymentColor}22; color: ${paymentColor}; font-weight: 600;">
+            <i class="fas fa-credit-card"></i> ${paymentStatus}
+          </div>
         </div>
-        <div class="booking-status" style="margin-top: 8px;">
-          <span class="status-badge ${booking.status}">${booking.status}</span>
+        <div class="booking-details">
+          <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+             <span style="font-weight: 600; color: var(--text-dark);">${booking.customer_name}</span>
+             <span style="color: #888; font-size: 0.9rem;">#${booking.id}</span>
+          </div>
+          <div style="font-size: 0.9rem; color: #444; margin-bottom: 3px;">
+            <strong>${serviceName}</strong> @ ${cityName}
+          </div>
+          <div class="booking-address" style="font-size: 0.85rem; color: #666; margin-top: 3px;">
+            <i class="fas fa-map-marker-alt"></i> ${booking.street_name} ${booking.house_number}
+          </div>
+          <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span class="status-badge ${booking.status}">${booking.status}</span>
+            <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal').remove(); showBookingDetails(${booking.id})">
+              <i class="fas fa-eye"></i> Dettagli
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   const modal = document.createElement('div');
   modal.className = 'modal active';
   modal.innerHTML = `
-    <div class="modal-content calendar-modal" style="max-width: 500px;">
-      <div class="modal-header">
-        <h3>Prenotazioni per ${formatDate(dateStr)}</h3>
+    <div class="modal-content calendar-modal" style="max-width: 500px; border-radius: 12px;">
+      <div class="modal-header" style="border-bottom: 1px solid #eee; padding: 15px 20px;">
+        <h3 style="margin: 0;">Prenotazioni per ${formatDate(dateStr)}</h3>
         <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
       </div>
-      <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 15px;">
+      <div class="modal-body" style="max-height: 75vh; overflow-y: auto; padding: 20px; background: #f8f9fa;">
         ${bookingList}
       </div>
     </div>
