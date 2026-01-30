@@ -11,7 +11,10 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+if (!stripe) {
+  console.warn('Stripe is not configured. Payments will be simulated.');
+}
 // Data directory (use /tmp on Vercel for writable storage)
 const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
 
@@ -135,12 +138,29 @@ function loadData() {
       const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
       const hashedPassword = bcrypt.hashSync(adminPassword, 10);
       admins = [{ id: 1, username: 'CasaClean', password_hash: hashedPassword }];
-      fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2));
+      saveData(admins, adminsFilePath);
     }
   } catch (err) {
     console.error('Failed to load admins:', err);
-    if (services.length === 0) saveData(services, servicesFilePath);
-  if (cities.length === 0) saveData(cities, citiesFilePath);
+  }
+  
+  if (services.length === 0) {
+    services = [
+        { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
+        { id: 2, name: 'One-time Cleaning', name_it: 'Pulizia Una Tantum', name_ru: 'Разовая уборка', name_ka: 'ერთჯერადი დასუფავება', description: 'Single deep clean for any occasion', description_it: 'Una pulizia approfondita per qualsiasi occasione', description_ru: 'Однократная глубокая уборка для любого случая', description_ka: 'ერთჯერადი ღრმა დასუფავება ნებისმიერი შემთხვევისთვის', price_per_hour: 21.90, enabled: true },
+        { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
+        { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
+        { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'დავალება ბიზნესისთვის', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+    ];
+    saveData(services, servicesFilePath);
+  }
+  if (cities.length === 0) {
+    cities = [
+        { id: 1, name: 'Rome', name_it: 'Roma', name_ru: 'Рим', name_ka: 'რომი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' },
+        { id: 2, name: 'Milan', name_it: 'Milano', name_ru: 'Милан', name_ka: 'Милан', name_ka: 'მილანი', enabled: true, working_days: '1,2,3,4,5,6,7', working_hours_start: '09:00', working_hours_end: '17:30' }
+    ];
+    saveData(cities, citiesFilePath);
   }
 
   try {
@@ -199,47 +219,6 @@ function saveData(array, filePath) {
 
 // Load data on startup
 loadData();
-
-// Cancel expired pending bookings at startup and every hour
-const cancelExpiredBookings = async () => {
-  const now = new Date();
-  const expiredBookings = bookings.filter(booking => {
-    if (booking.status === 'pending' && booking.created_at) {
-      const createdAt = new Date(booking.created_at);
-      const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
-      return hoursDiff > 24;
-    }
-    return false;
-  });
-
-  for (const booking of expiredBookings) {
-    const index = bookings.findIndex(b => b.id === booking.id);
-    if (booking.payment_intent_id && stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
-      try {
-        await stripe.paymentIntents.cancel(booking.payment_intent_id);
-        bookings[index].status = 'cancelled';
-        bookings[index].stripe_status = 'expired';
-        bookings[index].updated_at = new Date().toISOString();
-        console.log(`Cancelled expired booking ${booking.id}`);
-      } catch (error) {
-        console.error('Error cancelling expired booking:', error);
-      }
-    } else {
-      bookings[index].status = 'cancelled';
-      bookings[index].stripe_status = 'expired';
-      bookings[index].updated_at = new Date().toISOString();
-    }
-  }
-
-  if (expiredBookings.length > 0) {
-    saveData(bookings, bookingsFilePath);
-  }
-};
-
-cancelExpiredBookings();
-
-// Check for expired pending bookings every hour
-setInterval(cancelExpiredBookings, 60 * 60 * 1000);
 
 app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
