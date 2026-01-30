@@ -685,6 +685,34 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
   }
 });
 
+app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingIndex = bookings.findIndex(b => b.id == id);
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    bookings.splice(bookingIndex, 1);
+    saveData(bookings, bookingsFilePath);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    res.status(500).json({ error: 'Failed to delete booking' });
+  }
+});
+
+app.delete('/api/admin/bookings', requireAdmin, (req, res) => {
+  try {
+    bookings.length = 0; // Clear the array
+    saveData(bookings, bookingsFilePath);
+    res.json({ success: true, message: 'All bookings cleared' });
+  } catch (error) {
+    console.error('Error clearing all bookings:', error);
+    res.status(500).json({ error: 'Failed to clear all bookings' });
+  }
+});
+
 app.get('/api/admin/cities', (req, res) => {
   try {
     res.json(cities);

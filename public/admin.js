@@ -1551,24 +1551,24 @@ async function clearAllBookings() {
   if (!confirm('Sei sicuro di voler eliminare TUTTE le prenotazioni? Questa azione è irreversibile.')) return;
 
   try {
-    // Delete all bookings one by one
-    const deletePromises = bookings.map(booking =>
-      fetch(`/api/admin/bookings/${booking.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-    );
+    const response = await fetch('/api/admin/bookings', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
 
-    const results = await Promise.all(deletePromises);
-    const failedCount = results.filter(r => !r.ok).length;
-
-    if (failedCount === 0) {
+    if (response.ok) {
       alert('Tutte le prenotazioni sono state eliminate.');
+      loadDashboardData();
     } else {
-      alert(`${bookings.length - failedCount} prenotazioni eliminate. ${failedCount} fallite.`);
+      let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (jsonError) {
+        // If response is not JSON, use status text
+      }
+      throw new Error(errorMessage);
     }
-
-    loadDashboardData();
   } catch (error) {
     console.error('Clear all bookings error:', error);
     alert('Errore durante la cancellazione: ' + error.message);
