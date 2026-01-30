@@ -1607,6 +1607,20 @@ async function toggleWorker(id, active) {
     await loadWorkers();
   }
 }
+function toggleLanguageDropdown() {
+  const dropdown = document.getElementById('lang-options');
+  if (dropdown) {
+    dropdown.classList.toggle('active');
+  }
+}
+
+function toggleMobileLangDropdown() {
+  const dropdown = document.getElementById('mobile-lang-options');
+  if (dropdown) {
+    dropdown.classList.toggle('active');
+  }
+}
+
 window.onload = () => {
   loadWorkers();
 };
