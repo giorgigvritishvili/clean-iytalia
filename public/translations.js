@@ -993,8 +993,30 @@ function setLanguage(lang) {
   document.documentElement.lang = lang;
   updateContent();
 
+  // Update the current language display
+  const currentLangEl = document.getElementById('current-lang');
+  if (currentLangEl) {
+    currentLangEl.textContent = lang.toUpperCase();
+  }
+
+  const mobileCurrentLangEl = document.getElementById('mobile-current-lang');
+  if (mobileCurrentLangEl) {
+    mobileCurrentLangEl.textContent = lang.toUpperCase();
+  }
+
   const langSelect = document.getElementById('language-select');
   if (langSelect) langSelect.value = lang;
+
+  // Close dropdowns after language selection
+  const dropdown = document.getElementById('lang-options');
+  if (dropdown) {
+    dropdown.classList.remove('active');
+  }
+
+  const mobileDropdown = document.getElementById('mobile-lang-options');
+  if (mobileDropdown) {
+    mobileDropdown.classList.remove('active');
+  }
 
   // Sync admin language if hook exists
   if (typeof window.onLanguageChange === 'function') {

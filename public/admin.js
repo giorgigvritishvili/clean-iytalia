@@ -17,8 +17,8 @@ function loadLocalData() {
 }
 
 
-// Admin language override: always use Italian translations for the admin UI
-const ADMIN_LANG = 'it';
+// Admin language override: use current language for the admin UI
+let ADMIN_LANG = 'it';
 function getAdminTranslations() {
   return (typeof translations !== 'undefined' && translations[ADMIN_LANG] && translations[ADMIN_LANG].admin) ? translations[ADMIN_LANG].admin : {};
 }
@@ -28,6 +28,7 @@ try { document.documentElement.lang = 'it'; } catch (e) {}
 // Re-render dynamic admin content when translations change
 window.onLanguageChange = function(lang) {
   try {
+    ADMIN_LANG = lang; // Update admin language to current language
     renderServices();
     renderCities();
     renderWorkers();
