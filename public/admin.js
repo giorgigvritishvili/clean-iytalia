@@ -1147,6 +1147,10 @@ function changeMonth(delta) {
 }
 
 function showDayBookings(dateStr) {
+  // Clear any existing modals first to prevent ID/DOM duplication issues
+  const existingModals = document.querySelectorAll('.modal.calendar-day-modal');
+  existingModals.forEach(m => m.remove());
+
   const dayBookings = bookings.filter(booking => booking.booking_date === dateStr);
 
   if (dayBookings.length === 0) {
@@ -1182,7 +1186,12 @@ function showDayBookings(dateStr) {
           <div class="booking-time" style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">
             <i class="fas fa-clock"></i> ${booking.booking_time}
           </div>
-          <div class="status-badge ${booking.status}" style="font-size: 0.75rem;">${booking.status}</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="status-badge ${booking.status}" style="font-size: 0.75rem;">${booking.status}</div>
+            <button class="btn btn-sm btn-danger" onclick="deleteBooking(${booking.id}); this.closest('.modal').remove();" title="Elimina">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
         </div>
         <div class="booking-details">
           <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">${booking.customer_name}</div>
@@ -1201,7 +1210,7 @@ function showDayBookings(dateStr) {
   }).join('');
 
   const modal = document.createElement('div');
-  modal.className = 'modal active';
+  modal.className = 'modal active calendar-day-modal';
   modal.onclick = (e) => {
     if (e.target === modal) modal.remove();
   };
@@ -1508,25 +1517,25 @@ async function manualPayBooking(id) {
   }
 }
 
-async function deleteWorker(id) {
+async function deleteBooking(id) {
   const token = localStorage.getItem('adminToken');
-  if (!confirm('Eliminare questo collaboratore?')) return;
+  if (!confirm('Eliminare questa prenotazione permanentemente?')) return;
 
   try {
-    const response = await fetch(`/api/admin/workers/${id}`, {
+    const response = await fetch(`/api/admin/bookings/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (response.ok) {
-      alert('Collaboratore eliminato.');
-      await loadWorkers();
+      alert('Prenotazione eliminata.');
+      loadDashboardData();
     } else {
       const err = await response.json();
-      throw new Error(err.error || 'Failed to delete worker');
+      throw new Error(err.error || 'Failed to delete booking');
     }
   } catch (error) {
-    console.error('Delete worker error:', error);
+    console.error('Delete booking error:', error);
     alert('Errore: ' + error.message);
   }
 }
