@@ -1548,24 +1548,37 @@ async function manualPayBooking(id) {
 
 async function deleteBooking(id) {
   const token = localStorage.getItem('adminToken');
-  if (!confirm('Eliminare questa prenotazione permanentemente?')) return;
+
+  if (!confirm('Sei sicuro di voler eliminare questa prenotazione?')) return;
 
   try {
-    const response = await fetch(`/api/admin/bookings/${id}`, {
+    const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      cache: 'no-store'
     });
 
-    if (response.ok) {
-      alert('Prenotazione eliminata.');
-      loadDashboardData();
-    } else {
-      const err = await response.json();
-      throw new Error(err.error || 'Failed to delete booking');
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || 'Delete failed');
     }
-  } catch (error) {
-    console.error('Delete booking error:', error);
-    alert('Errore: ' + error.message);
+
+    // ✅ 1️⃣ ლოკალურადაც ვშლით
+    bookings = bookings.filter(b => b.id !== id);
+
+    // ✅ 2️⃣ UI refresh (არანაირი reload)
+    renderRecentBookings();
+    renderAllBookings();
+    loadAppointmentCalendar();
+
+    // ✅ 3️⃣ თუ დეტალების მოდალია გახსნილი — დავხუროთ
+    closeModal('booking-modal');
+
+  } catch (err) {
+    console.error('Delete booking failed:', err);
+    alert('Errore durante eliminazione');
   }
 }
 
