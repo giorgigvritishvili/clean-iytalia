@@ -344,11 +344,14 @@ function renderAllBookings() {
             <button class="btn btn-sm btn-secondary" onclick="showBookingDetails(${booking.id})">
               <i class="fas fa-eye"></i>
             </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteBooking(${booking.id})">
+              <i class="fas fa-trash"></i>
+            </button>
             ${booking.status === 'pending' ? `
               <button class="btn btn-sm btn-success" onclick="confirmBooking(${booking.id})">
                 <i class="fas fa-check"></i>
               </button>
-              <button class="btn btn-sm btn-danger" onclick="rejectBooking(${booking.id})">
+              <button class="btn btn-sm btn-warning" onclick="rejectBooking(${booking.id})">
                 <i class="fas fa-times"></i>
               </button>
             ` : ''}
@@ -369,6 +372,9 @@ function filterBookings() {
 }
 
 function showBookingDetails(id) {
+  // Close any existing booking modal first
+  closeModal('booking-modal');
+
   const booking = bookings.find(b => b.id === Number(id));
   if (!booking) {
     console.error('Booking not found for ID:', id);
@@ -1537,6 +1543,35 @@ async function deleteBooking(id) {
   } catch (error) {
     console.error('Delete booking error:', error);
     alert('Errore: ' + error.message);
+  }
+}
+
+async function clearAllBookings() {
+  const token = localStorage.getItem('adminToken');
+  if (!confirm('Sei sicuro di voler eliminare TUTTE le prenotazioni? Questa azione è irreversibile.')) return;
+
+  try {
+    // Delete all bookings one by one
+    const deletePromises = bookings.map(booking =>
+      fetch(`/api/admin/bookings/${booking.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+    );
+
+    const results = await Promise.all(deletePromises);
+    const failedCount = results.filter(r => !r.ok).length;
+
+    if (failedCount === 0) {
+      alert('Tutte le prenotazioni sono state eliminate.');
+    } else {
+      alert(`${bookings.length - failedCount} prenotazioni eliminate. ${failedCount} fallite.`);
+    }
+
+    loadDashboardData();
+  } catch (error) {
+    console.error('Clear all bookings error:', error);
+    alert('Errore durante la cancellazione: ' + error.message);
   }
 }
 

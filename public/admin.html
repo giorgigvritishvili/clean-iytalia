@@ -210,14 +210,20 @@
         <section id="bookings-tab" class="tab-content">
           <div class="section-header">
             <h3>Tutte le Prenotazioni</h3>
-            <div class="filter-group">
-              <select id="status-filter" onchange="filterBookings()">
-                <option value="">Tutti gli stati</option>
-                <option value="pending">In sospeso</option>
-                <option value="confirmed">Confermato</option>
-                <option value="cancelled">Annullato</option>
-                <option value="completed">Completato</option>
-              </select>
+            <div class="section-actions">
+              <button class="btn btn-danger" onclick="clearAllBookings()">
+                <i class="fas fa-trash-alt"></i>
+                Cancella Tutto
+              </button>
+              <div class="filter-group">
+                <select id="status-filter" onchange="filterBookings()">
+                  <option value="">Tutti gli stati</option>
+                  <option value="pending">In sospeso</option>
+                  <option value="confirmed">Confermato</option>
+                  <option value="cancelled">Annullato</option>
+                  <option value="completed">Completato</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="table-container">
