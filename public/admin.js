@@ -372,27 +372,140 @@ function filterBookings() {
   renderAllBookings();
 }
 
-function showBookingDetails(bookingId) {
-  const booking = bookings.find(b => b.id === bookingId);
-  if (!booking) return;
+function showBookingDetails(id) {
+  // Close any existing booking modal first
+  closeModal('booking-modal');
 
-  const detailsEl = document.getElementById('booking-details');
-  const actionsEl = document.getElementById('booking-actions');
+  const booking = bookings.find(b => b.id === Number(id));
+  if (!booking) {
+    console.error('Booking not found for ID:', id);
+    return;
+  }
 
-  // დეტალების ჩასმა
-  detailsEl.innerHTML = `
-    <p><strong>Client:</strong> ${booking.clientName || '-'}</p>
-    <p><strong>Email:</strong> ${booking.email || '-'}</p>
-    <p><strong>Phone:</strong> ${booking.phone || '-'}</p>
-    <p><strong>City:</strong> ${booking.city || '-'}</p>
-    <p><strong>Service:</strong> ${booking.service || '-'}</p>
-    <p><strong>Date:</strong> ${booking.date || '-'}</p>
-    <p><strong>Time:</strong> ${booking.time || '-'}</p>
-    <p><strong>Status:</strong> ${booking.status || 'pending'}</p>
+  const details = document.getElementById('booking-details');
+  const Ladmin = getAdminTranslations();
+  const Ltable = Ladmin.table || {};
+  const Lbooking = (translations[ADMIN_LANG] && translations[ADMIN_LANG].booking) || {};
+  const Lcontact = (translations[ADMIN_LANG] && translations[ADMIN_LANG].contact) || {};
+
+  const cleanPhone = booking.customer_phone
+  ? booking.customer_phone.replace(/[^0-9+]/g, '').replace(/^00/, '+')
+  : booking.customer_phone || '';
+
+  // Find service and city names if not already included
+  const service = services.find(s => Number(s.id) === Number(booking.service_id));
+  const city = cities.find(c => Number(c.id) === Number(booking.city_id));
+  const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
+  const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
+
+  details.innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item">
+        <label>${Ltable.id || 'Booking ID'}</label>
+        <span>#${booking.id}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.status || 'Status'}</label>
+        <span class="status-badge ${booking.status}">${booking.status}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.customer || 'Customer'}</label>
+        <span>${booking.customer_name}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Lcontact.email || 'Email'}</label>
+        <span>${booking.customer_email}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Lcontact.phone || 'Phone'}</label>
+        <span>${booking.customer_phone}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.service || 'Service'}</label>
+        <span>${serviceName}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.city || 'City'}</label>
+        <span>${cityName}</span>
+      </div>
+      <div class="detail-item full-width">
+        <label>Address</label>
+        <span>${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.date || 'Date'}</label>
+        <span>${formatDate(booking.booking_date)}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Lbooking.time || 'Time'}</label>
+        <span>${booking.booking_time}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.duration || 'Duration'}</label>
+        <span>${booking.hours} hours</span>
+      </div>
+      <div class="detail-item">
+        <label>${Lbooking.cleaners || 'Cleaners'}</label>
+        <span>${booking.cleaners}</span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.amount || 'Total Amount'}</label>
+        <span style="font-size: 1.25rem; font-weight: 600; color: var(--primary);">
+          €${parseFloat(booking.total_amount).toFixed(2)}
+        </span>
+      </div>
+      <div class="detail-item">
+        <label>${Ltable.payment || 'Payment Status'}</label>
+        <span class="status-badge ${booking.stripe_status}">${booking.stripe_status}</span>
+      </div>
+      ${booking.payment_intent_id ? `
+        <div class="detail-item full-width">
+          <label>Payment Intent ID</label>
+          <span style="font-size: 0.85rem; word-break: break-all;">
+            ${booking.payment_intent_id}
+          </span>
+        </div>
+      ` : ''}
+      ${booking.notes ? `
+        <div class="detail-item full-width">
+          <label>${Lbooking.notes || 'Special Instructions'}</label>
+          <span>${booking.notes}</span>
+        </div>
+      ` : ''}
+    </div>
   `;
 
-  // ღილაკები (თუ გინდა)
-  actionsEl.innerHTML = `
+  const actions = document.getElementById('booking-actions');
+
+  if (booking.status === 'pending') {
+    const A = getAdminTranslations().actions || {};
+    actions.innerHTML = `
+      <button class="btn btn-danger" onclick="rejectBooking(${booking.id}); closeModal('booking-modal');">
+        <i class="fas fa-times"></i> ${A.reject || 'Reject'}
+      </button>
+      <button class="btn btn-warning" onclick="manualPayBooking(${booking.id}); closeModal('booking-modal');">
+        <i class="fas fa-money-bill-wave"></i> Manual Pay
+      </button>
+      <button class="btn btn-success" onclick="confirmBooking(${booking.id}); closeModal('booking-modal');">
+        <i class="fas fa-check"></i> ${A.confirmAndCharge || 'Confirm & Charge'}
+      </button>
+    `;
+  } else {
+    // ✅ --- აქ შევცვალეთ ტელეფონი → cleanPhone ---
+    actions.innerHTML = `
+      <a href="mailto:${booking.customer_email}" class="btn btn-secondary">
+        <i class="fas fa-envelope"></i> Email
+      </a>
+      <a href="tel:${cleanPhone}" class="btn btn-secondary">
+        <i class="fas fa-phone"></i> Call
+      </a>
+      <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn btn-success">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>
+    `;
+  }
+
+ actionsEl.innerHTML = `
     <button class="btn btn-secondary" onclick="closeModal('booking-modal')">
       Close
     </button>
@@ -401,8 +514,9 @@ function showBookingDetails(bookingId) {
   // მოდალის გახსნა — მხოლოდ class-ით
   const modal = document.getElementById('booking-modal');
   modal.classList.add('active');
-}
 
+
+}
 
 
 async function confirmBooking(id) {
@@ -894,7 +1008,6 @@ function closeModal(id) {
 
   modal.classList.remove('active');
 }
-
 
 function toggleSidebar() {
   document.querySelector('.sidebar').classList.toggle('active');
