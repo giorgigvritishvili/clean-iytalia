@@ -277,6 +277,7 @@ async function loadBookings() {
 
 function renderRecentBookings() {
   const tbody = document.getElementById('recent-bookings');
+  if (!tbody) return;
   const recent = bookings.slice(0, 5);
 
   tbody.innerHTML = recent.map(booking => {
@@ -306,6 +307,7 @@ function renderRecentBookings() {
 
 function renderAllBookings() {
   const tbody = document.getElementById('all-bookings');
+  if (!tbody) return;
   const statusFilter = document.getElementById('status-filter').value;
 
   let filtered = bookings;
@@ -367,8 +369,11 @@ function filterBookings() {
 }
 
 function showBookingDetails(id) {
-  const booking = bookings.find(b => b.id === id);
-  if (!booking) return;
+  const booking = bookings.find(b => b.id === Number(id));
+  if (!booking) {
+    console.error('Booking not found for ID:', id);
+    return;
+  }
 
   const details = document.getElementById('booking-details');
   const Ladmin = getAdminTranslations();
@@ -381,10 +386,10 @@ function showBookingDetails(id) {
   : booking.customer_phone || '';
 
   // Find service and city names if not already included
-  const service = services.find(s => s.id === booking.service_id);
-  const city = cities.find(c => c.id === booking.city_id);
-  const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'Unknown Service');
-  const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'Unknown City');
+  const service = services.find(s => Number(s.id) === Number(booking.service_id));
+  const city = cities.find(c => Number(c.id) === Number(booking.city_id));
+  const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
+  const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
 
   details.innerHTML = `
     <div class="detail-grid">
@@ -562,6 +567,7 @@ async function loadCities() {
 
 function renderCities() {
   const grid = document.getElementById('cities-grid');
+  if (!grid) return;
 
   grid.innerHTML = cities.map(city => `
     <div class="admin-card">
@@ -702,6 +708,7 @@ async function loadServices() {
 
 function renderServices() {
   const grid = document.getElementById('services-grid');
+  if (!grid) return;
 
   grid.innerHTML = services.map(service => {
     const localizedName = (service.name_it && service.name_it.trim()) || service.name || '';
@@ -979,7 +986,19 @@ function switchTab(tab) {
 }
 
 function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  } else {
+    // If id not found, look for any open modal (like calendar day modal)
+    const activeModals = document.querySelectorAll('.modal.active');
+    activeModals.forEach(m => {
+      m.classList.remove('active');
+      // If it's a dynamically created one without ID, remove from DOM
+      if (!m.id) m.remove();
+    });
+  }
 }
 
 function toggleSidebar() {
@@ -1139,8 +1158,8 @@ function showDayBookings(dateStr) {
   dayBookings.sort((a, b) => a.booking_time.localeCompare(b.booking_time));
 
   const bookingList = dayBookings.map(booking => {
-    const service = services.find(s => s.id === booking.service_id);
-    const city = cities.find(c => c.id === booking.city_id);
+    const service = services.find(s => Number(s.id) === Number(booking.service_id));
+    const city = cities.find(c => Number(c.id) === Number(booking.city_id));
     const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
     const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
     
@@ -1183,6 +1202,9 @@ function showDayBookings(dateStr) {
 
   const modal = document.createElement('div');
   modal.className = 'modal active';
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
   modal.innerHTML = `
     <div class="modal-content calendar-modal" style="max-width: 500px; border-radius: 12px;">
       <div class="modal-header" style="border-bottom: 1px solid #eee; padding: 15px 20px;">
@@ -1320,6 +1342,7 @@ async function addWorker() {
 
 function renderWorkers() {
   const container = document.getElementById('workers-grid');
+  if (!container) return;
   container.innerHTML = ''; // Clear previous
 
   if (workers.length === 0) {

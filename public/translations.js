@@ -24,9 +24,10 @@ const translations = {
       deep: "Deep Cleaning",
       deepDesc: "Thorough cleaning including hard-to-reach areas",
       move: "Move-in/Move-out",
-      moveDesc: "Complete cleaning for moving in or out"
-    }
-    ,
+      moveDesc: "Complete cleaning for moving in or out",
+      commercial: "Commercial Cleaning",
+      commercialDesc: "Professional cleaning for offices and businesses"
+    },
     booking: {
       title: "Book Your Cleaning",
       subtitle: "Fill in the details below to schedule your service",
@@ -99,14 +100,7 @@ const translations = {
         solvents: "Cleaning Solvents",
         mop: "Mop",
         vacuum: "Vacuum Cleaner"
-      }
-      ,
-      propertySize: "Property Size (sqm)",
-      doorbell: "Name on Doorbell"
-      ,
-      propertySize: "Property Size (sqm)",
-      doorbell: "Name on Doorbell"
-      ,
+      },
       propertySize: "Property Size (sqm)",
       doorbell: "Name on Doorbell"
     },
@@ -158,8 +152,7 @@ const translations = {
         financial: "Financial",
         workers: "Workers",
         cities: "Cities",
-        services: "Services"
-      ,
+        services: "Services",
         availableProjects: "Available Projects",
         myProjects: "My Projects",
         appointmentCalendar: "Appointment Calendar",
@@ -193,39 +186,10 @@ const translations = {
         payment: "Payment",
         actions: "Actions"
       },
-      table: {
-        id: "ID",
-        customer: "Customer",
-        service: "Service",
-        city: "City",
-        date: "Date",
-        dateTime: "Date & Time",
-        status: "Status",
-        amount: "Amount",
-        contact: "Contact",
-        duration: "Duration",
-        payment: "Payment",
-        actions: "Actions"
-      },
-      table: {
-        id: "ID",
-        customer: "Customer",
-        service: "Service",
-        city: "City",
-        date: "Date",
-        dateTime: "Date & Time",
-        status: "Status",
-        amount: "Amount",
-        contact: "Contact",
-        duration: "Duration",
-        payment: "Payment",
-        actions: "Actions"
-      },
       common: {
         backToSite: "Back to Site",
         logout: "Logout"
-      }
-      ,
+      },
       actions: {
         cancel: "Cancel",
         addCity: "Add City",
@@ -239,8 +203,7 @@ const translations = {
         requestPayout: "Request Payout",
         reject: "Reject",
         confirmAndCharge: "Confirm & Charge"
-      }
-      ,
+      },
       form: {
         serviceNameEn: "Service Name (English)",
         serviceNameEnPlaceholder: "e.g., Regular Cleaning",
@@ -255,8 +218,7 @@ const translations = {
         status: "Status",
         enabled: "Enabled",
         disabled: "Disabled"
-      }
-      ,
+      },
       messages: {
         invalidCredentials: "Invalid credentials",
         loginFailedTry: "Login failed. Please try again.",
@@ -274,8 +236,7 @@ const translations = {
         addProjectPlaceholder: "Add project modal will be implemented here.",
         addWorkerPlaceholder: "Add worker modal will be implemented here.",
         confirmConfirmBooking: "Confirm this booking and charge the customer?",
-        confirmRejectBooking: "Reject this booking? The payment authorization will be released."
-      ,
+        confirmRejectBooking: "Reject this booking? The payment authorization will be released.",
         noBookingsYet: "No bookings yet",
         noBookingsFound: "No bookings found"
       }
@@ -307,8 +268,7 @@ const translations = {
       deepDesc: "Pulizia approfondita inclusi gli angoli difficili da raggiungere",
       move: "Trasloco Entrata/Uscita",
       moveDesc: "Pulizia completa per trasloco entrata o uscita"
-    }
-    ,
+    },
     booking: {
       title: "Prenota la tua pulizia",
       subtitle: "Compila i dettagli qui sotto per prenotare il servizio",
@@ -381,8 +341,7 @@ const translations = {
         solvents: "Detergenti",
         mop: "Mocio",
         vacuum: "Aspirapolvere"
-      }
-      ,
+      },
       propertySize: "Dimensione proprietà (mq)",
       doorbell: "Nome sul campanello"
     },
@@ -434,8 +393,7 @@ const translations = {
         financial: "Finanziario",
         workers: "Operatori",
         cities: "Città",
-        services: "Servizi"
-      ,
+        services: "Servizi",
         availableProjects: "Progetti Disponibili",
         myProjects: "I miei progetti",
         appointmentCalendar: "Calendario Appuntamenti",
@@ -472,8 +430,7 @@ const translations = {
       common: {
         backToSite: "Torna al sito",
         logout: "Esci"
-      }
-      ,
+      },
       actions: {
         cancel: "Annulla",
         addCity: "Aggiungi città",
@@ -484,43 +441,42 @@ const translations = {
         deleteService: "Elimina servizio",
         addProject: "Aggiungi progetto",
         addWorker: "Aggiungi operatore",
-          requestPayout: "Richiedi pagamento",
-          reject: "Rifiuta",
-          confirmAndCharge: "Conferma e Addebita"
-      }
-        ,
-        form: {
-          serviceNameEn: "Nome servizio (Inglese)",
-          serviceNameEnPlaceholder: "es., Regular Cleaning",
-          serviceNameIt: "Nome servizio (Italiano)",
-          serviceNameItPlaceholder: "es., Pulizia Regolare",
-          serviceNameKa: "Nome servizio (Georgiano)",
-          serviceNameKaPlaceholder: "es., რეგულარული დასუფავება",
-          serviceNameRu: "Nome servizio (Russo)",
-          serviceNameRuPlaceholder: "es., Регулярная уборка",
-          descriptionEn: "Descrizione (Inglese)",
-          descriptionEnPlaceholder: "Descrivi il servizio in inglese",
-          descriptionIt: "Descrizione (Italiano)",
-          descriptionItPlaceholder: "Descrivi il servizio in italiano",
-          descriptionKa: "Descrizione (Georgiano)",
-          descriptionKaPlaceholder: "აღწერეთ სერვისი ქართულად",
-          descriptionRu: "Descrizione (Russo)",
-          descriptionRuPlaceholder: "Опишите услугу на русском",
-          cityNameEn: "Nome città (Inglese)",
-          cityNameEnPlaceholder: "es., Florence",
-          cityNameIt: "Nome città (Italiano)",
-          cityNameItPlaceholder: "es., Firenze",
-          cityNameKa: "Nome città (Georgiano)",
-          cityNameKaPlaceholder: "es., ფლორენცია",
-          cityNameRu: "Nome città (Russo)",
-          cityNameRuPlaceholder: "es., Флоренция",
-          pricePerHour: "Prezzo per ora (€)",
-          pricePerHourPlaceholder: "25.00",
-          status: "Stato",
-          enabled: "Attivato",
-          disabled: "Disattivato"
-        },
-        messages: {
+        requestPayout: "Richiedi pagamento",
+        reject: "Rifiuta",
+        confirmAndCharge: "Conferma e Addebita"
+      },
+      form: {
+        serviceNameEn: "Nome servizio (Inglese)",
+        serviceNameEnPlaceholder: "es., Regular Cleaning",
+        serviceNameIt: "Nome servizio (Italiano)",
+        serviceNameItPlaceholder: "es., Pulizia Regolare",
+        serviceNameKa: "Nome servizio (Georgiano)",
+        serviceNameKaPlaceholder: "es., რეგულარული დასუფავება",
+        serviceNameRu: "Nome servizio (Russo)",
+        serviceNameRuPlaceholder: "es., Регулярная уборка",
+        descriptionEn: "Descrizione (Inglese)",
+        descriptionEnPlaceholder: "Descrivi il servicio in inglese",
+        descriptionIt: "Descrizione (Italiano)",
+        descriptionItPlaceholder: "Descrivi il servizio in italiano",
+        descriptionKa: "Descrizione (Georgiano)",
+        descriptionKaPlaceholder: "აღწერეთ სერვისი ქართულად",
+        descriptionRu: "Descrizione (Russo)",
+        descriptionRuPlaceholder: "Опишите услугу на русском",
+        cityNameEn: "Nome città (Inglese)",
+        cityNameEnPlaceholder: "es., Florence",
+        cityNameIt: "Nome città (Italiano)",
+        cityNameItPlaceholder: "es., Firenze",
+        cityNameKa: "Nome città (Georgiano)",
+        cityNameKaPlaceholder: "es., ფლორენცია",
+        cityNameRu: "Nome città (Russo)",
+        cityNameRuPlaceholder: "es., Флоренция",
+        pricePerHour: "Prezzo per ora (€)",
+        pricePerHourPlaceholder: "25.00",
+        status: "Stato",
+        enabled: "Attivato",
+        disabled: "Disattivato"
+      },
+      messages: {
         invalidCredentials: "Credenziali non valide",
         loginFailedTry: "Accesso fallito. Riprova.",
         bookingDetailsTitle: "Dettagli Prenotazione",
@@ -537,8 +493,7 @@ const translations = {
         addProjectPlaceholder: "La finestra per aggiungere un progetto sarà implementata qui.",
         addWorkerPlaceholder: "La finestra per aggiungere un operatore sarà implementata qui.",
         confirmConfirmBooking: "Confermare questa prenotazione e addebitare il cliente?",
-        confirmRejectBooking: "Rifiutare questa prenotazione? L'autorizzazione al pagamento verrà rilasciata."
-      ,
+        confirmRejectBooking: "Rifiutare questa prenotazione? L'autorizzazione al pagamento verrà rilasciata.",
         noBookingsYet: "Nessuna prenotazione",
         noBookingsFound: "Nessuna prenotazione trovata"
       }
@@ -569,9 +524,10 @@ const translations = {
       deep: "ღრმა დასუფავება",
       deepDesc: "სრულყოფილი დასუფავება მათ შორის რთულად მისაწვდომ ადგილებში",
       move: "შესვლა/გასვლა",
-      moveDesc: "სრული დასუფავება შესვლის ან გასვლისთვის"
-    }
-    ,
+      moveDesc: "სრული დასუფავება შესვლის ან გასვლისთვის",
+      commercial: "კომერციული დასუფთავება",
+      commercialDesc: "პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის"
+    },
     booking: {
       title: "დაჯავშნეთ დასუფთავება",
       subtitle: "შეავსეთ ქვემოთ მოცემული ინფორმაცია იმისათვის, რომ დაგეგმოთ მომსახურება",
@@ -585,15 +541,15 @@ const translations = {
       cleaners: "დასუფთავების თანამშრომლები",
       selectService: "აირჩიეთ სერვისი",
       selectCity: "აირჩიეთ ქალაქი",
-      selectDate: "პირველ რიგში აირჩიეთ თარიღი",
+      selectDate: "ჯერ აირჩიეთ თარიღი",
       date: "თარიღი",
       time: "დრო",
       next: "შემდეგი",
       back: "უკან",
-      confirm: "დაადასტურეთ ჯავშანი",
-      notes: "სპეციალური მითითებები (მომხმარებლისთვის)",
+      confirm: "ჯავშნის დადასტურება",
+      notes: "სპეციალური ინსტრუქციები (არასავალდებულო)",
       total: "სულ:",
-      paymentNotice: "თქვენი ბარათი ავტორიზებული იქნება, მაგრამ არ ჩამოიწერება სანამ ჩვენი გუნდი არ დაადასტურებს თქვენს ჯავშანს.",
+      paymentNotice: "თქვენი ბარათი ავტორიზებული იქნება, მაგრამ თანხა არ ჩამოიჭრება მანამ, სანამ თქვენი ჯავშანი არ დადასტურდება ჩვენი გუნდის მიერ. გადახდები მიიღება საკრედიტო და სადებეტო ბარათებით, უსაფრთხო Stripe-ის გადახდის სისტემის გამოყენებით.",
       hoursOptions: {
         "2": "2 საათი",
         "3": "3 საათი",
@@ -603,48 +559,50 @@ const translations = {
         "8": "8 საათი"
       },
       cleanersOptions: {
-        "1": "1 თანამშრომელი",
-        "2": "2 თანამშრომელი",
-        "3": "3 თანამშრომელი",
-        "4": "4 თანამშრომელი",
-        "5": "5 თანამშრომელი",
-        "6": "6 თანამშრომელი",
-        "7": "7 თანამშრომელი",
-        "8": "8 თანამშრომელი",
-        "9": "9 თანამშრომელი"
+        "1": "1 დამლაგებელი",
+        "2": "2 დამლაგებელი",
+        "3": "3 დამლაგებელი",
+        "4": "4 დამლაგებელი",
+        "5": "5 დამლაგებელი",
+        "6": "6 დამლაგებელი",
+        "7": "7 დამლაგებელი",
+        "8": "8 დამლაგებელი",
+        "9": "9 დამლაგებელი"
       },
       addons: {
-        fridge: "მაცივრის წმენდა",
-        limescale: "კალკის მოცილება",
-        dishwashing: "ჭურჭლის გარეცხვა",
-        ironing: "გლუვება",
-        balcony: "აივნის/პატიოს წმენდა",
+        fridge: "მაცივრის გაწმენდა",
+        limescale: "ნადების მოცილება",
+        dishwashing: "ჭურჭლის რეცხვა",
+        ironing: "დაუთოება",
+        balcony: "აივნის / ტერასის დასუფთავება",
         window: "ფანჯრების წმენდა",
-        laundry: "სარეცხი სერვისი",
-        gardening: "ბაღის სამუშაოები",
-        carpet: "ხალიჩის წმენდა",
-        oven: "ჭურჭლის ღუმელის წმენდა",
-        mold: "ფუზეანობის მოცილება",
-        steam: "საფრადი წმენდა",
-        wall: "სიმსივნის/მარკების მოცილება კედლებიდან",
-        sofa: "სოფის/დივანის წმენდა",
-        mattress: "მატრასის წმენდა"
+        laundry: "სარეცხის მომსახურება",
+        gardening: "მებაღეობა",
+        carpet: "ხალიჩების წმენდა",
+        oven: "ღუმელის გაწმენდა",
+        mold: "ობის ან ლაქების მოშორება კედლიდან",
+        steam: "ორთქლით წმენდა",
+        wall: "კედლიდან ლაქების მოცილება",
+        sofa: "სავარძლისა და დივნის წმენდა",
+        mattress: "ლეიბის წმენდა"
       },
       placeholders: {
-        name: "გიორგი გიორგაძე",
-        email: "giorgi@example.com",
-        phone: "+39 123 456 7890",
-        street: "address",
-        houseNumber: "street number",
+        name: "სახელი გვარი",
+        email: "email@example.com",
+        phone: "+995 5xx xx xx xx",
+        street: "მისამართი",
+        houseNumber: "ქუჩის ნომერი",
         propertySize: "100",
-        doorbell: "გვარი",
-        notes: "სპეციალური მოთხოვნები ან შესასვლელის ინსტრუქციები"
+        doorbell: "გვარი კარზე",
+        notes: "ნებისმიერი სპეციალური მოთხოვნა ან ინსტრუქცია"
       },
       supplies: {
-        solvents: "წამლები/დეტერგენტები",
-        mop: "შვაბრა",
-        vacuum: "პილესასრუტი"
-      }
+        solvents: "საწმენდი ხსნარები",
+        mop: "იატაკის საწმენდი ხელსაწყო",
+        vacuum: "მტვერსასრუტი"
+      },
+      propertySize: "ფართობი (კვ.მ)",
+      doorbell: "სახელი ზარზე"
     },
     success: {
       title: "ჯავშანი გაგზავნილია!",
@@ -654,14 +612,14 @@ const translations = {
     },
     faq: {
       title: "ხშირად დასმული კითხვები",
-      q1: "როგორ მუშაობს ჯავშნის პროცესი?",
-      a1: "აირჩიეთ სერვისი, მიუთითეთ თარიღი და დრო, შეავსეთ თქვენი ინფორმაცია და დაასრულეთ გადახდის ავტორიზაცია. თქვენი ბარათი ჩამოიწერება მხოლოდ ჯავშნის დადასტურების შემდეგ.",
-      q2: "რომელი ტერიტორიებს ემსახურებით?",
-      a2: "ამჟამად ვმსახურობთ რომსა და მილანს. უახლოეს მომავალში დამატებით ქალაქებს შევუმატებთ!",
-      q3: "რომელ გადახდის მეთოდებს ვიღებთ?",
-      a3: "ვიღებთ ძირითადი საკრედიტო და სადებეტო ბარათებს ჩვენი უსაფრთხო Stripe სისტემის მეშვეობით.",
-      q4: "მაქვს შეკითხვა ჯავშნის გაუქმებაზე — შესაძლებელია?",
-      a4: "თუ ჯავშანი ჯერ არ არის დადასტურებული, თანხა არ ჩაირთვება. დადასტურებული ჯავშნის შემთხვევაში დაგვიკავშირდით არანაკლებ 24 საათით ადრე."
+      q1: "როგორ მუშაობს დაჯავშნის პროცესი?",
+      a1: "უბრალოდ აირჩიეთ თქვენი სერვისი, აირჩიეთ თარიღი და დრო, შეიყვანეთ თქვენი მონაცემები და დაასრულეთ გადახდის ავტორიზაცია. თქვენი ბარათიდან თანხა ჩამოიჭრება მხოლოდ მას შემდეგ, რაც ჩვენ დავადასტურებთ თქვენს ჯავშანს.",
+      q2: "რომელია ჩვენი მომსახურების არეალი?",
+      a2: "ჩვენი მომსახურება ხელმისაწვდომია საქართველოში — თბილისში და იტალიაში — რომში, ფლორენციასა და მილანში. მალე სხვა ქალაქებიც დაემატება!",
+      q3: "გადახდის რა მეთოდებს იღებთ?",
+      a3: "ჩვენ ვიღებთ ყველა ძირითად საკრედიტო და სადებეტო ბარათს ჩვენი უსაფრთხო Stripe გადახდის სისტემის მეშვეობით.",
+      q4: "შემიძლია თუ არა ჯავშნის გაუქმება?",
+      a4: "თუ თქვენი ჯავშანი ჯერ არ დადასტურებულა, თანხა არ ჩამოიჭრება. დადასტურებული ჯავშნებისთვის, გთხოვთ დაგვიკავშირდეთ მინიმუმ 24 საათით ადრე."
     },
     contact: {
       title: "დაგვიკავშირდით",
@@ -738,33 +696,33 @@ const translations = {
         addServiceTitle: "ახალი სერვისის დამატება",
         addService: "სერვისის დამატება",
         editService: "სერვისის რედაქტირება",
-          updateService: "სერვისის განახლება",
-          deleteService: "სერვისის წაშლა",
-          addProject: "პროექტის დამატება",
-          addWorker: "თანამშრომლის დამატება",
-          requestPayout: "გადახდის მოთხოვნა",
-          reject: "უარყოფა",
-          confirmAndCharge: "დაადასტურე და ჩამოწერა"
+        updateService: "სერვისის განახლება",
+        deleteService: "სერვისის წაშლა",
+        addProject: "პროექტის დამატება",
+        addWorker: "თანამშრომლის დამატება",
+        requestPayout: "გადახდის მოთხოვნა",
+        reject: "უარყოფა",
+        confirmAndCharge: "დაადასტურე და ჩამოწერა"
       },
-        form: {
-          serviceNameEn: "Service Name (English)",
-          serviceNameEnPlaceholder: "e.g., Regular Cleaning",
-          serviceNameIt: "Service Name (Italian)",
-          serviceNameItPlaceholder: "e.g., Pulizia Regolare",
-          descriptionEn: "Description (English)",
-          descriptionEnPlaceholder: "Describe the service in English",
-          descriptionIt: "Description (Italian)",
-          descriptionItPlaceholder: "Descrivi il servizio in italiano",
-          pricePerHour: "Price per Hour (€)",
-          pricePerHourPlaceholder: "25.00",
-          status: "Status",
-          enabled: "Enabled",
-          disabled: "Disabled"
-        },
-        messages: {
+      form: {
+        serviceNameEn: "Service Name (English)",
+        serviceNameEnPlaceholder: "e.g., Regular Cleaning",
+        serviceNameIt: "Service Name (Italian)",
+        serviceNameItPlaceholder: "e.g., Pulizia Regolare",
+        descriptionEn: "Description (English)",
+        descriptionEnPlaceholder: "Describe the service in English",
+        descriptionIt: "Description (Italian)",
+        descriptionItPlaceholder: "Descrivi il servizio in italiano",
+        pricePerHour: "Price per Hour (€)",
+        pricePerHourPlaceholder: "25.00",
+        status: "Status",
+        enabled: "Enabled",
+        disabled: "Disabled"
+      },
+      messages: {
         invalidCredentials: "არასწორი მონაცემები",
         loginFailedTry: "შესვლა ვერ მოხერხდა. სცადეთ კიდევ.",
-          bookingDetailsTitle: "ჯავშანის დეტალები",
+        bookingDetailsTitle: "ჯავშანის დეტალები",
         confirmBookingSuccess: "ჯავშანი წარმატებით დადასტურდა!",
         confirmBookingFailed: "ჯავშნის დადასტურება ვერ მოხერხდა. სცადეთ ისევ.",
         rejectBookingSuccess: "ჯავშანი უარყოფილია. გადახდის ავტორიზაცია გაუქმდა.",
@@ -810,8 +768,7 @@ const translations = {
       deepDesc: "Тщательная уборка, включая труднодоступные места",
       move: "Въезд/выезд",
       moveDesc: "Полная уборка для въезда или выезда"
-    }
-    ,
+    },
     booking: {
       title: "Забронируйте уборку",
       subtitle: "Заполните информацию ниже, чтобы назначить услугу",
@@ -832,7 +789,7 @@ const translations = {
       back: "Назад",
       confirm: "Подтвердить бронирование",
       notes: "Особые инструкции (по желанию)",
-      total: "Итого:",
+      total: "Total:",
       paymentNotice: "Ваша карта будет авторизована, но списана не будет до подтверждения бронирования.",
       hoursOptions: {
         "2": "2 часа",
@@ -884,7 +841,9 @@ const translations = {
         solvents: "Чистящие средства",
         mop: "Швабра",
         vacuum: "Пылесос"
-      }
+      },
+      propertySize: "Property Size (sqm)",
+      doorbell: "Name on Doorbell"
     },
     success: {
       title: "Бронирование отправлено!",
@@ -978,147 +937,110 @@ const translations = {
         addServiceTitle: "Добавить новую услугу",
         addService: "Добавить услугу",
         editService: "Редактировать услугу",
-          updateService: "Обновить услугу",
-          deleteService: "Удалить услугу",
-          addProject: "Добавить проект",
-          addWorker: "Добавить сотрудника",
-          requestPayout: "Запрос выплаты",
-          reject: "Отклонить",
-          confirmAndCharge: "Подтвердить и списать"
+        updateService: "Обновить услугу",
+        deleteService: "Удалить услугу",
+        addProject: "Добавить проект",
+        addWorker: "Добавить сотрудника",
+        requestPayout: "Запрос выплаты",
+        reject: "Отклонить",
+        confirmAndCharge: "Подтвердить и списать"
       },
-        form: {
-          serviceNameEn: "Service Name (English)",
-          serviceNameEnPlaceholder: "e.g., Regular Cleaning",
-          serviceNameIt: "Service Name (Italian)",
-          serviceNameItPlaceholder: "e.g., Pulizia Regolare",
-          descriptionEn: "Description (English)",
-          descriptionEnPlaceholder: "Describe the service in English",
-          descriptionIt: "Description (Italian)",
-          descriptionItPlaceholder: "Descrivi il servizio in italiano",
-          pricePerHour: "Price per Hour (€)",
-          pricePerHourPlaceholder: "25.00",
-          status: "Status",
-          enabled: "Enabled",
-          disabled: "Disabled"
-        },
-        messages: {
+      form: {
+        serviceNameEn: "Service Name (English)",
+        serviceNameEnPlaceholder: "e.g., Regular Cleaning",
+        serviceNameIt: "Service Name (Italian)",
+        serviceNameItPlaceholder: "e.g., Pulizia Regolare",
+        descriptionEn: "Description (English)",
+        descriptionEnPlaceholder: "Describe the service in English",
+        descriptionIt: "Description (Italian)",
+        descriptionItPlaceholder: "Descrivi il servizio in italiano",
+        pricePerHour: "Price per Hour (€)",
+        pricePerHourPlaceholder: "25.00",
+        status: "Status",
+        enabled: "Enabled",
+        disabled: "Disabled"
+      },
+      messages: {
         invalidCredentials: "Неправильные учетные данные",
         loginFailedTry: "Ошибка входа. Повторите попытку.",
-          bookingDetailsTitle: "Детали бронирования",
+        bookingDetailsTitle: "Детали бронирования",
         confirmBookingSuccess: "Бронирование успешно подтверждено!",
-        confirmBookingFailed: "Не удалось подтвердить бронирование. Попробуйте ещё раз.",
-        rejectBookingSuccess: "Бронирование отклонено. Платёж разблокирован.",
-        rejectBookingFailed: "Не удалось отклонить бронирование. Попробуйте ещё раз.",
-        pleaseFillFields: "Пожалуйста, заполните все обязательные поля",
-        failedAddCity: "Не удалось добавить город. Повторите попытку.",
-        failedSaveService: "Не удалось сохранить услугу. Повторите попытку.",
-        failedDeleteService: "Не удалось удалить услугу. Повторите попытку.",
-        payoutPlaceholder: "Функция запроса выплат будет реализована здесь.",
-        commissionReportPlaceholder: "Генерация отчёта по комиссиям будет реализована здесь.",
-        addProjectPlaceholder: "Модальное окно добавления проекта будет реализовано здесь.",
-        addWorkerPlaceholder: "Модальное окно добавления сотрудника будет реализовано здесь.",
-        confirmConfirmBooking: "Подтвердить это бронирование и списать платёж с клиента?",
-        confirmRejectBooking: "Отклонить это бронирование? Авторизация платежа будет отменена.",
-        noBookingsYet: "Пока нет бронирований",
+        confirmBookingFailed: "Ошибка подтверждения. Повторите попытку.",
+        rejectBookingSuccess: "Бронирование отклонено. Платёж возвращён.",
+        rejectBookingFailed: "Ошибка отклонения. Повторите попытку.",
+        pleaseFillFields: "Пожалуйста, заполните все поля",
+        failedAddCity: "Ошибка добавления города.",
+        failedSaveService: "Ошибка сохранения услуги.",
+        failedDeleteService: "Ошибка удаления услуги.",
+        payoutPlaceholder: "Функционал выплат скоро появится.",
+        commissionReportPlaceholder: "Функционал отчётов скоро появится.",
+        addProjectPlaceholder: "Окно добавления проекта скоро появится.",
+        addWorkerPlaceholder: "Оკно добавления сотрудника скоро появится.",
+        confirmConfirmBooking: "Подтвердить бронирование и списать средства?",
+        confirmRejectBooking: "Отклонить бронирование? Авторизация будет отменена.",
+        noBookingsYet: "Бронирований пока нет",
         noBookingsFound: "Бронирования не найдены"
       }
     }
   }
 };
 
-let currentLanguage = localStorage.getItem('language') || 'en';
+let currentLanguage = localStorage.getItem('language') || 'it';
 
 function setLanguage(lang) {
   currentLanguage = lang;
   localStorage.setItem('language', lang);
-  document.getElementById('current-lang').textContent = lang.toUpperCase();
-  const mobileLangElement = document.getElementById('mobile-current-lang');
-  if (mobileLangElement) {
-    mobileLangElement.textContent = lang.toUpperCase();
-  }
+  document.documentElement.lang = lang;
+  updateContent();
 
-  // Close the dropdown after selecting a language
-  const dropdown = document.getElementById('lang-options');
-  if (dropdown) {
-    dropdown.classList.remove('active');
-  }
+  const langSelect = document.getElementById('language-select');
+  if (langSelect) langSelect.value = lang;
 
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
+  // Sync admin language if hook exists
+  if (typeof window.onLanguageChange === 'function') {
+    window.onLanguageChange(lang);
+  }
+}
+
+function updateContent() {
+  const t = translations[currentLanguage];
+  if (!t) return;
+
+  const elements = document.querySelectorAll('[data-i18n]');
+  elements.forEach(el => {
+    const key = el.getAttribute('data-i18n');
     const keys = key.split('.');
-    let value = translations[lang];
+    let value = t;
+    keys.forEach(k => {
+      value = value ? value[k] : null;
+    });
 
-    for (const k of keys) {
-      if (value && value[k] !== undefined) {
-        value = value[k];
+    if (value) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = value;
       } else {
-        value = null;
-        break;
+        el.innerHTML = value;
       }
     }
-
-    if (value !== null && value !== undefined) {
-      element.textContent = value;
-    }
   });
 
-  // Support placeholders, titles and values via data attributes
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-    const key = element.getAttribute('data-i18n-placeholder');
-    const keys = key.split('.');
-    let value = translations[lang];
-    for (const k of keys) {
-      if (value && value[k] !== undefined) value = value[k]; else { value = null; break; }
-    }
-    if (value !== null && value !== undefined) element.placeholder = value;
-  });
+  // Handle specific dynamic elements
+  updateDynamicLabels(t);
+}
 
-  document.querySelectorAll('[data-i18n-title]').forEach(element => {
-    const key = element.getAttribute('data-i18n-title');
-    const keys = key.split('.');
-    let value = translations[lang];
-    for (const k of keys) {
-      if (value && value[k] !== undefined) value = value[k]; else { value = null; break; }
-    }
-    if (value !== null && value !== undefined) element.title = value;
-  });
+function updateDynamicLabels(t) {
+  // Navigation
+  const navLinks = {
+    'nav-services': t.nav.services,
+    'nav-faq': t.nav.faq,
+    'nav-contact': t.nav.contact,
+    'nav-book': t.nav.book
+  };
 
-  document.querySelectorAll('[data-i18n-value]').forEach(element => {
-    const key = element.getAttribute('data-i18n-value');
-    const keys = key.split('.');
-    let value = translations[lang];
-    for (const k of keys) {
-      if (value && value[k] !== undefined) value = value[k]; else { value = null; break; }
-    }
-    if (value !== null && value !== undefined) element.value = value;
-  });
-
-  // Notify other scripts that language changed
-  if (typeof window.onLanguageChange === 'function') {
-    try { window.onLanguageChange(lang); } catch (e) { console.error('onLanguageChange error', e); }
+  for (const [id, text] of Object.entries(navLinks)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
   }
-}
-
-const languages = ['en', 'it', 'ka', 'ru'];
-
-function toggleLanguageDropdown() {
-  const dropdown = document.getElementById('lang-options');
-  dropdown.classList.add('active');
-}
-function toggleLanguageDropdown() {
-  const dropdown = document.getElementById('lang-options');
-  dropdown.classList.toggle('active');
-}
-
-function toggleMobileLangDropdown() {
-  const dropdown = document.getElementById('mobile-lang-options');
-  dropdown.classList.toggle('active');
-}
-
-function toggleLanguage() {
-  const currentIndex = languages.indexOf(currentLanguage);
-  const nextIndex = (currentIndex + 1) % languages.length;
-  setLanguage(languages[nextIndex]);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
