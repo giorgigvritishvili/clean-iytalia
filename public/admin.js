@@ -505,7 +505,11 @@ function showBookingDetails(id) {
     `;
   }
 
-  document.getElementById('booking-modal').classList.add('active');
+  const modal = document.getElementById('booking-modal');
+modal.style.display = 'flex'; // ⬅️ ეს დაამატე
+modal.classList.add('active');
+
+
 }
 
 
@@ -995,16 +999,8 @@ function switchTab(tab) {
 function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) {
-    modal.style.display = 'none';
     modal.classList.remove('active');
-  } else {
-    // If id not found, look for any open modal (like calendar day modal)
-    const activeModals = document.querySelectorAll('.modal.active');
-    activeModals.forEach(m => {
-      m.classList.remove('active');
-      // If it's a dynamically created one without ID, remove from DOM
-      if (!m.id) m.remove();
-    });
+    modal.style.display = ''; // ⬅️ ეს დაამატე
   }
 }
 
