@@ -743,7 +743,7 @@ app.get('/api/admin/cities', (req, res) => {
   }
 });
 
-app.put('/api/admin/cities/:id', (req, res) => {
+app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end } = req.body;
@@ -761,7 +761,8 @@ app.put('/api/admin/cities/:id', (req, res) => {
     cities[cityIndex].working_days = working_days;
     cities[cityIndex].working_hours_start = working_hours_start;
     cities[cityIndex].working_hours_end = working_hours_end;
-    saveData(cities, citiesFilePath);
+    const saved = saveData(cities, citiesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save city' });
 
     res.json({ success: true });
   } catch (error) {
@@ -770,11 +771,10 @@ app.put('/api/admin/cities/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/cities', (req, res) => {
+app.post('/api/admin/cities', requireAdmin, (req, res) => {
   try {
     const { name, name_it, name_ka, name_ru, working_days, working_hours_start, working_hours_end } = req.body;
-
-    const newId = Math.max(...cities.map(c => c.id)) + 1;
+    const newId = cities.length > 0 ? Math.max(...cities.map(c => c.id || 0)) + 1 : 1;
     const newCity = {
       id: newId,
       name,
@@ -788,7 +788,8 @@ app.post('/api/admin/cities', (req, res) => {
     };
 
     cities.push(newCity);
-    saveData(cities, citiesFilePath);
+    const saved = saveData(cities, citiesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save city' });
     res.json(newCity);
   } catch (error) {
     console.error('Error adding city:', error);
@@ -971,7 +972,8 @@ app.post('/api/admin/workers', requireAdmin, (req, res) => {
     };
 
     workers.push(newWorker);
-    saveData(workers, workersFilePath);
+    const saved = saveData(workers, workersFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
     res.json(newWorker);
   } catch (error) {
     console.error('Error adding worker:', error);
@@ -1001,7 +1003,9 @@ app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
     };
 
     saveData(workers, workersFilePath);
-    res.json(workers[workerIndex]);
+      const saved = saveData(workers, workersFilePath);
+      if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
+      res.json(workers[workerIndex]);
   } catch (error) {
     console.error('Error updating worker:', error);
     res.status(500).json({ error: 'Failed to update worker' });
@@ -1017,7 +1021,8 @@ app.delete('/api/admin/workers/:id', requireAdmin, (req, res) => {
     }
 
     workers.splice(workerIndex, 1);
-    saveData(workers, workersFilePath);
+    const saved = saveData(workers, workersFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to delete worker' });
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting worker:', error);
