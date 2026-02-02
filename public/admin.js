@@ -1449,7 +1449,7 @@ function getSpecialties() {
     .filter(val => val.length > 0);
 }
 
-function saveWorker() {
+async function saveWorker(id) {
   const name = document.getElementById('worker-name').value.trim();
   const email = document.getElementById('worker-email').value.trim();
   const phone = document.getElementById('worker-phone').value.trim();
@@ -1470,11 +1470,69 @@ function saveWorker() {
     return;
   }
 
-  const newWorker = { name, email, phone, rating, jobs, active, specialties };
+  const payload = {
+    name,
+    email,
+    phone,
+    specialties,
+    rating: isNaN(rating) ? 0 : rating,
+    completed_jobs: isNaN(jobs) ? 0 : jobs,
+    active: !!active
+  };
 
-  workers.push(newWorker);
+  const token = localStorage.getItem('adminToken');
+
+  // Try to persist to server if admin token available
+  if (token) {
+    try {
+      const url = id ? `/api/admin/workers/${id}` : '/api/admin/workers';
+      const method = id ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save worker on server');
+      }
+
+      closeModal('worker-modal');
+      await loadWorkers();
+      // Clear form
+      document.getElementById('worker-form').reset();
+      document.getElementById('specialties-container').innerHTML = `
+        <div class="specialty-item">
+          <input type="text" class="specialty-input" placeholder="e.g., Regular Cleaning">
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeSpecialty(this)">×</button>
+        </div>
+      `;
+      return;
+    } catch (err) {
+      console.error('Worker API error:', err);
+      alert('Could not save to server, saving locally instead.');
+    }
+  }
+
+  // Fallback to localStorage when server is unavailable or no token
+  if (id) {
+    const idx = workers.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      workers[idx] = { ...workers[idx], ...payload };
+    } else {
+      const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id || 0)) + 1 : 1;
+      workers.push({ ...payload, id: newId });
+    }
+  } else {
+    const newId = workers.length > 0 ? Math.max(...workers.map(w => w.id || 0)) + 1 : 1;
+    workers.push({ ...payload, id: newId });
+  }
+
   localStorage.setItem('workers', JSON.stringify(workers));
-
   closeModal('worker-modal');
   renderWorkers();
 
@@ -1533,6 +1591,12 @@ async function manualPayBooking(id) {
       }
     });
 
+    if (response.status === 401 || response.status === 403) {
+      alert('Session expired or unauthorized. Please login again.');
+      logout();
+      return;
+    }
+
     if (response.ok) {
       alert('Booking marked as paid.');
       loadDashboardData();
@@ -1558,6 +1622,12 @@ async function deleteBooking(id) {
         'Authorization': `Bearer ${token}`
       }
     });
+
+    if (res.status === 401 || res.status === 403) {
+      alert('Session expired or unauthorized. Please login again.');
+      logout();
+      return;
+    }
 
     if (res.ok) {
       // Remove from local array immediately
@@ -1586,6 +1656,12 @@ async function clearAllBookings() {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
+
+    if (response.status === 401 || response.status === 403) {
+      alert('Session expired or unauthorized. Please login again.');
+      logout();
+      return;
+    }
 
     if (response.ok) {
       // Update UI immediately and ensure local state cleared

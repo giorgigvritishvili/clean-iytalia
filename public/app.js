@@ -77,11 +77,11 @@ const embeddedServices = [
     "name": "Business Cleaning",
     "name_it": "Pulizia Uffici",
     "name_ru": "Уборка офисов",
-    "name_ka": "დავალება ბიზნესისთვის",
+    "name_ka": "კომერციული დასუფთავება",
     "description": "Professional cleaning for offices and businesses",
     "description_it": "Pulizia professionale per uffici e aziende",
     "description_ru": "Профессиональная уборка для офисов и предприятий",
-    "description_ka": "პროფესიონალური დასუფთავება ოფისებისთვის და ბიზნესისთვის",
+    "description_ka": "პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის",
     "price_per_hour": 35,
     "enabled": true
   }

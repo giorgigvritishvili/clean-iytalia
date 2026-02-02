@@ -88,7 +88,7 @@ function loadData() {
         { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფთავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფთავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
         { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფთავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
         { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფთავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფთავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
-        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
       ];
       saveData(services, servicesFilePath);
     }
@@ -153,7 +153,7 @@ function loadData() {
         { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფთავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფთავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
         { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფთავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
         { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფთავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფთავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
-        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისთვის და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
     ];
     saveData(services, servicesFilePath);
   }
@@ -435,8 +435,11 @@ app.post('/api/admin/logout', (req, res) => {
 function requireAdmin(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token || !adminTokens[token]) {
+    console.warn(`Unauthorized admin access attempt from ${req.ip} to ${req.originalUrl}`);
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  // attach admin id for auditing in routes
+  req.adminId = adminTokens[token];
   next();
 }
 
@@ -691,6 +694,7 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
 app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`Admin ${req.adminId} requested deletion of booking ${id}`);
     const bookingIndex = bookings.findIndex(b => b.id == id);
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
@@ -707,6 +711,7 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
 
 app.delete('/api/admin/bookings', requireAdmin, (req, res) => {
   try {
+    console.log(`Admin ${req.adminId} requested clearing all bookings`);
     bookings.length = 0; // Clear the array
     saveData(bookings, bookingsFilePath);
     res.json({ success: true, message: 'All bookings cleared' });
