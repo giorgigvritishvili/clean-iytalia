@@ -15,10 +15,8 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 if (!stripe) {
   console.warn('Stripe is not configured. Payments will be simulated.');
 }
-// Data directory (use /tmp on Vercel for writable storage)
-const _vercelEnv = String(process.env.VERCEL || '').toLowerCase();
-const isVercel = _vercelEnv === '1' || _vercelEnv === 'true';
-const dataDir = isVercel ? '/tmp' : __dirname;
+// Data directory (use disk persistence on Render if available)
+const dataDir = process.env.DATA_DIR || __dirname;
 
 // Data file paths
 const servicesFilePath = path.join(dataDir, 'data', 'services.json');
@@ -1054,9 +1052,9 @@ app.get('/api/admin/check-session', (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log("Server running on port", PORT);
+  console.log(`Server running on port ${PORT}`);
 });
 
