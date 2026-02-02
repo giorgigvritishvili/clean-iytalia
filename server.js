@@ -9,7 +9,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 if (!stripe) {
@@ -1036,12 +1036,9 @@ app.get('/api/admin/check-session', (req, res) => {
   }
 });
 
-if (isVercel) {
-  // When running on Vercel, export the Express app as the serverless handler.
-  module.exports = app;
-} else {
-  console.log('About to call app.listen with PORT=', PORT);
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log("Server running on port", PORT);
+});
+
