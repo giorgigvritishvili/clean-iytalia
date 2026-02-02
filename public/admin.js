@@ -1791,6 +1791,72 @@ async function toggleWorker(id, active) {
     await loadWorkers();
   }
 }
+
+async function deleteWorker(id) {
+  const token = localStorage.getItem('adminToken');
+
+  if (!confirm('Are you sure you want to delete this worker?')) return;
+
+  const worker = workers.find(w => w.id === id);
+  if (!worker) {
+    alert('Worker not found');
+    return;
+  }
+
+  // If authenticated, request server to delete
+  if (token) {
+    try {
+      const res = await fetch(`/api/admin/workers/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        alert('Session expired or unauthorized. Please login again.');
+        logout();
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete worker on server');
+      }
+
+      // Remove from local cache and pending queue if present
+      workers = workers.filter(w => w.id !== id);
+      localStorage.setItem('workers', JSON.stringify(workers));
+      const pending = getPendingWorkers();
+      const pendingFiltered = pending.filter(p => !(p.name === worker.name && p.email === worker.email && p.phone === worker.phone));
+      setPendingWorkers(pendingFiltered);
+
+      await loadWorkers();
+      alert('Worker deleted successfully');
+    } catch (err) {
+      console.error('Error deleting worker:', err);
+      alert('Failed to delete worker: ' + err.message);
+    }
+
+    return;
+  }
+
+  // Offline/local delete: remove from pending queue if matches, and from local workers cache
+  try {
+    const pending = getPendingWorkers();
+    const pidx = pending.findIndex(p => p.name === worker.name && p.email === worker.email && p.phone === worker.phone);
+    if (pidx !== -1) {
+      pending.splice(pidx, 1);
+      setPendingWorkers(pending);
+    }
+
+    workers = workers.filter(w => w.id !== id);
+    localStorage.setItem('workers', JSON.stringify(workers));
+    renderWorkers();
+    alert('Worker removed locally. It will be synced with the server when you log in.');
+  } catch (err) {
+    console.error('Local delete error:', err);
+    alert('Failed to remove worker locally: ' + err.message);
+  }
+}
 function toggleLanguageDropdown() {
   const dropdown = document.getElementById('lang-options');
   if (dropdown) {
