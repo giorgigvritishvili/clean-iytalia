@@ -16,7 +16,9 @@ if (!stripe) {
   console.warn('Stripe is not configured. Payments will be simulated.');
 }
 // Data directory (use /tmp on Vercel for writable storage)
-const dataDir = process.env.VERCEL ? '/tmp' : __dirname;
+const _vercelEnv = String(process.env.VERCEL || '').toLowerCase();
+const isVercel = _vercelEnv === '1' || _vercelEnv === 'true';
+const dataDir = isVercel ? '/tmp' : __dirname;
 
 // Data file paths
 const servicesFilePath = path.join(dataDir, 'data', 'services.json');
@@ -1029,10 +1031,11 @@ app.get('/api/admin/check-session', (req, res) => {
   }
 });
 
-if (process.env.VERCEL) {
+if (isVercel) {
   // When running on Vercel, export the Express app as the serverless handler.
   module.exports = app;
 } else {
+  console.log('About to call app.listen with PORT=', PORT);
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });

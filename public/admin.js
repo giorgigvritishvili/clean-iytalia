@@ -28,7 +28,7 @@ try { document.documentElement.lang = 'it'; } catch (e) {}
 // Re-render dynamic admin content when translations change
 window.onLanguageChange = function(lang) {
   try {
-    ADMIN_LANG = lang; // Update admin language to current language
+    // Keep admin UI language locked to Italian; ignore external language changes
     renderServices();
     renderCities();
     renderWorkers();
@@ -1574,6 +1574,7 @@ async function deleteBooking(id) {
     console.error('Error deleting booking:', error);
     alert('Failed to delete booking: ' + error.message);
   }
+}
 
 
 async function clearAllBookings() {
@@ -1587,8 +1588,14 @@ async function clearAllBookings() {
     });
 
     if (response.ok) {
+      // Update UI immediately and ensure local state cleared
+      bookings = [];
+      renderAllBookings();
+      renderRecentBookings();
+      loadStats();
       alert('Tutte le prenotazioni sono state eliminate.');
-      loadDashboardData();
+      // reload to ensure server state consistency
+      await loadDashboardData();
     } else {
       let errorMessage = `Server error: ${response.status} ${response.statusText}`;
       try {
@@ -1653,5 +1660,4 @@ function toggleMobileLangDropdown() {
 window.onload = () => {
   loadWorkers();
 };
-
-}
+ 
