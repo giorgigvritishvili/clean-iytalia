@@ -168,6 +168,12 @@ function showDashboard() {
 }
 
 async function loadDashboardData() {
+  const token = localStorage.getItem('adminToken');
+  if (token) {
+    // push any locally-created workers to server before loading lists
+    await syncPendingWorkers();
+  }
+
   await Promise.all([
     loadStats(),
     loadBookings(),
@@ -176,6 +182,61 @@ async function loadDashboardData() {
     loadContactInfo(),
     loadWorkers()
   ]);
+}
+
+function getPendingWorkers() {
+  return JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+}
+
+function setPendingWorkers(list) {
+  localStorage.setItem('pendingWorkers', JSON.stringify(list));
+}
+
+async function syncPendingWorkers() {
+  const token = localStorage.getItem('adminToken');
+  if (!token) return;
+  const pending = getPendingWorkers();
+  if (!pending || pending.length === 0) return;
+
+  // Attempt to create each pending worker on server
+  for (const p of pending.slice()) {
+    try {
+      const res = await fetch('/api/admin/workers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: p.name,
+          email: p.email,
+          phone: p.phone,
+          specialties: p.specialties || [],
+          rating: p.rating || 0,
+          completed_jobs: p.completed_jobs || 0,
+          active: p.active !== undefined ? p.active : true
+        })
+      });
+
+      if (res.ok) {
+        // remove from pending
+        const list = getPendingWorkers();
+        const idx = list.findIndex(x => x._tempId === p._tempId);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+          setPendingWorkers(list);
+        }
+      } else {
+        console.warn('Failed to sync pending worker:', await res.text());
+      }
+    } catch (err) {
+      console.error('Error syncing pending worker:', err);
+      // stop trying further on network errors
+      return;
+    }
+  }
+  // refresh workers list from server after sync
+  await loadWorkers();
 }
 async function loadContactInfo() {
   const token = localStorage.getItem('adminToken');
@@ -1532,6 +1593,15 @@ async function saveWorker(id) {
     workers.push({ ...payload, id: newId });
   }
 
+  // If not authenticated, save to pending queue so it can be synced later
+  if (!token) {
+    const pending = JSON.parse(localStorage.getItem('pendingWorkers') || '[]');
+    const temp = { ...payload, _tempId: Date.now() };
+    pending.push(temp);
+    localStorage.setItem('pendingWorkers', JSON.stringify(pending));
+  }
+
+  // keep a local cache for offline rendering
   localStorage.setItem('workers', JSON.stringify(workers));
   closeModal('worker-modal');
   renderWorkers();
@@ -1692,11 +1762,13 @@ async function toggleWorker(id, active) {
   try {
     const worker = workers.find(w => w.id === id);
     if (!worker) throw new Error("Worker not found");
-
+    const token = localStorage.getItem('adminToken');
     const res = await fetch(`/api/admin/workers/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : undefined
+      },
       cache: "no-store",
       body: JSON.stringify({
         active,
