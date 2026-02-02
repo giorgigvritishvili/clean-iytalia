@@ -50,7 +50,7 @@ function showLoginForm() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('adminToken');
-  
+
   // Hide dashboard by default until authenticated
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-page').style.display = 'flex';
@@ -256,7 +256,7 @@ async function loadBookings() {
     }
 
     const newBookings = await response.json();
-    
+
     // Sort by date and time (descending) to keep newest at top
     newBookings.sort((a, b) => {
       const dateA = new Date(`${a.booking_date}T${a.booking_time}`);
@@ -286,7 +286,7 @@ function renderRecentBookings() {
     const city = cities.find(c => c.id === booking.city_id);
     const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
     const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
-    
+
     return `
       <tr onclick="showBookingDetails(${booking.id})" style="cursor: pointer;">
         <td>#${booking.id}</td>
@@ -1195,7 +1195,7 @@ function showDayBookings(dateStr) {
     const city = cities.find(c => Number(c.id) === Number(booking.city_id));
     const serviceName = booking.service_name_it || booking.service_name || (service ? (service.name_it || service.name) : 'N/A');
     const cityName = booking.city_name_it || booking.city_name || (city ? (city.name_it || city.name) : 'N/A');
-    
+
     // Determine payment status and date
     let paymentInfo = '';
     if (booking.stripe_status === 'succeeded' || booking.status === 'paid') {
@@ -1556,7 +1556,25 @@ async function deleteBooking(id) {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
-      },
+      }
+    });
+
+    if (res.ok) {
+      // Remove from local array immediately
+      bookings = bookings.filter(b => b.id !== id);
+      renderAllBookings();
+      renderRecentBookings();
+      loadStats(); // Update stats
+      alert('Prenotazione eliminata con successo.');
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to delete booking');
+    }
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    alert('Failed to delete booking: ' + error.message);
+  }
+}
       cache: 'no-store'
     });
 
