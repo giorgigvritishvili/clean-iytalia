@@ -1,0 +1,20 @@
+{
+  "serviceId": 1,
+  "cityId": 1,
+  "customerName": "Local Test 3",
+  "customerEmail": "local3@test.example",
+  "customerPhone": "000",
+  "streetName": "Via Test",
+  "houseNumber": "12",
+  "propertySize": "80",
+  "doorbellName": "Test",
+  "bookingDate": "2026-02-05",
+  "bookingTime": "13:00",
+  "hours": 2,
+  "cleaners": 1,
+  "totalAmount": 60,
+  "paymentIntentId": "test789",
+  "notes": "test-payload-file",
+  "additionalServices": [],
+  "supplies": []
+}

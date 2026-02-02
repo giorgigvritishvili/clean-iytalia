@@ -212,11 +212,18 @@ function loadData() {
 }
 
 function saveData(array, filePath) {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
+    console.log(`Saved data to ${filePath} (items: ${array && array.length ? array.length : 0})`);
+    return true;
+  } catch (err) {
+    console.error(`Failed to save data to ${filePath}:`, err);
+    return false;
   }
-  fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
 }
 
 // Load data on startup
@@ -362,8 +369,14 @@ app.post('/api/bookings', async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-    bookings.push(newBooking);
-    saveData(bookings, bookingsFilePath);
+    // Attempt to persist bookings safely
+    const tentative = bookings.concat(newBooking);
+    const saved = saveData(tentative, bookingsFilePath);
+    if (!saved) {
+      console.error(`Failed to persist booking ${newBooking.id} to ${bookingsFilePath}`);
+      return res.status(500).json({ error: 'Failed to save booking' });
+    }
+    bookings = tentative;
     console.log(`Booking ${newBooking.id} created and persisted to ${bookingsFilePath}`);
 
     try {
