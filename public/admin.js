@@ -1574,31 +1574,7 @@ async function deleteBooking(id) {
     console.error('Error deleting booking:', error);
     alert('Failed to delete booking: ' + error.message);
   }
-}
-      cache: 'no-store'
-    });
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || 'Delete failed');
-    }
-
-    // ✅ 1️⃣ ლოკალურადაც ვშლით
-    bookings = bookings.filter(b => b.id !== id);
-
-    // ✅ 2️⃣ UI refresh (არანაირი reload)
-    renderRecentBookings();
-    renderAllBookings();
-    loadAppointmentCalendar();
-
-    // ✅ 3️⃣ თუ დეტალების მოდალია გახსნილი — დავხუროთ
-    closeModal('booking-modal');
-
-  } catch (err) {
-    console.error('Delete booking failed:', err);
-    alert('Errore durante eliminazione');
-  }
-}
 
 async function clearAllBookings() {
   const token = localStorage.getItem('adminToken');
@@ -1677,3 +1653,5 @@ function toggleMobileLangDropdown() {
 window.onload = () => {
   loadWorkers();
 };
+
+}
