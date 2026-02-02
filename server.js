@@ -217,6 +217,16 @@ function saveData(array, filePath) {
     }
     fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
     console.log(`Saved data to ${filePath} (items: ${array && array.length ? array.length : 0})`);
+    
+    // Update local variables after saving
+    if (filePath === servicesFilePath) services = array;
+    if (filePath === citiesFilePath) cities = array;
+    if (filePath === bookingsFilePath) bookings = array;
+    if (filePath === blockedSlotsFilePath) blockedSlots = array;
+    if (filePath === adminsFilePath) admins = array;
+    if (filePath === workersFilePath) workers = array;
+    if (filePath === tokensFilePath) adminTokens = array;
+    
     return true;
   } catch (err) {
     console.error(`Failed to save data to ${filePath}:`, err);
