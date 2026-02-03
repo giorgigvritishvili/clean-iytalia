@@ -4,6 +4,7 @@ let services = [];
 let workers = [];
 
 let bookingPollingInterval = null; // For real-time updates
+let adminEventSource = null;
 
 function saveLocalData() {
   localStorage.setItem('cities', JSON.stringify(cities));
@@ -153,6 +154,7 @@ async function logout() {
     });
     localStorage.removeItem('adminToken');
     stopBookingPolling(); // Stop polling on logout
+    stopAdminSSE(); // Stop SSE on logout
     document.getElementById('login-page').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'none';
   } catch (error) {
@@ -164,7 +166,8 @@ function showDashboard() {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('dashboard').style.display = 'flex';
   loadDashboardData();
-  startBookingPolling(); // Start real-time updates
+  startBookingPolling(); // Start polling as fallback
+  startAdminSSE(); // Start SSE for push updates
 }
 
 async function loadDashboardData() {
@@ -1641,6 +1644,50 @@ function startBookingPolling() {
   }, 30000); // Poll every 30 seconds
 }
 
+function startAdminSSE() {
+  const token = localStorage.getItem('adminToken');
+  if (!token) return;
+  // If EventSource already open, do nothing
+  if (adminEventSource) return;
+
+  // Use token as query param (EventSource cannot set Authorization header)
+  const url = `/api/admin/events?token=${encodeURIComponent(token)}`;
+  try {
+    adminEventSource = new EventSource(url);
+
+    adminEventSource.addEventListener('hello', (e) => {
+      console.debug('SSE hello:', e.data);
+    });
+
+    adminEventSource.addEventListener('bookings-updated', async (e) => {
+      try {
+        console.info('Bookings updated event received');
+        await loadBookings();
+        await loadStats();
+      } catch (err) {
+        console.error('Error handling bookings-updated:', err);
+      }
+    });
+
+    adminEventSource.onerror = (err) => {
+      console.warn('SSE connection error, will attempt reconnect:', err);
+      // Close and retry after a delay
+      try { adminEventSource.close(); } catch (e) {}
+      adminEventSource = null;
+      setTimeout(startAdminSSE, 5000);
+    };
+  } catch (err) {
+    console.error('Failed to start SSE:', err);
+  }
+}
+
+function stopAdminSSE() {
+  if (adminEventSource) {
+    try { adminEventSource.close(); } catch (e) {}
+    adminEventSource = null;
+  }
+}
+
 function stopBookingPolling() {
   if (bookingPollingInterval) {
     clearInterval(bookingPollingInterval);
@@ -1685,6 +1732,19 @@ async function deleteBooking(id) {
 
   if (!confirm('Sei sicuro di voler eliminare questa prenotazione?')) return;
 
+  // Store the booking for potential restoration
+  const bookingToDelete = bookings.find(b => b.id === id);
+  if (!bookingToDelete) {
+    alert('Booking not found');
+    return;
+  }
+
+  // Remove from local array immediately for UI feedback
+  bookings = bookings.filter(b => b.id !== id);
+  renderAllBookings();
+  renderRecentBookings();
+  loadStats(); // Update stats
+
   try {
     const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'DELETE',
@@ -1696,15 +1756,15 @@ async function deleteBooking(id) {
     if (res.status === 401 || res.status === 403) {
       alert('Session expired or unauthorized. Please login again.');
       logout();
+      // Restore the booking since we couldn't delete it
+      bookings.push(bookingToDelete);
+      renderAllBookings();
+      renderRecentBookings();
+      loadStats();
       return;
     }
 
     if (res.ok) {
-      // Remove from local array immediately
-      bookings = bookings.filter(b => b.id !== id);
-      renderAllBookings();
-      renderRecentBookings();
-      loadStats(); // Update stats
       alert('Prenotazione eliminata con successo.');
     } else {
       const errorData = await res.json();
@@ -1713,6 +1773,11 @@ async function deleteBooking(id) {
   } catch (error) {
     console.error('Error deleting booking:', error);
     alert('Failed to delete booking: ' + error.message);
+    // Restore the booking since deletion failed
+    bookings.push(bookingToDelete);
+    renderAllBookings();
+    renderRecentBookings();
+    loadStats();
   }
 }
 

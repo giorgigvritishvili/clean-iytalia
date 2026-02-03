@@ -46,10 +46,14 @@ const transporter = nodemailer.createTransport({
 });
 
 app.use(cors({ credentials: true }));
-app.use(express.json());
+// Capture raw body buffer on incoming JSON requests so webhook signature
+// verification can use the original payload (Stripe requires the raw body).
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf } }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 let adminTokens = {}; // token -> adminId
+// SSE clients for admin real-time updates
+const adminSseClients = new Set();
 
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -221,7 +225,42 @@ function saveData(array, filePath) {
     fs.writeFileSync(tmpPath, JSON.stringify(array, null, 2));
     fs.renameSync(tmpPath, filePath);
 
-    console.log(`Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
+    console.log(`✅ Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
+
+    // Mirror important data files into public/data so the static copy used by the client
+    // (if any) stays in sync with the server-side data files. This helps avoid cases where
+    // edits through the admin UI update server `data/` but the `public/data` copy remains stale.
+    try {
+      const publicDataDir = path.join(__dirname, 'public', 'data');
+      if (!fs.existsSync(publicDataDir)) fs.mkdirSync(publicDataDir, { recursive: true });
+
+      const basename = path.basename(filePath);
+      const publicFilePath = path.join(publicDataDir, basename);
+      const publicTmp = publicFilePath + '.tmp';
+      fs.writeFileSync(publicTmp, JSON.stringify(array, null, 2));
+      fs.renameSync(publicTmp, publicFilePath);
+      console.log(`✅ Mirrored ${basename} to public/data`);
+    } catch (mirrorErr) {
+      console.error('Failed to mirror data to public/data:', mirrorErr && mirrorErr.message ? mirrorErr.message : mirrorErr);
+    }
+
+    // Broadcast booking updates to connected admin SSE clients when bookings.json changes
+    try {
+      if (filePath === bookingsFilePath) {
+        const payload = JSON.stringify({ type: 'bookings-updated', timestamp: new Date().toISOString() });
+        for (const res of adminSseClients) {
+          try {
+            res.write(`event: bookings-updated\n`);
+            res.write(`data: ${payload}\n\n`);
+          } catch (e) {
+            console.warn('Failed to write SSE to client, removing:', e && e.message ? e.message : e);
+            try { adminSseClients.delete(res); } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error broadcasting SSE:', e && e.message ? e.message : e);
+    }
 
     // Update local variables after saving
     if (filePath === servicesFilePath) services = array;
@@ -234,7 +273,7 @@ function saveData(array, filePath) {
 
     return true;
   } catch (err) {
-    console.error(`Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
+    console.error(`❌ Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
     try {
       // cleanup tmp file if exists
       const tmpPath = filePath + '.tmp';
@@ -354,6 +393,60 @@ app.post('/api/create-payment-intent', async (req, res) => {
   }
 });
 
+// Stripe webhook endpoint — validates signature when STRIPE_WEBHOOK_SECRET is set
+app.post('/api/payments/webhook', async (req, res) => {
+  let event = null;
+  const sig = req.headers['stripe-signature'];
+
+  try {
+    if (process.env.STRIPE_WEBHOOK_SECRET && stripe) {
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } else {
+      // If webhook secret not configured, accept the parsed body (useful for local/demo testing)
+      event = req.body;
+    }
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err && err.message ? err.message : err);
+    return res.status(400).send(`Webhook Error: ${err && err.message ? err.message : err}`);
+  }
+
+  try {
+    const type = event.type;
+    const intent = event.data && event.data.object ? event.data.object : event;
+    const paymentIntentId = intent && intent.id;
+
+    if (!paymentIntentId) {
+      console.warn('Webhook received without payment intent id');
+      return res.json({ received: true });
+    }
+
+    const bookingIndex = bookings.findIndex(b => String(b.payment_intent_id) === String(paymentIntentId));
+    if (bookingIndex === -1) {
+      // Not related to our bookings — ignore
+      return res.json({ received: true });
+    }
+
+    console.log(`Webhook received for PaymentIntent ${paymentIntentId}: ${type}`);
+
+    if (type === 'payment_intent.succeeded' || type === 'payment_intent.captured') {
+      bookings[bookingIndex].status = 'confirmed';
+      bookings[bookingIndex].stripe_status = 'captured';
+      bookings[bookingIndex].updated_at = new Date().toISOString();
+      saveData(bookings, bookingsFilePath);
+    } else if (type === 'payment_intent.canceled' || type === 'payment_intent.payment_failed') {
+      bookings[bookingIndex].status = 'cancelled';
+      bookings[bookingIndex].stripe_status = 'failed';
+      bookings[bookingIndex].updated_at = new Date().toISOString();
+      saveData(bookings, bookingsFilePath);
+    }
+
+    return res.json({ received: true });
+  } catch (err) {
+    console.error('Error handling webhook:', err && err.message ? err.message : err);
+    return res.status(500).json({ error: 'Webhook handling error' });
+  }
+});
+
 app.post('/api/bookings', async (req, res) => {
   try {
     const {
@@ -362,6 +455,14 @@ app.post('/api/bookings', async (req, res) => {
       bookingDate, bookingTime, hours, cleaners,
       totalAmount, paymentIntentId, notes, additionalServices, supplies
     } = req.body;
+
+    // Idempotency: if a booking with the same paymentIntentId already exists, return it
+    if (paymentIntentId) {
+      const existing = bookings.find(b => String(b.payment_intent_id) === String(paymentIntentId));
+      if (existing) {
+        return res.json(existing);
+      }
+    }
 
     const newId = bookings.length > 0 ? Math.max(...bookings.map(b => b.id)) + 1 : 1;
     const newBooking = {
@@ -995,6 +1096,63 @@ app.get('/api/admin/check-session', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   res.json({ authenticated: !!token && adminTokens[token] });
 });
+
+// Server-Sent Events endpoint for admin UI real-time updates.
+// Accepts token via Authorization header or `token` query param (used by browser EventSource).
+app.get('/api/admin/events', (req, res) => {
+  const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+  if (!token || !adminTokens[token]) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Setup SSE headers
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+  res.flushHeaders && res.flushHeaders();
+
+  // Send a welcome ping
+  res.write(`event: hello\n`);
+  res.write(`data: ${JSON.stringify({ message: 'connected', timestamp: new Date().toISOString() })}\n\n`);
+
+  adminSseClients.add(res);
+
+  req.on('close', () => {
+    try { adminSseClients.delete(res); } catch (e) {}
+  });
+});
+
+// Periodic cleanup: expire pending bookings older than X minutes and try to release Stripe authorizations
+const BOOKING_EXPIRY_MINUTES = parseInt(process.env.BOOKING_EXPIRY_MINUTES || '30');
+async function cleanupExpiredBookings() {
+  try {
+    const now = Date.now();
+    let changed = false;
+    for (const b of bookings) {
+      if (b.status === 'pending' && b.created_at) {
+        const created = new Date(b.created_at).getTime();
+        if (now - created > BOOKING_EXPIRY_MINUTES * 60 * 1000) {
+          console.log(`Expiring booking ${b.id} due to timeout`);
+          if (b.payment_intent_id && stripe && !String(b.payment_intent_id).startsWith('demo_')) {
+            try {
+              await stripe.paymentIntents.cancel(b.payment_intent_id);
+              b.stripe_status = 'released';
+            } catch (err) {
+              console.error(`Failed to cancel PaymentIntent ${b.payment_intent_id}:`, err && err.message ? err.message : err);
+            }
+          }
+          b.status = 'expired';
+          b.updated_at = new Date().toISOString();
+          changed = true;
+        }
+      }
+    }
+    if (changed) saveData(bookings, bookingsFilePath);
+  } catch (err) {
+    console.error('Error during cleanupExpiredBookings:', err && err.message ? err.message : err);
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredBookings, 5 * 60 * 1000);
 
 // Worker management endpoints
 app.get('/api/admin/workers', requireAdmin, (req, res) => {
