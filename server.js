@@ -227,22 +227,7 @@ function saveData(array, filePath) {
 
     console.log(`✅ Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
 
-    // Mirror important data files into public/data so the static copy used by the client
-    // (if any) stays in sync with the server-side data files. This helps avoid cases where
-    // edits through the admin UI update server `data/` but the `public/data` copy remains stale.
-    try {
-      const publicDataDir = path.join(__dirname, 'public', 'data');
-      if (!fs.existsSync(publicDataDir)) fs.mkdirSync(publicDataDir, { recursive: true });
-
-      const basename = path.basename(filePath);
-      const publicFilePath = path.join(publicDataDir, basename);
-      const publicTmp = publicFilePath + '.tmp';
-      fs.writeFileSync(publicTmp, JSON.stringify(array, null, 2));
-      fs.renameSync(publicTmp, publicFilePath);
-      console.log(`✅ Mirrored ${basename} to public/data`);
-    } catch (mirrorErr) {
-      console.error('Failed to mirror data to public/data:', mirrorErr && mirrorErr.message ? mirrorErr.message : mirrorErr);
-    }
+    // Note: removed automatic mirroring to public/data to avoid stale static copies.
 
     // Broadcast booking updates to connected admin SSE clients when bookings.json changes
     try {
