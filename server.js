@@ -755,18 +755,15 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
     }
-<<<<<<< HEAD
-    bookings.splice(bookingIndex, 1);
-    saveData(bookings, bookingsFilePath);
-=======
+
     const removed = bookings.splice(bookingIndex, 1);
     const saved = saveData(bookings, bookingsFilePath);
-    console.log(`Deleted booking ${id} (second handler), saveData returned: ${saved}`);
+    console.log(`Deleted booking ${id}, saveData returned: ${saved}`);
     if (!saved) {
       if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
       return res.status(500).json({ error: 'Failed to persist deletion' });
     }
->>>>>>> 2344bd6ed6d5f9b0e4ddb374336679f99e195e67
+
     res.json({ success: true, message: 'Booking deleted' });
   } catch (error) {
     console.error('Error deleting booking:', error);
