@@ -1719,10 +1719,10 @@ async function deleteBooking(id) {
 
 async function clearAllBookings() {
   const token = localStorage.getItem('adminToken');
-  if (!confirm('Sei sicuro di voler eliminare TUTTE le prenotazioni? Questa azione è irreversibile.')) return;
+  if (!confirm('Sei sicuro di voler eliminare TUTTE le prenotazioni? Questa azione არის irreversibile.')) return;
 
   try {
-    const response = await fetch('/api/admin/bookings', {
+    const response = await fetch('/api/admin/bookings/all/clear', {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });

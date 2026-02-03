@@ -802,6 +802,9 @@ function toggleFaq(button) {
   item.classList.toggle('active');
 }
 
+function updateBookingFormLabels() {
+}
+
 window.onLanguageChange = function(lang) {
   loadCities();
   loadServices();

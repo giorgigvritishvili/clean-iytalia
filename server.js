@@ -730,7 +730,23 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.delete('/api/admin/bookings', requireAdmin, (req, res) => {
+app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const bookingIndex = bookings.findIndex(b => b.id == id);
+    if (bookingIndex === -1) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    bookings.splice(bookingIndex, 1);
+    saveData(bookings, bookingsFilePath);
+    res.json({ success: true, message: 'Booking deleted' });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    res.status(500).json({ error: 'Failed to delete booking' });
+  }
+});
+
+app.delete('/api/admin/bookings/all/clear', requireAdmin, (req, res) => {
   try {
     console.log(`Admin ${req.adminId} requested clearing all bookings`);
     bookings.length = 0; // Clear the array
