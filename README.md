@@ -118,3 +118,28 @@ $env:VERCEL=1; node -e "require('./server.js'); console.log('loaded OK')"
 - Calendar: Basic; no time slot blocking per day.
 
 For production, add a database, secure environment, and deploy to a cloud service.
+
+## Deploying to Render (recommended for this project)
+
+Render is a good choice for this app because it supports both web services and managed Postgres. Important notes for a stable deployment:
+
+1. Start Command: set to `npm start` (Render uses this by default if present in `package.json`).
+2. Port: Render provides `$PORT`; `server.js` reads `process.env.PORT` so no change needed.
+3. Persistent Storage: the app writes `data/*.json` by default. On Render you must either:
+   - Attach a Persistent Disk and set the Environment Variable `DATA_DIR=/data` (or `RENDER_DATA_DIR`) so `server.js` will store data there; or
+   - Use a managed database (Postgres) — preferred for production. The project already includes `pg` in dependencies and can be migrated.
+4. Environment Variables to set in Render dashboard (Production + Staging as needed):
+   - `STRIPE_SECRET_KEY` — your Stripe secret key
+   - `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
+   - `SMTP_USER`, `SMTP_PASS`, `SMTP_HOST`, `SMTP_PORT` — for Nodemailer
+   - `ADMIN_PASSWORD` — optional admin password override
+   - `DATA_DIR` — set to `/data` if you attached a Persistent Disk
+5. Health check: set Render's health check path to `/api/health` (I added this endpoint for uptime and quick checks).
+6. Stripe webhooks: configure Stripe to POST to `https://<your-service>.onrender.com/api/payments/webhook` and add the signing secret to `STRIPE_WEBHOOK_SECRET`.
+
+Quick Render checklist after deploy:
+- Verify `GET https://<your-service>.onrender.com/api/health` returns `status: ok`.
+- Ensure `DATA_DIR` is set and writable if you rely on JSON files.
+- Add `STRIPE_*` and `SMTP_*` env vars in the Render dashboard.
+
+If you want, I can scaffold a Postgres migration (create `bookings` table and wire basic CRUD) so the app stops relying on JSON files and becomes robust on Render. This is recommended if you expect production traffic.

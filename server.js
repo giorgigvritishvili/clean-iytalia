@@ -15,8 +15,30 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 if (!stripe) {
   console.warn('Stripe is not configured. Payments will be simulated.');
 }
-// Data directory (use disk persistence on Render if available)
-const dataDir = process.env.DATA_DIR || __dirname;
+const DISABLE_PAYMENTS = (process.env.DISABLE_PAYMENTS === '1' || process.env.DISABLE_PAYMENTS === 'true');
+// Data directory: prefer explicit `DATA_DIR`, then `RENDER_DATA_DIR`, then Render's
+// default persistent disk mount `/data` (if writable), otherwise fall back to project dir.
+let dataDir = process.env.DATA_DIR || process.env.RENDER_DATA_DIR || null;
+if (!dataDir) {
+  try {
+    // Render mounts persistent disk at /data by convention; prefer it when available and writable.
+    const candidate = '/data';
+    if (process.env.RENDER || fs.existsSync(candidate)) {
+      // check writable
+      try {
+        fs.accessSync(candidate, fs.constants.W_OK);
+        dataDir = candidate;
+      } catch (e) {
+        // not writable
+        dataDir = null;
+      }
+    }
+  } catch (e) {
+    dataDir = null;
+  }
+}
+if (!dataDir) dataDir = __dirname;
+console.log(`Using data directory: ${dataDir}`);
 
 // Data file paths
 const servicesFilePath = path.join(dataDir, 'data', 'services.json');
@@ -247,6 +269,24 @@ function saveData(array, filePath) {
       console.error('Error broadcasting SSE:', e && e.message ? e.message : e);
     }
 
+    // If Postgres is enabled, also sync bookings to DB asynchronously
+    try {
+      if (filePath === bookingsFilePath) {
+        try {
+          if (db && db.enabled && db.enabled()) {
+            // fire-and-forget
+            db.replaceBookings(array).then(ok => {
+              if (!ok) console.warn('Failed to sync bookings to Postgres');
+            }).catch(err => console.error('DB replaceBookings error:', err && err.message ? err.message : err));
+          }
+        } catch (err) {
+          console.error('Error attempting DB sync:', err && err.message ? err.message : err);
+        }
+      }
+    } catch (e) {
+      console.error('Error scheduling DB sync:', e && e.message ? e.message : e);
+    }
+
     // Update local variables after saving
     if (filePath === servicesFilePath) services = array;
     if (filePath === citiesFilePath) cities = array;
@@ -271,10 +311,53 @@ function saveData(array, filePath) {
 }
 
 // Load data on startup
+const db = require('./db');
+
+async function initPersistence() {
+  try {
+    const dbUrl = process.env.DATABASE_URL || process.env.PG_CONNECTION_STRING || null;
+    if (dbUrl) {
+      console.log('DATABASE_URL detected — initializing Postgres persistence');
+      await db.initDb(dbUrl);
+      // load bookings from DB and overwrite in-memory bookings to keep single source of truth
+      try {
+        const rows = await db.getBookings();
+        if (Array.isArray(rows) && rows.length > 0) {
+          bookings = rows;
+          // write to disk for compatibility/backups
+          try { fs.writeFileSync(bookingsFilePath, JSON.stringify(bookings, null, 2)); } catch (e) { console.warn('Failed to write bookings file backup:', e && e.message ? e.message : e); }
+          console.log(`Loaded ${bookings.length} bookings from Postgres`);
+        }
+      } catch (err) {
+        console.error('Failed to load bookings from DB:', err && err.message ? err.message : err);
+      }
+    }
+  } catch (err) {
+    console.error('initPersistence error:', err && err.message ? err.message : err);
+  }
+}
+
+initPersistence().catch(e => console.error('initPersistence failed:', e));
+
 loadData();
 
 app.get('/api/contact', (req, res) => {
   res.json(contactConfig);
+});
+
+// Health check for Render / uptime monitoring
+app.get('/api/health', (req, res) => {
+  try {
+    res.json({
+      status: 'ok',
+      env: process.env.NODE_ENV || 'development',
+      uptime_seconds: process.uptime(),
+      dataDir,
+      bookingsCount: Array.isArray(bookings) ? bookings.length : 0
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
 });
 
 app.post('/api/admin/contact', (req, res) => {
@@ -358,6 +441,13 @@ app.post('/api/create-payment-intent', async (req, res) => {
     const { amount, currency = 'eur' } = req.body;
 
     console.log(`Attempting to create payment for: ${amount} ${currency}`);
+
+    if (DISABLE_PAYMENTS || !stripe) {
+      // Payments disabled — return demo values so frontend can proceed without real Stripe
+      const demoId = `demo_${Date.now()}`;
+      console.log('Payments disabled — returning demo payment intent', demoId);
+      return res.json({ clientSecret: `demo_client_secret_${demoId}`, paymentIntentId: demoId });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // ცენტებში გადაყვანა
@@ -470,8 +560,8 @@ app.post('/api/bookings', async (req, res) => {
       notes,
       additional_services: additionalServices || [],
       supplies: supplies || [],
-      status: 'pending',
-      stripe_status: 'authorized',
+      status: DISABLE_PAYMENTS ? 'confirmed' : 'pending',
+      stripe_status: DISABLE_PAYMENTS ? 'not_required' : 'authorized',
       created_at: new Date().toISOString()
     };
 
@@ -486,25 +576,46 @@ app.post('/api/bookings', async (req, res) => {
     console.log(`Booking ${newBooking.id} created and persisted to ${bookingsFilePath}`);
 
     try {
-      await transporter.sendMail({
-        from: process.env.SMTP_USER,
-        to: customerEmail,
-        subject: 'Booking Pending Confirmation - CasaClean',
-        html: `
-          <h2>Thank you for your booking!</h2>
-          <p>Dear ${customerName},</p>
-          <p>Your booking is pending confirmation. We will notify you once it's confirmed.</p>
-          <p><strong>Details:</strong></p>
-          <ul>
-            <li>Date: ${bookingDate}</li>
-            <li>Time: ${bookingTime}</li>
-            <li>Duration: ${hours} hours</li>
-            <li>Total: €${totalAmount}</li>
-          </ul>
-          <p>Your payment has been authorized and will only be charged upon confirmation.</p>
-          <p>Best regards,<br>CasaClean Team</p>
-        `
-      });
+      if (DISABLE_PAYMENTS) {
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: customerEmail,
+          subject: 'Booking Confirmed - CasaClean',
+          html: `
+            <h2>Your booking is confirmed!</h2>
+            <p>Dear ${customerName},</p>
+            <p>Great news — payments are disabled and your booking is confirmed.</p>
+            <p><strong>Details:</strong></p>
+            <ul>
+              <li>Date: ${bookingDate}</li>
+              <li>Time: ${bookingTime}</li>
+              <li>Duration: ${hours} hours</li>
+              <li>Total: €${totalAmount}</li>
+            </ul>
+            <p>Best regards,<br>CasaClean Team</p>
+          `
+        });
+      } else {
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: customerEmail,
+          subject: 'Booking Pending Confirmation - CasaClean',
+          html: `
+            <h2>Thank you for your booking!</h2>
+            <p>Dear ${customerName},</p>
+            <p>Your booking is pending confirmation. We will notify you once it's confirmed.</p>
+            <p><strong>Details:</strong></p>
+            <ul>
+              <li>Date: ${bookingDate}</li>
+              <li>Time: ${bookingTime}</li>
+              <li>Duration: ${hours} hours</li>
+              <li>Total: €${totalAmount}</li>
+            </ul>
+            <p>Your payment has been authorized and will only be charged upon confirmation.</p>
+            <p>Best regards,<br>CasaClean Team</p>
+          `
+        });
+      }
     } catch (emailError) {
       console.log('Email sending skipped:', emailError.message);
     }
@@ -562,9 +673,20 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/bookings', (req, res) => {
+app.get('/api/admin/bookings', async (req, res) => {
   try {
-    const bookingsWithDetails = bookings.map(booking => {
+    let source = bookings;
+    // If Postgres enabled, read authoritative bookings from DB
+    try {
+      if (db && db.enabled && db.enabled()) {
+        source = await db.getBookings();
+      }
+    } catch (dbErr) {
+      console.warn('Failed to load bookings from DB, falling back to in-memory:', dbErr && dbErr.message ? dbErr.message : dbErr);
+      source = bookings;
+    }
+
+    const bookingsWithDetails = source.map(booking => {
       const service = services.find(s => Number(s.id) === Number(booking.service_id));
       const city = cities.find(c => Number(c.id) === Number(booking.city_id));
       return {
@@ -866,6 +988,33 @@ app.delete('/api/admin/bookings/all/clear', requireAdmin, (req, res) => {
   } catch (error) {
     console.error('Error clearing all bookings:', error);
     res.status(500).json({ error: 'Failed to clear all bookings' });
+  }
+});
+
+// Debug endpoint: returns in-memory bookings and on-disk bookings file for comparison
+app.get('/api/admin/debug-bookings', requireAdmin, (req, res) => {
+  try {
+    let onDisk = null;
+    let stat = null;
+    if (fs.existsSync(bookingsFilePath)) {
+      try {
+        onDisk = JSON.parse(fs.readFileSync(bookingsFilePath, 'utf8'));
+        stat = fs.statSync(bookingsFilePath);
+      } catch (e) {
+        // if parse fails, include raw content
+        onDisk = fs.readFileSync(bookingsFilePath, 'utf8');
+      }
+    }
+
+    res.json({
+      inMemoryCount: Array.isArray(bookings) ? bookings.length : 0,
+      inMemory: bookings,
+      onDisk,
+      fileMtime: stat ? stat.mtime : null
+    });
+  } catch (err) {
+    console.error('Debug endpoint error:', err);
+    res.status(500).json({ error: 'Failed to read debug info', message: err.message });
   }
 });
 
