@@ -215,9 +215,14 @@ function saveData(array, filePath) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
-    console.log(`Saved data to ${filePath} (items: ${array && array.length ? array.length : 0})`);
-    
+
+    // Atomic write: write to temp file then rename
+    const tmpPath = filePath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(array, null, 2));
+    fs.renameSync(tmpPath, filePath);
+
+    console.log(`Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
+
     // Update local variables after saving
     if (filePath === servicesFilePath) services = array;
     if (filePath === citiesFilePath) cities = array;
@@ -226,10 +231,17 @@ function saveData(array, filePath) {
     if (filePath === adminsFilePath) admins = array;
     if (filePath === workersFilePath) workers = array;
     if (filePath === tokensFilePath) adminTokens = array;
-    
+
     return true;
   } catch (err) {
-    console.error(`Failed to save data to ${filePath}:`, err);
+    console.error(`Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
+    try {
+      // cleanup tmp file if exists
+      const tmpPath = filePath + '.tmp';
+      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    } catch (cleanupErr) {
+      console.error('Failed to cleanup tmp file:', cleanupErr && cleanupErr.message ? cleanupErr.message : cleanupErr);
+    }
     return false;
   }
 }
