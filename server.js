@@ -534,7 +534,14 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
     bookings[bookingIndex].status = 'confirmed';
     bookings[bookingIndex].stripe_status = 'captured';
     bookings[bookingIndex].updated_at = new Date().toISOString();
-    saveData(bookings, bookingsFilePath);
+    const saved = saveData(bookings, bookingsFilePath);
+    if (!saved) {
+      // Revert changes if save failed
+      bookings[bookingIndex].status = 'pending';
+      bookings[bookingIndex].stripe_status = 'authorized';
+      delete bookings[bookingIndex].updated_at;
+      return res.status(500).json({ error: 'Failed to save booking status' });
+    }
 
     try {
       const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
@@ -616,7 +623,14 @@ app.post('/api/admin/bookings/:id/reject', async (req, res) => {
     bookings[bookingIndex].status = 'cancelled';
     bookings[bookingIndex].stripe_status = 'released';
     bookings[bookingIndex].updated_at = new Date().toISOString();
-    saveData(bookings, bookingsFilePath);
+    const saved = saveData(bookings, bookingsFilePath);
+    if (!saved) {
+      // Revert changes if save failed
+      bookings[bookingIndex].status = 'pending';
+      bookings[bookingIndex].stripe_status = 'authorized';
+      delete bookings[bookingIndex].updated_at;
+      return res.status(500).json({ error: 'Failed to save booking status' });
+    }
 
     try {
       const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
@@ -680,7 +694,14 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
     bookings[bookingIndex].status = 'confirmed';
     bookings[bookingIndex].stripe_status = 'manually_paid';
     bookings[bookingIndex].updated_at = new Date().toISOString();
-    saveData(bookings, bookingsFilePath);
+    const saved = saveData(bookings, bookingsFilePath);
+    if (!saved) {
+      // Revert changes if save failed
+      bookings[bookingIndex].status = 'pending';
+      bookings[bookingIndex].stripe_status = 'authorized';
+      delete bookings[bookingIndex].updated_at;
+      return res.status(500).json({ error: 'Failed to save booking status' });
+    }
 
     try {
       const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
@@ -748,28 +769,7 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
-  try {
-    const { id } = req.params;
-    const bookingIndex = bookings.findIndex(b => b.id == id);
-    if (bookingIndex === -1) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
 
-    const removed = bookings.splice(bookingIndex, 1);
-    const saved = saveData(bookings, bookingsFilePath);
-    console.log(`Deleted booking ${id}, saveData returned: ${saved}`);
-    if (!saved) {
-      if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
-      return res.status(500).json({ error: 'Failed to persist deletion' });
-    }
-
-    res.json({ success: true, message: 'Booking deleted' });
-  } catch (error) {
-    console.error('Error deleting booking:', error);
-    res.status(500).json({ error: 'Failed to delete booking' });
-  }
-});
 
 app.delete('/api/admin/bookings/all/clear', requireAdmin, (req, res) => {
   try {
@@ -875,7 +875,8 @@ app.put('/api/admin/services/:id', (req, res) => {
     if (description_ru !== undefined) services[serviceIndex].description_ru = description_ru;
     services[serviceIndex].price_per_hour = price_per_hour;
     services[serviceIndex].enabled = enabled;
-    saveData(services, servicesFilePath);
+    const saved = saveData(services, servicesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save service' });
 
     res.json({ success: true });
   } catch (error) {
@@ -904,7 +905,8 @@ app.post('/api/admin/services', (req, res) => {
     };
 
     services.push(newService);
-    saveData(services, servicesFilePath);
+    const saved = saveData(services, servicesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save service' });
     res.json(newService);
   } catch (error) {
     console.error('Error adding service:', error);
@@ -921,7 +923,8 @@ app.delete('/api/admin/services/:id', (req, res) => {
     }
 
     services.splice(serviceIndex, 1);
-    saveData(services, servicesFilePath);
+    const saved = saveData(services, servicesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to delete service' });
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting service:', error);
@@ -1051,10 +1054,9 @@ app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
       active: active !== undefined ? active : workers[workerIndex].active
     };
 
-    saveData(workers, workersFilePath);
-      const saved = saveData(workers, workersFilePath);
-      if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
-      res.json(workers[workerIndex]);
+    const saved = saveData(workers, workersFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
+    res.json(workers[workerIndex]);
   } catch (error) {
     console.error('Error updating worker:', error);
     res.status(500).json({ error: 'Failed to update worker' });
