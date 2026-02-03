@@ -733,8 +733,14 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    bookings.splice(bookingIndex, 1);
-    saveData(bookings, bookingsFilePath);
+    const removed = bookings.splice(bookingIndex, 1);
+    const saved = saveData(bookings, bookingsFilePath);
+    console.log(`Deleted booking ${id}, saveData returned: ${saved}`);
+    if (!saved) {
+      // try to restore in-memory state in case of disk write failure
+      if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
+      return res.status(500).json({ error: 'Failed to persist deletion' });
+    }
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting booking:', error);
@@ -749,8 +755,13 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
     }
-    bookings.splice(bookingIndex, 1);
-    saveData(bookings, bookingsFilePath);
+    const removed = bookings.splice(bookingIndex, 1);
+    const saved = saveData(bookings, bookingsFilePath);
+    console.log(`Deleted booking ${id} (second handler), saveData returned: ${saved}`);
+    if (!saved) {
+      if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
+      return res.status(500).json({ error: 'Failed to persist deletion' });
+    }
     res.json({ success: true, message: 'Booking deleted' });
   } catch (error) {
     console.error('Error deleting booking:', error);
