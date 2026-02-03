@@ -215,9 +215,14 @@ function saveData(array, filePath) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
-    console.log(`Saved data to ${filePath} (items: ${array && array.length ? array.length : 0})`);
-    
+
+    // Atomic write: write to temp file then rename
+    const tmpPath = filePath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(array, null, 2));
+    fs.renameSync(tmpPath, filePath);
+
+    console.log(`Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
+
     // Update local variables after saving
     if (filePath === servicesFilePath) services = array;
     if (filePath === citiesFilePath) cities = array;
@@ -226,10 +231,17 @@ function saveData(array, filePath) {
     if (filePath === adminsFilePath) admins = array;
     if (filePath === workersFilePath) workers = array;
     if (filePath === tokensFilePath) adminTokens = array;
-    
+
     return true;
   } catch (err) {
-    console.error(`Failed to save data to ${filePath}:`, err);
+    console.error(`Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
+    try {
+      // cleanup tmp file if exists
+      const tmpPath = filePath + '.tmp';
+      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    } catch (cleanupErr) {
+      console.error('Failed to cleanup tmp file:', cleanupErr && cleanupErr.message ? cleanupErr.message : cleanupErr);
+    }
     return false;
   }
 }
@@ -721,8 +733,14 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    bookings.splice(bookingIndex, 1);
-    saveData(bookings, bookingsFilePath);
+    const removed = bookings.splice(bookingIndex, 1);
+    const saved = saveData(bookings, bookingsFilePath);
+    console.log(`Deleted booking ${id}, saveData returned: ${saved}`);
+    if (!saved) {
+      // try to restore in-memory state in case of disk write failure
+      if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
+      return res.status(500).json({ error: 'Failed to persist deletion' });
+    }
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting booking:', error);
@@ -737,8 +755,18 @@ app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
     }
+<<<<<<< HEAD
     bookings.splice(bookingIndex, 1);
     saveData(bookings, bookingsFilePath);
+=======
+    const removed = bookings.splice(bookingIndex, 1);
+    const saved = saveData(bookings, bookingsFilePath);
+    console.log(`Deleted booking ${id} (second handler), saveData returned: ${saved}`);
+    if (!saved) {
+      if (removed && removed[0]) bookings.splice(bookingIndex, 0, removed[0]);
+      return res.status(500).json({ error: 'Failed to persist deletion' });
+    }
+>>>>>>> 2344bd6ed6d5f9b0e4ddb374336679f99e195e67
     res.json({ success: true, message: 'Booking deleted' });
   } catch (error) {
     console.error('Error deleting booking:', error);
