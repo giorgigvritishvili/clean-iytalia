@@ -1421,12 +1421,12 @@ async function addWorker() {
   const email = document.getElementById('worker-email').value;
   const phone = document.getElementById('worker-phone').value;
 
-  const workerData = { name, email, phone, rating: 5.0, status: 'active' };
+  const workerData = { name, email, phone, rating: 5.0, completed_jobs: 0, active: true };
 
   try {
     const response = await fetch('/api/admin/workers', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
