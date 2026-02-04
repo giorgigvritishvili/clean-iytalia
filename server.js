@@ -242,10 +242,8 @@ function saveData(array, filePath) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    // Atomic write: write to temp file then rename
-    const tmpPath = filePath + '.tmp';
-    fs.writeFileSync(tmpPath, JSON.stringify(array, null, 2));
-    fs.renameSync(tmpPath, filePath);
+    // Direct write to file (simplified for Windows compatibility)
+    fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
 
     console.log(`✅ Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
 
@@ -299,13 +297,6 @@ function saveData(array, filePath) {
     return true;
   } catch (err) {
     console.error(`❌ Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
-    try {
-      // cleanup tmp file if exists
-      const tmpPath = filePath + '.tmp';
-      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
-    } catch (cleanupErr) {
-      console.error('Failed to cleanup tmp file:', cleanupErr && cleanupErr.message ? cleanupErr.message : cleanupErr);
-    }
     return false;
   }
 }
@@ -1090,7 +1081,7 @@ app.get('/api/admin/services', (req, res) => {
   }
 });
 
-app.put('/api/admin/services/:id', (req, res) => {
+app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled } = req.body;
@@ -1120,7 +1111,7 @@ app.put('/api/admin/services/:id', (req, res) => {
   }
 });
 
-app.post('/api/admin/services', (req, res) => {
+app.post('/api/admin/services', requireAdmin, (req, res) => {
   try {
     const { name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled } = req.body;
 
