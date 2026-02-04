@@ -404,7 +404,15 @@ app.post('/api/admin/contact', (req, res) => {
 // Initialize admin password hash
 (async () => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
-  admins[0].password_hash = await bcrypt.hash(adminPassword, 10);
+  for (let i = 0; i < admins.length; i++) {
+    if (!admins[i].password_hash) {
+      admins[i].password_hash = await bcrypt.hash(adminPassword, 10);
+      // Update DB with hashed password
+      if (db && db.enabled && db.enabled()) {
+        await db.updateAdminById(admins[i].id, { password_hash: admins[i].password_hash });
+      }
+    }
+  }
 })();
 
 app.get('/api/cities', (req, res) => {
