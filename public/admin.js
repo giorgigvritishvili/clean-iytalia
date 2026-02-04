@@ -760,7 +760,7 @@ async function addCity() {
     const response = await fetch('/api/admin/cities', {
       cache: "no-store",
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
@@ -845,14 +845,17 @@ function renderServices() {
 }
 
 async function toggleService(id, enabled) {
+  const token = localStorage.getItem('adminToken');
   try {
     const service = services.find(s => s.id === id);
     if (!service) throw new Error("Service not found");
 
     const res = await fetch(`/api/admin/services/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       cache: "no-store",
       body: JSON.stringify({
         enabled,
@@ -904,6 +907,7 @@ function showEditServiceModal(id) {
 }
 
 async function saveService(id = null) {
+  const token = localStorage.getItem('adminToken');
   const name = document.getElementById('service-name').value.trim();
   const nameIt = document.getElementById('service-name-it').value.trim();
   const nameKa = document.getElementById('service-name-ka').value.trim();
@@ -933,8 +937,11 @@ async function saveService(id = null) {
     const url = id ? `/api/admin/services/${id}` : '/api/admin/services';
     const response = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      cache: "no-store",
       body: JSON.stringify({
         name,
         name_it: finalNameIt,
@@ -962,15 +969,15 @@ async function saveService(id = null) {
 }
 
 async function deleteService(id) {
+  const token = localStorage.getItem('adminToken');
   if (!confirm('Sei sicuro di voler eliminare questo servizio? Questa azione è irreversibile.')) return;
 
   try {
- const response = await fetch(`/api/admin/services/${id}`, {
-  method: 'DELETE',
-  credentials: 'include',
-  cache: "no-store"
-});
-
+    const response = await fetch(`/api/admin/services/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: "no-store"
+    });
 
     if (response.ok) {
       loadServices();

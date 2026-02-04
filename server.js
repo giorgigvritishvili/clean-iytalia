@@ -236,16 +236,29 @@ function loadData() {
 }
 
 function saveData(array, filePath) {
+  console.log(`🔄 Attempting to save data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
   try {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
+      console.log(`📁 Creating directory: ${dir}`);
       fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Check if file is writable
+    try {
+      fs.accessSync(filePath, fs.constants.W_OK);
+    } catch (accessErr) {
+      console.warn(`⚠️ File not writable: ${filePath}, trying to create or fix permissions`);
+      // Try to create the file if it doesn't exist
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, '[]');
+      }
     }
 
     // Direct write to file (simplified for Windows compatibility)
     fs.writeFileSync(filePath, JSON.stringify(array, null, 2));
 
-    console.log(`✅ Saved data to ${filePath} (items: ${Array.isArray(array) ? array.length : Object.keys(array || {}).length})`);
+    console.log(`✅ Successfully saved data to ${filePath}`);
 
     // Note: removed automatic mirroring to public/data to avoid stale static copies.
 
@@ -297,6 +310,7 @@ function saveData(array, filePath) {
     return true;
   } catch (err) {
     console.error(`❌ Failed to save data to ${filePath}: ${err && err.message ? err.message : err}`);
+    console.error('Full error:', err);
     return false;
   }
 }
