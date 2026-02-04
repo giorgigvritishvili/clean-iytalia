@@ -1,4 +1,4 @@
-require('dotenv').config();
+ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -280,18 +280,33 @@ function saveData(array, filePath) {
       console.error('Error broadcasting SSE:', e && e.message ? e.message : e);
     }
 
-    // If Postgres is enabled, also sync bookings to DB asynchronously
+    // If Postgres is enabled, also sync data to DB asynchronously
     try {
-      if (filePath === bookingsFilePath) {
-        try {
-          if (db && db.enabled && db.enabled()) {
-            // fire-and-forget
-            db.replaceBookings(array).then(ok => {
-              if (!ok) console.warn('Failed to sync bookings to Postgres');
-            }).catch(err => console.error('DB replaceBookings error:', err && err.message ? err.message : err));
-          }
-        } catch (err) {
-          console.error('Error attempting DB sync:', err && err.message ? err.message : err);
+      if (db && db.enabled && db.enabled()) {
+        if (filePath === bookingsFilePath) {
+          db.replaceBookings(array).then(ok => {
+            if (!ok) console.warn('Failed to sync bookings to Postgres');
+          }).catch(err => console.error('DB replaceBookings error:', err && err.message ? err.message : err));
+        } else if (filePath === servicesFilePath) {
+          db.replaceServices(array).then(ok => {
+            if (!ok) console.warn('Failed to sync services to Postgres');
+          }).catch(err => console.error('DB replaceServices error:', err && err.message ? err.message : err));
+        } else if (filePath === citiesFilePath) {
+          db.replaceCities(array).then(ok => {
+            if (!ok) console.warn('Failed to sync cities to Postgres');
+          }).catch(err => console.error('DB replaceCities error:', err && err.message ? err.message : err));
+        } else if (filePath === workersFilePath) {
+          db.replaceWorkers(array).then(ok => {
+            if (!ok) console.warn('Failed to sync workers to Postgres');
+          }).catch(err => console.error('DB replaceWorkers error:', err && err.message ? err.message : err));
+        } else if (filePath === blockedSlotsFilePath) {
+          db.replaceBlockedSlots(array).then(ok => {
+            if (!ok) console.warn('Failed to sync blockedSlots to Postgres');
+          }).catch(err => console.error('DB replaceBlockedSlots error:', err && err.message ? err.message : err));
+        } else if (filePath === adminsFilePath) {
+          db.replaceAdmins(array).then(ok => {
+            if (!ok) console.warn('Failed to sync admins to Postgres');
+          }).catch(err => console.error('DB replaceAdmins error:', err && err.message ? err.message : err));
         }
       }
     } catch (e) {
@@ -324,17 +339,26 @@ async function initPersistence() {
     if (dbUrl) {
       console.log('DATABASE_URL detected — initializing Postgres persistence');
       await db.initDb(dbUrl);
-      // load bookings from DB and overwrite in-memory bookings to keep single source of truth
+      // Load all data from DB
       try {
-        const rows = await db.getBookings();
-        if (Array.isArray(rows) && rows.length > 0) {
-          bookings = rows;
-          // write to disk for compatibility/backups
-          try { fs.writeFileSync(bookingsFilePath, JSON.stringify(bookings, null, 2)); } catch (e) { console.warn('Failed to write bookings file backup:', e && e.message ? e.message : e); }
-          console.log(`Loaded ${bookings.length} bookings from Postgres`);
-        }
+        bookings = await db.getBookings();
+        services = await db.getServices();
+        cities = await db.getCities();
+        workers = await db.getWorkers();
+        blockedSlots = await db.getBlockedSlots();
+        admins = await db.getAdmins();
+
+        // Write to disk for compatibility/backups
+        try { fs.writeFileSync(bookingsFilePath, JSON.stringify(bookings, null, 2)); } catch (e) { console.warn('Failed to write bookings file backup:', e && e.message ? e.message : e); }
+        try { fs.writeFileSync(servicesFilePath, JSON.stringify(services, null, 2)); } catch (e) { console.warn('Failed to write services file backup:', e && e.message ? e.message : e); }
+        try { fs.writeFileSync(citiesFilePath, JSON.stringify(cities, null, 2)); } catch (e) { console.warn('Failed to write cities file backup:', e && e.message ? e.message : e); }
+        try { fs.writeFileSync(workersFilePath, JSON.stringify(workers, null, 2)); } catch (e) { console.warn('Failed to write workers file backup:', e && e.message ? e.message : e); }
+        try { fs.writeFileSync(blockedSlotsFilePath, JSON.stringify(blockedSlots, null, 2)); } catch (e) { console.warn('Failed to write blockedSlots file backup:', e && e.message ? e.message : e); }
+        try { fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2)); } catch (e) { console.warn('Failed to write admins file backup:', e && e.message ? e.message : e); }
+
+        console.log(`Loaded data from Postgres: ${bookings.length} bookings, ${services.length} services, ${cities.length} cities, ${workers.length} workers, ${blockedSlots.length} blocked slots, ${admins.length} admins`);
       } catch (err) {
-        console.error('Failed to load bookings from DB:', err && err.message ? err.message : err);
+        console.error('Failed to load data from DB:', err && err.message ? err.message : err);
       }
     }
   } catch (err) {
@@ -1032,7 +1056,7 @@ app.get('/api/admin/cities', (req, res) => {
   }
 });
 
-app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/cities/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end } = req.body;
@@ -1050,6 +1074,11 @@ app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
     cities[cityIndex].working_days = working_days;
     cities[cityIndex].working_hours_start = working_hours_start;
     cities[cityIndex].working_hours_end = working_hours_end;
+
+    // Update DB
+    const updated = await db.updateCityById(id, { name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end });
+    if (!updated) return res.status(500).json({ error: 'Failed to update city in DB' });
+
     const saved = saveData(cities, citiesFilePath);
     if (!saved) return res.status(500).json({ error: 'Failed to save city' });
 
@@ -1060,7 +1089,7 @@ app.put('/api/admin/cities/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/cities', requireAdmin, (req, res) => {
+app.post('/api/admin/cities', requireAdmin, async (req, res) => {
   try {
     const { name, name_it, name_ka, name_ru, working_days, working_hours_start, working_hours_end } = req.body;
     const newId = cities.length > 0 ? Math.max(...cities.map(c => c.id || 0)) + 1 : 1;
@@ -1075,6 +1104,10 @@ app.post('/api/admin/cities', requireAdmin, (req, res) => {
       working_hours_start: working_hours_start || '08:00',
       working_hours_end: working_hours_end || '18:00'
     };
+
+    // Insert into DB
+    const inserted = await db.insertCity(newCity);
+    if (!inserted) return res.status(500).json({ error: 'Failed to insert city into DB' });
 
     cities.push(newCity);
     const saved = saveData(cities, citiesFilePath);
@@ -1125,7 +1158,7 @@ app.put('/api/admin/services/:id', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/services', requireAdmin, (req, res) => {
+app.post('/api/admin/services', requireAdmin, async (req, res) => {
   try {
     const { name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled } = req.body;
 
@@ -1143,6 +1176,10 @@ app.post('/api/admin/services', requireAdmin, (req, res) => {
       price_per_hour: parseFloat(price_per_hour),
       enabled: enabled !== undefined ? enabled : true
     };
+
+    // Insert into DB
+    const inserted = await db.insertService(newService);
+    if (!inserted) return res.status(500).json({ error: 'Failed to insert service into DB' });
 
     services.push(newService);
     const saved = saveData(services, servicesFilePath);
@@ -1303,7 +1340,7 @@ app.get('/api/admin/workers', requireAdmin, (req, res) => {
   }
 });
 
-app.post('/api/admin/workers', requireAdmin, (req, res) => {
+app.post('/api/admin/workers', requireAdmin, async (req, res) => {
   try {
     const { name, email, phone, specialties, rating, completed_jobs, active } = req.body;
 
@@ -1320,6 +1357,10 @@ app.post('/api/admin/workers', requireAdmin, (req, res) => {
       created_at: new Date().toISOString()
     };
 
+    // Insert into DB
+    const inserted = await db.insertWorker(newWorker);
+    if (!inserted) return res.status(500).json({ error: 'Failed to insert worker into DB' });
+
     workers.push(newWorker);
     const saved = saveData(workers, workersFilePath);
     if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
@@ -1330,7 +1371,7 @@ app.post('/api/admin/workers', requireAdmin, (req, res) => {
   }
 });
 
-app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/workers/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, specialties, rating, completed_jobs, active } = req.body;
@@ -1340,7 +1381,7 @@ app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
       return res.status(404).json({ error: 'Worker not found' });
     }
 
-    workers[workerIndex] = {
+    const updatedWorker = {
       ...workers[workerIndex],
       name,
       email,
@@ -1351,9 +1392,14 @@ app.put('/api/admin/workers/:id', requireAdmin, (req, res) => {
       active: active !== undefined ? active : workers[workerIndex].active
     };
 
+    // Update DB
+    const updated = await db.updateWorkerById(id, { name, email, phone, specialties, rating, completed_jobs, active });
+    if (!updated) return res.status(500).json({ error: 'Failed to update worker in DB' });
+
+    workers[workerIndex] = updatedWorker;
     const saved = saveData(workers, workersFilePath);
     if (!saved) return res.status(500).json({ error: 'Failed to save worker' });
-    res.json(workers[workerIndex]);
+    res.json(updatedWorker);
   } catch (error) {
     console.error('Error updating worker:', error);
     res.status(500).json({ error: 'Failed to update worker' });
