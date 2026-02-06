@@ -170,6 +170,11 @@ function loadData() {
     console.error('Failed to load admins:', err);
   }
 
+  // Force correct admin credentials
+  const hashedPassword = bcrypt.hashSync('CasaClean2026', 10);
+  admins = [{ id: 1, username: 'CasaClean', password_hash: hashedPassword }];
+  saveData(admins, adminsFilePath);
+
   if (services.length === 0) {
     services = [
         { id: 1, name: 'Regular Cleaning', name_it: 'Pulizia Regolare', name_ru: 'Регулярная уборка', name_ka: 'რეგულარული დასუფთავება', description: 'Weekly or bi-weekly cleaning for homes', description_it: 'Pulizia settimanale o bisettimanale per case', description_ru: 'Еженедельная или двухнедельная уборка для домов', description_ka: 'კვირაში ან ორჯერ კვირაში დასუფთავება სახლებისთვის', price_per_hour: 18.90, enabled: true },
@@ -354,7 +359,9 @@ async function initPersistence() {
         try { fs.writeFileSync(citiesFilePath, JSON.stringify(cities, null, 2)); } catch (e) { console.warn('Failed to write cities file backup:', e && e.message ? e.message : e); }
         try { fs.writeFileSync(workersFilePath, JSON.stringify(workers, null, 2)); } catch (e) { console.warn('Failed to write workers file backup:', e && e.message ? e.message : e); }
         try { fs.writeFileSync(blockedSlotsFilePath, JSON.stringify(blockedSlots, null, 2)); } catch (e) { console.warn('Failed to write blockedSlots file backup:', e && e.message ? e.message : e); }
-        try { fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2)); } catch (e) { console.warn('Failed to write admins file backup:', e && e.message ? e.message : e); }
+        if (admins.length > 0) {
+          try { fs.writeFileSync(adminsFilePath, JSON.stringify(admins, null, 2)); } catch (e) { console.warn('Failed to write admins file backup:', e && e.message ? e.message : e); }
+        }
 
         console.log(`Loaded data from Postgres: ${bookings.length} bookings, ${services.length} services, ${cities.length} cities, ${workers.length} workers, ${blockedSlots.length} blocked slots, ${admins.length} admins`);
       } catch (err) {
