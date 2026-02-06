@@ -1288,6 +1288,47 @@ app.get('/api/admin/check-session', (req, res) => {
   res.json({ authenticated: !!token && adminTokens[token] });
 });
 
+// Endpoint to sync data from database to local JSON files
+app.post('/api/admin/sync-from-db', requireAdmin, async (req, res) => {
+  try {
+    if (!db || !db.enabled || !db.enabled()) {
+      return res.status(400).json({ error: 'Database not configured' });
+    }
+
+    console.log('Syncing data from database to local files...');
+
+    // Reload all data from DB
+    const dbBookings = await db.getBookings();
+    const dbServices = await db.getServices();
+    const dbCities = await db.getCities();
+    const dbWorkers = await db.getWorkers();
+    const dbBlockedSlots = await db.getBlockedSlots();
+    const dbAdmins = await db.getAdmins();
+
+    // Update in-memory arrays
+    bookings = dbBookings;
+    services = dbServices;
+    cities = dbCities;
+    workers = dbWorkers;
+    blockedSlots = dbBlockedSlots;
+    admins = dbAdmins;
+
+    // Save to JSON files
+    saveData(bookings, bookingsFilePath);
+    saveData(services, servicesFilePath);
+    saveData(cities, citiesFilePath);
+    saveData(workers, workersFilePath);
+    saveData(blockedSlots, blockedSlotsFilePath);
+    saveData(admins, adminsFilePath);
+
+    console.log('Data synced from database successfully');
+    res.json({ success: true, message: 'Data synced from database' });
+  } catch (error) {
+    console.error('Error syncing from database:', error);
+    res.status(500).json({ error: 'Failed to sync from database' });
+  }
+});
+
 // Server-Sent Events endpoint for admin UI real-time updates.
 // Accepts token via Authorization header or `token` query param (used by browser EventSource).
 app.get('/api/admin/events', (req, res) => {
@@ -1346,9 +1387,19 @@ async function cleanupExpiredBookings() {
 setInterval(cleanupExpiredBookings, 5 * 60 * 1000);
 
 // Worker management endpoints
-app.get('/api/admin/workers', requireAdmin, (req, res) => {
+app.get('/api/admin/workers', requireAdmin, async (req, res) => {
   try {
-    res.json(workers);
+    let source = workers;
+    // If Postgres enabled, read authoritative workers from DB
+    try {
+      if (db && db.enabled && db.enabled()) {
+        source = await db.getWorkers();
+      }
+    } catch (dbErr) {
+      console.warn('Failed to load workers from DB, falling back to in-memory:', dbErr && dbErr.message ? dbErr.message : dbErr);
+      source = workers;
+    }
+    res.json(source);
   } catch (error) {
     console.error('Error fetching workers:', error);
     res.status(500).json({ error: 'Failed to fetch workers' });
@@ -1421,12 +1472,18 @@ app.put('/api/admin/workers/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/workers/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/workers/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const workerIndex = workers.findIndex(w => w.id == id);
     if (workerIndex === -1) {
       return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    // Delete from DB if enabled
+    if (db && db.enabled && db.enabled()) {
+      const deleted = await db.deleteWorkerById(id);
+      if (!deleted) return res.status(500).json({ error: 'Failed to delete worker from DB' });
     }
 
     workers.splice(workerIndex, 1);

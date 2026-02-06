@@ -31,5 +31,16 @@
     "working_days": "1,2,3,4,5",
     "working_hours_start": "08:00",
     "working_hours_end": "18:00"
+  },
+  {
+    "id": 4,
+    "name": "tbilisi",
+    "name_it": "firenze",
+    "name_ka": "ფლორენცია",
+    "name_ru": "е.д., Флоренция",
+    "enabled": true,
+    "working_days": "1,2,3,4,5",
+    "working_hours_start": "08:00",
+    "working_hours_end": "18:00"
   }
 ]
