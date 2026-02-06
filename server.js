@@ -997,13 +997,19 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/bookings/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/bookings/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`Admin ${req.adminId} requested deletion of booking ${id}`);
     const bookingIndex = bookings.findIndex(b => b.id == id);
     if (bookingIndex === -1) {
       return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Delete from DB if enabled
+    if (db && db.enabled && db.enabled()) {
+      const deleted = await db.deleteBookingById(id);
+      if (!deleted) return res.status(500).json({ error: 'Failed to delete booking from DB' });
     }
 
     const removed = bookings.splice(bookingIndex, 1);
@@ -1134,6 +1140,30 @@ app.post('/api/admin/cities', requireAdmin, async (req, res) => {
   }
 });
 
+app.delete('/api/admin/cities/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cityIndex = cities.findIndex(c => c.id == id);
+    if (cityIndex === -1) {
+      return res.status(404).json({ error: 'City not found' });
+    }
+
+    // Delete from DB if enabled
+    if (db && db.enabled && db.enabled()) {
+      const deleted = await db.deleteCityById(id);
+      if (!deleted) return res.status(500).json({ error: 'Failed to delete city from DB' });
+    }
+
+    cities.splice(cityIndex, 1);
+    const saved = saveData(cities, citiesFilePath);
+    if (!saved) return res.status(500).json({ error: 'Failed to delete city' });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting city:', error);
+    res.status(500).json({ error: 'Failed to delete city' });
+  }
+});
+
 app.get('/api/admin/services', (req, res) => {
   try {
     res.json(services);
@@ -1206,12 +1236,18 @@ app.post('/api/admin/services', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/services/:id', (req, res) => {
+app.delete('/api/admin/services/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const serviceIndex = services.findIndex(s => s.id == id);
     if (serviceIndex === -1) {
       return res.status(404).json({ error: 'Service not found' });
+    }
+
+    // Delete from DB if enabled
+    if (db && db.enabled && db.enabled()) {
+      const deleted = await db.deleteServiceById(id);
+      if (!deleted) return res.status(500).json({ error: 'Failed to delete service from DB' });
     }
 
     services.splice(serviceIndex, 1);
