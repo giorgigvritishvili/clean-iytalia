@@ -676,10 +676,15 @@ function renderCities() {
     <div class="admin-card">
       <h4>
         ${city.name_it || city.name}
-        <label class="toggle-switch">
-          <input type="checkbox" ${city.enabled ? 'checked' : ''} onchange="toggleCity(${city.id}, this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="card-actions">
+          <button class="btn btn-sm btn-danger" onclick="deleteCity(${city.id})" title="Delete City">
+            <i class="fas fa-trash"></i>
+          </button>
+          <label class="toggle-switch">
+            <input type="checkbox" ${city.enabled ? 'checked' : ''} onchange="toggleCity(${city.id}, this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </h4>
       <div class="card-details">
         <p><i class="fas fa-clock"></i> ${city.working_hours_start} - ${city.working_hours_end}</p>
@@ -702,7 +707,7 @@ async function toggleCity(id, enabled) {
 
     const res = await fetch(`/api/admin/cities/${id}`, {
       method: 'PUT',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
@@ -726,6 +731,31 @@ async function toggleCity(id, enabled) {
     console.error('Failed to update city:', error);
     alert('Failed to update city. Please try again.');
     await loadCities(); // შეცდომის შემთხვევაში დავაბრუნოთ სწორ მდგომარეობაზე
+  }
+}
+
+async function deleteCity(id) {
+  const token = localStorage.getItem('adminToken');
+  if (!confirm('Sei sicuro di voler eliminare questa città? Questa azione è irreversibile.')) return;
+
+  try {
+    const res = await fetch(`/api/admin/cities/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to delete city');
+    }
+
+    // Remove from local array and re-render
+    cities = cities.filter(c => c.id !== id);
+    renderCities();
+
+  } catch (error) {
+    console.error('Failed to delete city:', error);
+    alert('Failed to delete city. Please try again.');
   }
 }
 
@@ -1100,6 +1130,14 @@ function closeModal(id) {
   if (!modal) return;
 
   modal.classList.remove('active');
+
+  // Reset form if it's the worker modal
+  if (id === 'worker-modal') {
+    document.getElementById('worker-form').reset();
+    document.getElementById('worker-modal-title').textContent = 'Add New Worker';
+    document.getElementById('worker-submit-btn').textContent = 'Add Worker';
+    document.getElementById('worker-submit-btn').onclick = saveWorker;
+  }
 }
 
 function toggleSidebar() {
@@ -1205,6 +1243,7 @@ function loadAppointmentCalendar() {
       <button class="btn btn-sm btn-secondary" onclick="changeMonth(1)">
         <i class="fas fa-chevron-right"></i>
       </button>
+      <input type="date" id="calendar-date-picker" onchange="jumpToDate(this.value)" style="margin-left: 10px;">
     </div>
     <div class="calendar-grid">
       <div class="calendar-day-header">
@@ -1233,6 +1272,14 @@ function loadAppointmentCalendar() {
 
   calendarHTML += '</div></div>';
   calendar.innerHTML = calendarHTML;
+}
+
+function jumpToDate(dateStr) {
+  if (!dateStr) return;
+  const date = new Date(dateStr);
+  currentYear = date.getFullYear();
+  currentMonth = date.getMonth();
+  loadAppointmentCalendar();
 }
 
 function changeMonth(delta) {
@@ -1566,7 +1613,8 @@ function showAddProjectModal() {
 }
 
 function showAddWorkerModal() {
-  document.getElementById('worker-modal').style.display = 'block';
+  const modal = document.getElementById('worker-modal');
+  modal.classList.add('active');
 }
 
 function showEditWorkerModal(id) {
