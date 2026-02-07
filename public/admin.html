@@ -91,18 +91,6 @@
             <i class="fas fa-chart-bar"></i>
             <span>Earnings</span>
           </li>
-          <li data-tab="payout">
-            <i class="fas fa-money-bill-wave"></i>
-            <span>Payout</span>
-          </li>
-          <li data-tab="commission-invoices">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <span>Commission Invoices</span>
-          </li>
-          <li data-tab="billing-commissions">
-            <i class="fas fa-receipt"></i>
-            <span>Billing & Commissions</span>
-          </li>
         </ul>
         <li data-tab="workers">
           <i class="fas fa-users"></i>
@@ -391,7 +379,19 @@
             </div>
           </div>
           <div class="recent-section">
-            <h3 data-i18n="admin.menu.earnings">Earnings History</h3>
+            <div class="section-header">
+              <h3 data-i18n="admin.menu.earnings">Earnings History</h3>
+              <div class="section-actions">
+                <button class="btn btn-secondary" onclick="exportToExcel()">
+                  <i class="fas fa-file-excel"></i>
+                  Export Excel
+                </button>
+                <button class="btn btn-secondary" onclick="exportToPDF()">
+                  <i class="fas fa-file-pdf"></i>
+                  Export PDF
+                </button>
+              </div>
+            </div>
             <div class="table-container">
               <table class="data-table">
                 <thead>
@@ -753,6 +753,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="translations.js"></script>
   <!-- Removed forced language to allow dynamic switching -->
   <script src="admin.js"></script>

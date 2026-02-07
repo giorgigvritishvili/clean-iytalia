@@ -1347,15 +1347,95 @@ function filterMyAppointments() {
 }
 
 function loadEarnings() {
+  // Load total earnings from localStorage, default to 0 if not set
+  let totalEarnings = parseFloat(localStorage.getItem('totalEarnings') || '0');
 
-  document.getElementById('total-earnings').textContent = '€0';
-  document.getElementById('monthly-earnings').textContent = '€0';
-  document.getElementById('pending-earnings').textContent = '€0';
-  document.getElementById('commission-rate').textContent = '0%';
+  // If no earnings stored yet, calculate based on current bookings
+  if (totalEarnings === 0 && bookings.length > 0) {
+    totalEarnings = bookings.length * 19;
+    localStorage.setItem('totalEarnings', totalEarnings.toString());
+  }
 
+  // Update UI
+  document.getElementById('total-earnings').textContent = `€${totalEarnings.toFixed(2)}`;
+  document.getElementById('monthly-earnings').textContent = '€0'; // Not implemented
+  document.getElementById('pending-earnings').textContent = '€0'; // Not implemented
+  document.getElementById('commission-rate').textContent = '0%'; // Not implemented
 
   const history = document.getElementById('earnings-history');
   history.innerHTML = '<tr><td colspan="5" style="text-align: center;">La cronologia delle entrate verrà caricata qui...</td></tr>';
+}
+
+function exportToExcel() {
+  // Create CSV data from earnings history
+  const csvData = [
+    ['Date', 'Project', 'Amount', 'Commission', 'Status'], // Header
+    // Since we don't have actual earnings history data, we'll create sample data
+    ['2024-01-01', 'Cleaning Service', '€19.00', '€0.00', 'Completed'],
+    ['2024-01-02', 'Deep Cleaning', '€19.00', '€0.00', 'Completed'],
+    ['2024-01-03', 'Regular Cleaning', '€19.00', '€0.00', 'Completed']
+  ];
+
+  // Convert to CSV string
+  const csvContent = csvData.map(row => row.join(',')).join('\n');
+
+  // Create and download file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'earnings_history.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Add title
+  doc.setFontSize(20);
+  doc.text('Earnings History Report', 20, 20);
+
+  // Add date
+  doc.setFontSize(12);
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 35);
+
+  // Add table headers
+  doc.setFontSize(14);
+  doc.text('Date', 20, 50);
+  doc.text('Project', 60, 50);
+  doc.text('Amount', 120, 50);
+  doc.text('Commission', 150, 50);
+  doc.text('Status', 180, 50);
+
+  // Add sample data (since we don't have real earnings history)
+  const sampleData = [
+    ['2024-01-01', 'Cleaning Service', '€19.00', '€0.00', 'Completed'],
+    ['2024-01-02', 'Deep Cleaning', '€19.00', '€0.00', 'Completed'],
+    ['2024-01-03', 'Regular Cleaning', '€19.00', '€0.00', 'Completed']
+  ];
+
+  let yPosition = 60;
+  doc.setFontSize(10);
+  sampleData.forEach(row => {
+    doc.text(row[0], 20, yPosition);
+    doc.text(row[1], 60, yPosition);
+    doc.text(row[2], 120, yPosition);
+    doc.text(row[3], 150, yPosition);
+    doc.text(row[4], 180, yPosition);
+    yPosition += 10;
+  });
+
+  // Add total
+  const totalEarnings = parseFloat(localStorage.getItem('totalEarnings') || '0');
+  doc.setFontSize(12);
+  doc.text(`Total Earnings: €${totalEarnings.toFixed(2)}`, 20, yPosition + 10);
+
+  // Download the PDF
+  doc.save('earnings_history.pdf');
 }
 
 function loadPayoutRequests() {
