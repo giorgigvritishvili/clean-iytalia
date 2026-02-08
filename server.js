@@ -660,6 +660,37 @@ app.post('/api/bookings', async (req, res) => {
           `
         });
       }
+
+      // Send notification email to admin
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: 'Vacanzeromane2024@libero.it',
+        subject: 'New Booking Received - CasaClean Admin',
+        html: `
+          <h2>New Booking Notification</h2>
+          <p>A new booking has been received on the admin panel.</p>
+          <p><strong>Customer Details:</strong></p>
+          <ul>
+            <li>Name: ${customerName}</li>
+            <li>Email: ${customerEmail}</li>
+            <li>Phone: ${customerPhone}</li>
+          </ul>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+            <li>Service ID: ${serviceId}</li>
+            <li>City ID: ${cityId}</li>
+            <li>Date: ${bookingDate}</li>
+            <li>Time: ${bookingTime}</li>
+            <li>Duration: ${hours} hours</li>
+            <li>Cleaners: ${cleaners}</li>
+            <li>Total Amount: €${totalAmount}</li>
+            <li>Status: ${DISABLE_PAYMENTS ? 'confirmed' : 'pending'}</li>
+            ${notes ? `<li>Notes: ${notes}</li>` : ''}
+          </ul>
+          <p>Please log in to the admin panel to review and confirm the booking.</p>
+          <p>Best regards,<br>CasaClean System</p>
+        `
+      });
     } catch (emailError) {
       console.log('Email sending skipped:', emailError.message);
     }
