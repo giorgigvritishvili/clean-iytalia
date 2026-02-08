@@ -1,1 +1,85 @@
-[]
+[
+  {
+    "id": 1,
+    "service_id": 2,
+    "city_id": 1,
+    "customer_name": "Lela gorelishvili",
+    "customer_email": "llgorelishvili@gmail.com",
+    "customer_phone": "+393891496149",
+    "street_name": "via giovanni giorgi",
+    "house_number": "5",
+    "property_size": "40",
+    "doorbell_name": "Lela gorelishvili",
+    "booking_date": "2026-02-06",
+    "booking_time": "14:00",
+    "hours": 2,
+    "cleaners": 2,
+    "total_amount": 19,
+    "payment_intent_id": "pi_3Sxm6IKEJbAqCpEe1WsxbEal",
+    "notes": null,
+    "additional_services": [],
+    "supplies": [
+      "provide-solvents",
+      "provide-mop",
+      "provide-vacuum"
+    ],
+    "status": "confirmed",
+    "stripe_status": "captured",
+    "created_at": "2026-02-06T06:17:26.318Z",
+    "updated_at": "2026-02-06T06:19:05.800Z"
+  },
+  {
+    "id": 2,
+    "service_id": 2,
+    "city_id": 1,
+    "customer_name": "Lela gorelishvili",
+    "customer_email": "llgorelishvili@gmail.com",
+    "customer_phone": "+393891496149",
+    "street_name": "via giovanni giorgi",
+    "house_number": "5",
+    "property_size": "90",
+    "doorbell_name": "Lela gorelishvili",
+    "booking_date": "2026-02-07",
+    "booking_time": "16:00",
+    "hours": 2,
+    "cleaners": 1,
+    "total_amount": 9,
+    "payment_intent_id": "pi_3SyCFlKEJbAqCpEe03MKeh3H",
+    "notes": null,
+    "additional_services": [],
+    "supplies": [
+      "provide-solvents"
+    ],
+    "status": "confirmed",
+    "stripe_status": "captured",
+    "created_at": "2026-02-07T10:12:55.836Z",
+    "updated_at": "2026-02-07T10:20:40.267Z"
+  },
+  {
+    "id": 3,
+    "service_id": 2,
+    "city_id": 2,
+    "customer_name": "Lela gorelishvili",
+    "customer_email": "llgorelishvili@gmail.com",
+    "customer_phone": "+393891496149",
+    "street_name": "via giovanni giorgi",
+    "house_number": "5",
+    "property_size": "50",
+    "doorbell_name": "Lela gorelishvili",
+    "booking_date": "2026-02-10",
+    "booking_time": "09:00",
+    "hours": 2,
+    "cleaners": 1,
+    "total_amount": 11,
+    "payment_intent_id": "pi_3SyCHpKEJbAqCpEe04DaAZlF",
+    "notes": null,
+    "additional_services": [],
+    "supplies": [
+      "provide-vacuum"
+    ],
+    "status": "confirmed",
+    "stripe_status": "captured",
+    "created_at": "2026-02-07T10:15:04.001Z",
+    "updated_at": "2026-02-07T10:21:09.883Z"
+  }
+]

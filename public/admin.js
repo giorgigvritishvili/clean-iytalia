@@ -1394,14 +1394,13 @@ function filterMyAppointments() {
 }
 
 function loadEarnings() {
-  // Load total earnings from localStorage, default to 0 if not set
-  let totalEarnings = parseFloat(localStorage.getItem('totalEarnings') || '0');
-
-  // If no earnings stored yet, calculate based on current bookings
-  if (totalEarnings === 0 && bookings.length > 0) {
-    totalEarnings = bookings.length * 19;
-    localStorage.setItem('totalEarnings', totalEarnings.toString());
-  }
+  // Calculate total earnings from confirmed/paid bookings
+  const totalEarnings = bookings
+    .filter(b => b.status === 'confirmed' || b.status === 'paid')
+    .reduce((sum, b) => {
+      const amount = parseFloat(b.total_amount);
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
   // Update UI
   document.getElementById('total-earnings').textContent = `€${totalEarnings.toFixed(2)}`;
