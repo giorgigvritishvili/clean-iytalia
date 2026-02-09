@@ -59,8 +59,8 @@ let workers = [];
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -112,7 +112,11 @@ function loadData() {
         { id: 3, name: 'Deep Cleaning', name_it: 'Pulizia Profonda', name_ru: 'Глубокая уборка', name_ka: 'ღრმა დასუფთავება', description: 'Thorough cleaning including hard-to-reach areas', description_it: 'Pulizia accurata incluse le aree difficili da raggiungere', description_ru: 'Тщательная уборка, включая труднодоступные места', description_ka: 'სრულყოფილი დასუფთავება მათ შორის რთულად მისაწვდომ ადგილებში', price_per_hour: 25.90, enabled: true },
         { id: 4, name: 'Move-in/Move-out', name_it: 'Trasloco', name_ru: 'Въезд/выезд', name_ka: 'შესვლა/გასვლა', description: 'Complete cleaning for moving in or out', description_it: 'Pulizia completa per traslochi', description_ru: 'Полная уборка для въезда или выезда', description_ka: 'სრული დასუფთავება შესვლის ან გასვლისთვის', price_per_hour: 25.90, enabled: true },
         { id: 5, name: 'Last-minute Cleaning', name_it: 'Pulizia Last Minute', name_ru: 'Срочная уборка', name_ka: 'ბოლო წუთის დასუფთავება', description: 'Urgent cleaning service within 24 hours', description_it: 'Servizio di pulizia urgente entro 24 ore', description_ru: 'Срочная услуга уборки в течение 24 часов', description_ka: 'სასწრაფო დასუფთავების სერვისი 24 საათის განმავლობაში', price_per_hour: 31.90, enabled: true },
-        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის', price_per_hour: 35.00, enabled: true }
+        { id: 6, name: 'Business Cleaning', name_it: 'Pulizia Uffici', name_ru: 'Уборка офисов', name_ka: 'კომერციული დასუფთავება', description: 'Professional cleaning for offices and businesses', description_it: 'Pulizia professionale per uffici e aziende', description_ru: 'Профессиональная уборка для офисов и предприятий', description_ka: 'პროფესიონალური დასუფთავება ოფისებისა და ბიზნესისთვის', price_per_hour: 35.00, enabled: true },
+        { id: 7, name: 'Window Cleaning', name_it: 'Pulizia Finestre', name_ru: 'Мытье окон', name_ka: 'ფანჯრების დასუფთავება', description: 'Professional window cleaning service', description_it: 'Servizio professionale di pulizia finestre', description_ru: 'Профессиональная услуга мытья окон', description_ka: 'პროფესიონალური ფანჯრების დასუფთავების სერვისი', price_per_hour: 22.00, enabled: true },
+        { id: 8, name: 'Carpet Cleaning', name_it: 'Pulizia Tappeti', name_ru: 'Чистка ковров', name_ka: 'ხალიჩების დასუფთავება', description: 'Deep carpet and upholstery cleaning', description_it: 'Pulizia profonda di tappeti e imbottiti', description_ru: 'Глубокая чистка ковров и мягкой мебели', description_ka: 'ხალიჩებისა და ავეჯის ღრმა დასუფთავება', price_per_hour: 28.00, enabled: true },
+        { id: 9, name: 'Post-Construction Cleaning', name_it: 'Pulizia Post-Costruzione', name_ru: 'Уборка после ремонта', name_ka: 'რემონტის შემდგომი დასუფთავება', description: 'Cleaning after construction or renovation work', description_it: 'Pulizia dopo lavori di costruzione o ristrutturazione', description_ru: 'Уборка после строительных или ремонтных работ', description_ka: 'სამშენებლო ან რემონტის სამუშაოების შემდგომი დასუფთავება', price_per_hour: 30.00, enabled: true },
+        { id: 10, name: 'Garden Cleaning', name_it: 'Pulizia Giardino', name_ru: 'Уборка сада', name_ka: 'ბაღის დასუფთავება', description: 'Outdoor cleaning and maintenance services', description_it: 'Servizi di pulizia e manutenzione esterna', description_ru: 'Услуги по уборке и обслуживанию на открытом воздухе', description_ka: 'გარე დასუფთავებისა და მოვლის სერვისები', price_per_hour: 20.00, enabled: true }
       ];
       saveData(services, servicesFilePath);
     }
