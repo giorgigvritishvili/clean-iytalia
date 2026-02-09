@@ -1,4 +1,4 @@
- require('dotenv').config();
+  require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -599,7 +599,7 @@ app.post('/api/bookings', async (req, res) => {
       booking_time: bookingTime,
       hours,
       cleaners,
-      total_amount: totalAmount,
+      total_amount: parseFloat(totalAmount) || 0,
       payment_intent_id: paymentIntentId,
       notes,
       additional_services: additionalServices || [],
@@ -721,6 +721,30 @@ app.post('/api/admin/login', async (req, res) => {
     const token = crypto.randomBytes(32).toString('hex');
     adminTokens[token] = admin.id;
     saveData(adminTokens, tokensFilePath);
+
+    // Send admin login notification email
+    try {
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: 'Vacanzeromane2024@libero.it',
+        subject: 'Admin Login Notification - CasaClean',
+        html: `
+          <h2>Admin Login Alert</h2>
+          <p>An admin has successfully logged into the CasaClean admin panel.</p>
+          <p><strong>Details:</strong></p>
+          <ul>
+            <li>Username: ${username}</li>
+            <li>Login Time: ${new Date().toISOString()}</li>
+            <li>IP Address: ${req.ip || 'Unknown'}</li>
+          </ul>
+          <p>If this was not you, please check the system security.</p>
+          <p>Best regards,<br>CasaClean System</p>
+        `
+      });
+    } catch (emailError) {
+      console.log('Admin login email sending skipped:', emailError.message);
+    }
+
     res.json({ success: true, message: 'Login successful', token });
   } catch (error) {
     console.error('Error during login:', error);
@@ -834,6 +858,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
         ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
         : '';
 
+      // Send email to customer
       await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
@@ -855,6 +880,36 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
           </ul>
           <p>Your payment has been processed.</p>
           <p>Best regards,<br>CasaClean Team</p>
+        `
+      });
+
+      // Send notification email to admin
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: 'Vacanzeromane2024@libero.it',
+        subject: 'Booking Confirmed - Admin Notification',
+        html: `
+          <h2>Booking Confirmed</h2>
+          <p>A booking has been confirmed by admin.</p>
+          <p><strong>Customer Details:</strong></p>
+          <ul>
+            <li>Name: ${booking.customer_name}</li>
+            <li>Email: ${booking.customer_email}</li>
+            <li>Phone: ${booking.customer_phone}</li>
+          </ul>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+            <li>Date: ${booking.booking_date}</li>
+            <li>Time: ${booking.booking_time}</li>
+            <li>Duration: ${booking.hours} hours</li>
+            <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+            <li>Property Size: ${booking.property_size} sqm</li>
+            ${additionalServicesList}
+            ${suppliesList}
+            <li>Total: €${booking.total_amount}</li>
+            <li>Status: confirmed</li>
+          </ul>
+          <p>Best regards,<br>CasaClean System</p>
         `
       });
     } catch (emailError) {
@@ -1420,7 +1475,8 @@ app.get('/api/admin/events', (req, res) => {
 });
 
 // Periodic cleanup: expire pending bookings older than X minutes and try to release Stripe authorizations
-const BOOKING_EXPIRY_MINUTES = parseInt(process.env.BOOKING_EXPIRY_MINUTES || '30');
+// Disabled to allow confirming bookings at any time
+const BOOKING_EXPIRY_MINUTES = parseInt(process.env.BOOKING_EXPIRY_MINUTES || '60');
 async function cleanupExpiredBookings() {
   try {
     const now = Date.now();

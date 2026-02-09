@@ -9,7 +9,7 @@
     "description_it": "Pulizia settimanale o bisettimanale per case",
     "description_ka": "კვირაში ან ორჯერ კვირაში დასუფთავება სახლებისთვის",
     "description_ru": "Еженедельная или двухнедельная уборка для домов",
-    "price_per_hour": 20.9,
+    "price_per_hour": 1,
     "enabled": true
   },
   {
@@ -22,7 +22,7 @@
     "description_it": "Una pulizia approfondita per qualsiasi occasione",
     "description_ka": "ერთჯერადი ღრმა დასუფთავება ნებისმიერი შემთხვევისთვის",
     "description_ru": "Однократная глубокая уборка для любого случая",
-    "price_per_hour": 26,
+    "price_per_hour": 22,
     "enabled": true
   },
   {

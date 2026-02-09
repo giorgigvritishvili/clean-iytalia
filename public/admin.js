@@ -283,9 +283,9 @@ async function loadStats() {
     const pendingBookings = bookings.filter(b => b.status === 'pending').length;
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
 
-    // 🔥 Revenue = მხოლოდ CONFIRMED / PAID bookings
+    // 🔥 Revenue = მხოლოდ CONFIRMED bookings
     const totalRevenue = bookings
-      .filter(b => b.status === 'confirmed' || b.status === 'paid')
+      .filter(b => b.status === 'confirmed')
       .reduce((sum, b) => {
         const amount = parseFloat(b.total_amount);
         return sum + (isNaN(amount) ? 0 : amount);
