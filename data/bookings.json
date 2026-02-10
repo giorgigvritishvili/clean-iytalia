@@ -10,7 +10,7 @@
     "house_number": "5",
     "property_size": "40",
     "doorbell_name": "Lela gorelishvili",
-    "booking_date": "2026-02-05",
+    "booking_date": "2026-02-04",
     "booking_time": "14:00",
     "hours": 2,
     "cleaners": 2,
@@ -25,8 +25,8 @@
     ],
     "status": "confirmed",
     "stripe_status": "captured",
-    "created_at": "2026-02-06T02:17:26.318Z",
-    "updated_at": "2026-02-06T02:19:05.800Z"
+    "created_at": "2026-02-05T22:17:26.318Z",
+    "updated_at": "2026-02-05T22:19:05.800Z"
   },
   {
     "id": 3,
@@ -39,7 +39,7 @@
     "house_number": "5",
     "property_size": "50",
     "doorbell_name": "Lela gorelishvili",
-    "booking_date": "2026-02-09",
+    "booking_date": "2026-02-08",
     "booking_time": "09:00",
     "hours": 2,
     "cleaners": 1,
@@ -52,8 +52,8 @@
     ],
     "status": "confirmed",
     "stripe_status": "captured",
-    "created_at": "2026-02-07T06:15:04.001Z",
-    "updated_at": "2026-02-07T06:21:09.883Z"
+    "created_at": "2026-02-07T02:15:04.001Z",
+    "updated_at": "2026-02-07T02:21:09.883Z"
   },
   {
     "id": 4,
@@ -66,7 +66,7 @@
     "house_number": "5",
     "property_size": "75",
     "doorbell_name": null,
-    "booking_date": "2026-02-10",
+    "booking_date": "2026-02-09",
     "booking_time": "10:00",
     "hours": 2,
     "cleaners": 1,
@@ -77,8 +77,8 @@
     "supplies": [],
     "status": "expired",
     "stripe_status": "released",
-    "created_at": "2026-02-08T09:34:27.900Z",
-    "updated_at": "2026-02-08T10:07:01.056Z"
+    "created_at": "2026-02-08T05:34:27.900Z",
+    "updated_at": "2026-02-08T06:07:01.056Z"
   },
   {
     "id": 5,
@@ -91,7 +91,7 @@
     "house_number": "5",
     "property_size": "74",
     "doorbell_name": null,
-    "booking_date": "2026-02-10",
+    "booking_date": "2026-02-09",
     "booking_time": "11:00",
     "hours": 2,
     "cleaners": 1,
@@ -102,8 +102,8 @@
     "supplies": [],
     "status": "expired",
     "stripe_status": "released",
-    "created_at": "2026-02-08T10:57:23.153Z",
-    "updated_at": "2026-02-08T11:32:01.162Z"
+    "created_at": "2026-02-08T06:57:23.153Z",
+    "updated_at": "2026-02-08T07:32:01.162Z"
   },
   {
     "id": 6,
@@ -116,7 +116,7 @@
     "house_number": "5",
     "property_size": "55",
     "doorbell_name": "lkuyh",
-    "booking_date": "2026-02-11",
+    "booking_date": "2026-02-10",
     "booking_time": "10:00",
     "hours": 2,
     "cleaners": 1,
@@ -127,8 +127,8 @@
     "supplies": [],
     "status": "expired",
     "stripe_status": "released",
-    "created_at": "2026-02-09T06:27:21.723Z",
-    "updated_at": "2026-02-09T07:02:01.676Z"
+    "created_at": "2026-02-09T02:27:21.723Z",
+    "updated_at": "2026-02-09T03:02:01.676Z"
   },
   {
     "id": 7,
@@ -141,7 +141,7 @@
     "house_number": "5",
     "property_size": "75",
     "doorbell_name": null,
-    "booking_date": "2026-02-19",
+    "booking_date": "2026-02-18",
     "booking_time": "12:00",
     "hours": 2,
     "cleaners": 1,
@@ -150,10 +150,10 @@
     "notes": null,
     "additional_services": [],
     "supplies": [],
-    "status": "expired",
-    "stripe_status": "released",
-    "created_at": "2026-02-09T06:58:57.136Z",
-    "updated_at": "2026-02-09T07:32:01.709Z"
+    "status": "confirmed",
+    "stripe_status": "expired_confirmed",
+    "created_at": "2026-02-09T02:58:57.136Z",
+    "updated_at": "2026-02-10T04:14:25.853Z"
   },
   {
     "id": 8,
@@ -166,7 +166,7 @@
     "house_number": "11",
     "property_size": "70",
     "doorbell_name": "Test",
-    "booking_date": "2026-02-04",
+    "booking_date": "2026-02-03",
     "booking_time": "12:00",
     "hours": 3,
     "cleaners": 1,
@@ -175,8 +175,59 @@
     "notes": "test-post",
     "additional_services": [],
     "supplies": [],
+    "status": "expired",
+    "stripe_status": "authorized",
+    "created_at": "2026-02-09T08:15:26.918Z",
+    "updated_at": "2026-02-09T09:16:53.339Z"
+  },
+  {
+    "id": 9,
+    "service_id": 1,
+    "city_id": 5,
+    "customer_name": "satesto2.0",
+    "customer_email": "llgorelishvili@gmail.com",
+    "customer_phone": "+393891496149",
+    "street_name": "via giovanni giorgi",
+    "house_number": "5",
+    "property_size": "45",
+    "doorbell_name": "41",
+    "booking_date": "2026-02-12",
+    "booking_time": "10:00",
+    "hours": 2,
+    "cleaners": 1,
+    "total_amount": 2,
+    "payment_intent_id": "pi_3SytyAKEJbAqCpEe0ufafxOg",
+    "notes": null,
+    "additional_services": [],
+    "supplies": [],
+    "status": "confirmed",
+    "stripe_status": "expired_confirmed",
+    "created_at": "2026-02-09T08:53:41.789Z",
+    "updated_at": "2026-02-10T05:35:35.819Z"
+  },
+  {
+    "id": 10,
+    "service_id": 1,
+    "city_id": 1,
+    "customer_name": "satesto 3.0",
+    "customer_email": "llgorelishvili@gmail.com",
+    "customer_phone": "+393891496149",
+    "street_name": "via giovanni giorgi",
+    "house_number": "5",
+    "property_size": "96",
+    "doorbell_name": "Lela gorelishvili",
+    "booking_date": "2026-02-27",
+    "booking_time": "09:00",
+    "hours": 2,
+    "cleaners": 1,
+    "total_amount": 2,
+    "payment_intent_id": "pi_3SzDTNKEJbAqCpEe0PTzwuJ0",
+    "notes": null,
+    "additional_services": [],
+    "supplies": [],
     "status": "pending",
     "stripe_status": "authorized",
-    "created_at": "2026-02-09T12:15:26.918Z"
+    "created_at": "2026-02-10T05:43:12.177Z",
+    "updated_at": null
   }
 ]

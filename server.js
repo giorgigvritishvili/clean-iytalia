@@ -58,16 +58,16 @@ let admins = [];
 let workers = [];
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === 'true',
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+    pass: process.env.SMTP_PASS
+  }
 });
 
-const adminEmail = process.env.ADMIN_EMAIL || 'vacanzeromane2024@libero.it';
+const adminEmail = process.env.ADMIN_EMAIL || 'gvritishvilig47@gmail.com';
 
 app.use(cors({ credentials: true }));
 // Capture raw body buffer on incoming JSON requests so webhook signature
@@ -669,32 +669,15 @@ app.post('/api/bookings', async (req, res) => {
 
       // Send notification email to admin
       await transporter.sendMail({
-        from: process.env.SMTP_USER,
-        to: adminEmail,
-        subject: 'New Booking Received - CasaClean Admin',
+        from: `"Booking System" <${process.env.SMTP_USER}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: 'ახალი Booking გაკეთდა',
         html: `
-          <h2>New Booking Notification</h2>
-          <p>A new booking has been received on the admin panel.</p>
-          <p><strong>Customer Details:</strong></p>
-          <ul>
-            <li>Name: ${customerName}</li>
-            <li>Email: ${customerEmail}</li>
-            <li>Phone: ${customerPhone}</li>
-          </ul>
-          <p><strong>Booking Details:</strong></p>
-          <ul>
-            <li>Service ID: ${serviceId}</li>
-            <li>City ID: ${cityId}</li>
-            <li>Date: ${bookingDate}</li>
-            <li>Time: ${bookingTime}</li>
-            <li>Duration: ${hours} hours</li>
-            <li>Cleaners: ${cleaners}</li>
-            <li>Total Amount: €${totalAmount}</li>
-            <li>Status: ${DISABLE_PAYMENTS ? 'confirmed' : 'pending'}</li>
-            ${notes ? `<li>Notes: ${notes}</li>` : ''}
-          </ul>
-          <p>Please log in to the admin panel to review and confirm the booking.</p>
-          <p>Best regards,<br>CasaClean System</p>
+          <h2>ახალი Booking</h2>
+          <p><b>სახელი:</b> ${customerName}</p>
+          <p><b>ტელეფონი:</b> ${customerPhone}</p>
+          <p><b>სერვისი:</b> ${serviceId}</p>
+          <p><b>თარიღი:</b> ${bookingDate}</p>
         `
       });
     } catch (emailError) {
