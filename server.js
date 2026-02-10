@@ -67,7 +67,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const adminEmail = process.env.ADMIN_EMAIL || 'gvritishvilig47@gmail.com';
+const adminEmail = process.env.ADMIN_EMAIL || 'vacanzeromane2024@libero.it';
 
 app.use(cors({ credentials: true }));
 // Capture raw body buffer on incoming JSON requests so webhook signature
