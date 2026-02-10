@@ -413,7 +413,7 @@ function renderAllBookings() {
             <button class="btn btn-sm btn-danger" onclick="deleteBooking(${booking.id})">
               <i class="fas fa-trash"></i>
             </button>
-            ${booking.status === 'pending' ? `
+            ${(booking.status === 'pending' || booking.status === 'expired') ? `
               <button class="btn btn-sm btn-success" onclick="confirmBooking(${booking.id})">
                 <i class="fas fa-check"></i>
               </button>

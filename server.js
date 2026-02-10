@@ -1,4 +1,4 @@
-  require('dotenv').config();
+     require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -66,6 +66,8 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
 });
+
+const adminEmail = process.env.ADMIN_EMAIL || 'vacanzeromane2024@libero.it';
 
 app.use(cors({ credentials: true }));
 // Capture raw body buffer on incoming JSON requests so webhook signature
@@ -668,7 +670,7 @@ app.post('/api/bookings', async (req, res) => {
       // Send notification email to admin
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: 'Vacanzeromane2024@libero.it',
+        to: adminEmail,
         subject: 'New Booking Received - CasaClean Admin',
         html: `
           <h2>New Booking Notification</h2>
@@ -730,7 +732,7 @@ app.post('/api/admin/login', async (req, res) => {
     try {
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: 'Vacanzeromane2024@libero.it',
+        to: adminEmail,
         subject: 'Admin Login Notification - CasaClean',
         html: `
           <h2>Admin Login Alert</h2>
@@ -818,6 +820,86 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
 
     const booking = bookings[bookingIndex];
 
+    if (booking.status === 'expired') {
+      // Handle expired booking confirmation
+      bookings[bookingIndex].status = 'confirmed';
+      bookings[bookingIndex].stripe_status = 'expired_confirmed';
+      bookings[bookingIndex].updated_at = new Date().toISOString();
+      const saved = saveData(bookings, bookingsFilePath);
+      if (!saved) {
+        return res.status(500).json({ error: 'Failed to save booking status' });
+      }
+
+      try {
+        const additionalServicesList = booking.additional_services && booking.additional_services.length > 0
+          ? `<li>Additional Services: ${booking.additional_services.join(', ')}</li>`
+          : '';
+        const suppliesList = booking.supplies && booking.supplies.length > 0
+          ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
+          : '';
+
+        // Send email to customer
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: booking.customer_email,
+          subject: 'Booking Confirmed - CasaClean',
+          html: `
+            <h2>Your booking is confirmed!</h2>
+            <p>Dear ${booking.customer_name},</p>
+            <p>Great news! Your cleaning service booking has been confirmed.</p>
+            <p><strong>Details:</strong></p>
+            <ul>
+              <li>Date: ${booking.booking_date}</li>
+              <li>Time: ${booking.booking_time}</li>
+              <li>Duration: ${booking.hours} hours</li>
+              <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+              <li>Property Size: ${booking.property_size} sqm</li>
+              ${additionalServicesList}
+              ${suppliesList}
+              <li>Total: €${booking.total_amount}</li>
+            </ul>
+            <p>Your payment has been processed.</p>
+            <p>Best regards,<br>CasaClean Team</p>
+          `
+        });
+
+        // Send notification email to admin
+        await transporter.sendMail({
+          from: process.env.SMTP_USER,
+          to: adminEmail,
+          subject: 'Expired Booking Confirmed - Admin Notification',
+          html: `
+            <h2>Expired Booking Confirmed</h2>
+            <p>An expired booking has been confirmed by admin.</p>
+            <p><strong>Customer Details:</strong></p>
+            <ul>
+              <li>Name: ${booking.customer_name}</li>
+              <li>Email: ${booking.customer_email}</li>
+              <li>Phone: ${booking.customer_phone}</li>
+            </ul>
+            <p><strong>Booking Details:</strong></p>
+            <ul>
+              <li>Date: ${booking.booking_date}</li>
+              <li>Time: ${booking.booking_time}</li>
+              <li>Duration: ${booking.hours} hours</li>
+              <li>Address: ${booking.street_name} ${booking.house_number}${booking.doorbell_name ? ', ' + booking.doorbell_name : ''}</li>
+              <li>Property Size: ${booking.property_size} sqm</li>
+              ${additionalServicesList}
+              ${suppliesList}
+              <li>Total: €${booking.total_amount}</li>
+              <li>Status: confirmed (from expired)</li>
+            </ul>
+            <p>Best regards,<br>CasaClean System</p>
+          `
+        });
+      } catch (emailError) {
+        console.log('Email sending skipped:', emailError.message);
+      }
+
+      res.json({ success: true, message: 'Expired booking confirmed' });
+      return;
+    }
+
     // Attempt to capture the PaymentIntent when Stripe is configured
     let captureSucceeded = false;
     if (booking.payment_intent_id && stripe && !String(booking.payment_intent_id).startsWith('demo_')) {
@@ -890,7 +972,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
       // Send notification email to admin
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: 'Vacanzeromane2024@libero.it',
+        to: adminEmail,
         subject: 'Booking Confirmed - Admin Notification',
         html: `
           <h2>Booking Confirmed</h2>
@@ -1479,8 +1561,7 @@ app.get('/api/admin/events', (req, res) => {
 });
 
 // Periodic cleanup: expire pending bookings older than X minutes and try to release Stripe authorizations
-// Disabled to allow confirming bookings at any time
-const BOOKING_EXPIRY_MINUTES = parseInt(process.env.BOOKING_EXPIRY_MINUTES || '60');
+const BOOKING_EXPIRY_MINUTES = parseInt(process.env.BOOKING_EXPIRY_MINUTES || '525600'); // 1 year default
 async function cleanupExpiredBookings() {
   try {
     const now = Date.now();
@@ -1511,7 +1592,7 @@ async function cleanupExpiredBookings() {
 }
 
 // Run cleanup every 5 minutes
-setInterval(cleanupExpiredBookings, 5 * 60 * 1000);
+// setInterval(cleanupExpiredBookings, 5 * 60 * 1000);
 
 // Worker management endpoints
 app.get('/api/admin/workers', requireAdmin, async (req, res) => {
