@@ -669,7 +669,7 @@ app.post('/api/bookings', async (req, res) => {
 
       // Send notification email to admin
       await transporter.sendMail({
-        from: `"Booking System" <${process.env.SMTP_USER}>`,
+        from: process.env.SMTP_USER,
         to: process.env.ADMIN_EMAIL,
         subject: 'ახალი Booking გაკეთდა',
         html: `
