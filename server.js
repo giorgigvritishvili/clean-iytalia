@@ -1,4 +1,5 @@
-     require('dotenv').config();
+
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -68,6 +69,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const adminEmail = process.env.ADMIN_EMAIL || 'vacanzeromane2024@libero.it';
+console.log('Admin email set to:', adminEmail);
 
 app.use(cors({ credentials: true }));
 // Capture raw body buffer on incoming JSON requests so webhook signature
@@ -668,9 +670,10 @@ app.post('/api/bookings', async (req, res) => {
       }
 
       // Send notification email to admin
+      console.log(`Sending admin notification to: ${adminEmail}`);
       await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: process.env.ADMIN_EMAIL,
+        to: adminEmail,
         subject: 'ახალი Booking გაკეთდა',
         html: `
           <h2>ახალი Booking</h2>
@@ -678,10 +681,12 @@ app.post('/api/bookings', async (req, res) => {
           <p><b>ტელეფონი:</b> ${customerPhone}</p>
           <p><b>სერვისი:</b> ${serviceId}</p>
           <p><b>თარიღი:</b> ${bookingDate}</p>
+          <p><b>Email:</b> ${customerEmail}</p>
+          <p><b>მისამართი:</b> ${streetName} ${houseNumber}</p>
         `
       });
     } catch (emailError) {
-      console.log('Email sending skipped:', emailError.message);
+      console.error('Email sending failed:', emailError);
     }
 
     res.json(newBooking);
@@ -1696,8 +1701,7 @@ app.get('/admin', (req, res) => {
 });
 
 // Catch-all: serve index.html for non-API routes (SPA support).
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not found' });
+app.get(/^(?!\/api).+/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
