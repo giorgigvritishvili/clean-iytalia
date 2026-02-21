@@ -75,7 +75,9 @@ body {
 
 .nav-brand .brand-logo {
   height: 40px;
-  width: auto;
+  width: 40px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .brand-name{
   color: var(--primary);
