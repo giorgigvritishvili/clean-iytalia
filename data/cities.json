@@ -22,44 +22,11 @@
     "working_hours_end": "17:30"
   },
   {
-    "id": 4,
-    "name": "tbilisi",
-    "name_it": "firenze",
-    "name_ka": "ფლორენცია",
-    "name_ru": "е.д., Флоренция",
-    "enabled": true,
-    "working_days": "1,2,3,4,5",
-    "working_hours_start": "08:00",
-    "working_hours_end": "18:00"
-  },
-  {
-    "id": 5,
-    "name": "PIZA",
-    "name_it": "PIZA",
-    "name_ka": "PIZA",
-    "name_ru": "PIUZA",
-    "enabled": true,
-    "working_days": "1,2,3,4,5",
-    "working_hours_start": "08:00",
-    "working_hours_end": "18:00"
-  },
-  {
     "id": 6,
     "name": "tbilisi",
     "name_it": "tbilisi",
     "name_ka": "tbilisi",
     "name_ru": "tbilisi",
-    "enabled": true,
-    "working_days": "1,2,3,4,5",
-    "working_hours_start": "08:00",
-    "working_hours_end": "18:00"
-  },
-  {
-    "id": 7,
-    "name": "Naples",
-    "name_it": "Napoli",
-    "name_ka": "ნაპოლი",
-    "name_ru": "Неаполь",
     "enabled": true,
     "working_days": "1,2,3,4,5",
     "working_hours_start": "08:00",
