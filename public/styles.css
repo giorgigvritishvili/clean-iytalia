@@ -73,15 +73,6 @@ body {
   color: var(--primary);
 }
 
-.nav-brand .brand-logo {
-  height: 38px;
-  width: 38px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
-  border: 2px solid var(--primary);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
 .brand-name{
   color: var(--primary);
 }
