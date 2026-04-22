@@ -1,0 +1,44 @@
+{
+  "name": "clear-italia-backend",
+  "version": "1.0.0",
+  "description": "Backend for Clear Italia cleaning service booking with Stripe integration",
+  "main": "server.js",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "restore-booking": "node scripts/restore-booking.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.22.1",
+    "express-session": "^1.17.3",
+    "nodemailer": "^6.10.1",
+    "pg": "^8.11.0",
+    "stripe": "^12.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "keywords": [
+    "cleaning",
+    "booking",
+    "stripe",
+    "italy"
+  ],
+  "author": "Clear Italia",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giorgigvritishvili/clean-iytalia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/giorgigvritishvili/clean-iytalia/issues"
+  },
+  "homepage": "https://github.com/giorgigvritishvili/clean-iytalia#readme"
+}

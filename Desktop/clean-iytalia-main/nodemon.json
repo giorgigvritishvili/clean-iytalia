@@ -1,0 +1,4 @@
+{
+  "watch": ["*.js", "api/**", "controller/**", "public/**", "scripts/**"],
+  "ignore": ["data/**/*"]
+}
