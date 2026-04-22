@@ -20,17 +20,26 @@ async function initDb(databaseUrl) {
     console.error('Postgres pool error:', err && err.stack ? err.stack : err);
   });
 
-  try {
-    // Verify connection and create tables
-    await createTables();
-    enabled = true;
-    return true;
-  } catch (err) {
-    console.error('initDb: failed to initialize Postgres:', err && err.stack ? err.stack : err);
-    try { await pool.end(); } catch (_) {}
-    pool = null;
-    enabled = false;
-    throw err;
+  // Try creating tables with a small retry loop for transient connection errors
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await createTables();
+      enabled = true;
+      return true;
+    } catch (err) {
+      console.error(`initDb: attempt ${attempt} failed:`, err && err.stack ? err.stack : err);
+      if (attempt < maxAttempts) {
+        const waitMs = 500 * attempt;
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      console.error('initDb: all attempts to initialize Postgres failed');
+      try { await pool.end(); } catch (_) {}
+      pool = null;
+      enabled = false;
+      throw err;
+    }
   }
 }
 
