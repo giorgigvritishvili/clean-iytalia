@@ -2,6 +2,10 @@
   {
     "id": 1,
     "username": "CasaClean",
+<<<<<<< HEAD
     "password_hash": "$2a$10$4XGggCVAeXNgR6eAtXWyauskkYDUUytdfUakt.i8r7RwcwLgoTAyS"
+=======
+    "password_hash": "$2a$10$rw2BMUk.t46AH6C6Ql0gkOLRMI6cAqB.St3q/.s4QU5brD.L1JrSC"
+>>>>>>> 9192fc0 (first commit)
   }
 ]

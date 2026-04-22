@@ -58,18 +58,50 @@ let blockedSlots = [];
 let admins = [];
 let workers = [];
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
+const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
+const smtpSecure = (process.env.SMTP_SECURE === 'true') || smtpPort === 465;
 
-const adminEmail = process.env.ADMIN_EMAIL || 'vacanzeromane2024@libero.it';
+let transporter;
+if (process.env.SMTP_MODE === 'console') {
+  // Test mode: print emails to stdout instead of sending (safe for local testing)
+  transporter = nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true });
+  console.log('SMTP running in console test mode (emails will be printed, not sent)');
+} else {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  // Verify transporter at startup to surface auth/connection issues early
+  transporter.verify()
+    .then(() => console.log('SMTP transporter verified'))
+    .catch(err => console.error('SMTP transporter verification failed:', err && err.stack ? err.stack : err));
+}
+
+const adminEmail = process.env.ADMIN_EMAIL || 'casaclean2026@gmail.com';
 console.log('Admin email set to:', adminEmail);
+
+// Helper to send mail and log results (prints raw message in console test mode)
+async function sendMailAndLog(mailOptions) {
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    try {
+      if (info && info.message) console.log('\n----- Email message (raw) -----\n' + info.message.toString() + '\n----- end email -----\n');
+    } catch (e) {
+      // ignore
+    }
+    console.log('Email send result for', mailOptions.to, ':', info && (info.messageId || info.response) ? (info.messageId || info.response) : info);
+    return info;
+  } catch (err) {
+    console.error('Email send error for', mailOptions.to, ':', err && err.stack ? err.stack : err);
+    throw err;
+  }
+}
 
 app.use(cors({ credentials: true }));
 // Capture raw body buffer on incoming JSON requests so webhook signature
@@ -629,7 +661,7 @@ app.post('/api/bookings', async (req, res) => {
 
     try {
       if (DISABLE_PAYMENTS) {
-        await transporter.sendMail({
+        await sendMailAndLog({
           from: process.env.SMTP_USER,
           to: customerEmail,
           subject: 'Booking Confirmed - CasaClean',
@@ -648,7 +680,7 @@ app.post('/api/bookings', async (req, res) => {
           `
         });
       } else {
-        await transporter.sendMail({
+        await sendMailAndLog({
           from: process.env.SMTP_USER,
           to: customerEmail,
           subject: 'Booking Pending Confirmation - CasaClean',
@@ -671,7 +703,7 @@ app.post('/api/bookings', async (req, res) => {
 
       // Send notification email to admin
       console.log(`Sending admin notification to: ${adminEmail}`);
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: adminEmail,
         subject: 'ახალი Booking გაკეთდა',
@@ -686,7 +718,7 @@ app.post('/api/bookings', async (req, res) => {
         `
       });
     } catch (emailError) {
-      console.error('Email sending failed:', emailError);
+      console.error('Email sending failed:', emailError && emailError.stack ? emailError.stack : emailError);
     }
 
     res.json(newBooking);
@@ -718,7 +750,7 @@ app.post('/api/admin/login', async (req, res) => {
 
     // Send admin login notification email
     try {
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: adminEmail,
         subject: 'Admin Login Notification - CasaClean',
@@ -736,7 +768,7 @@ app.post('/api/admin/login', async (req, res) => {
         `
       });
     } catch (emailError) {
-      console.log('Admin login email sending skipped:', emailError.message);
+      console.log('Admin login email sending skipped:', emailError && emailError.stack ? emailError.stack : emailError);
     }
 
     res.json({ success: true, message: 'Login successful', token });
@@ -827,7 +859,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
           : '';
 
         // Send email to customer
-        await transporter.sendMail({
+        await sendMailAndLog({
           from: process.env.SMTP_USER,
           to: booking.customer_email,
           subject: 'Booking Confirmed - CasaClean',
@@ -852,7 +884,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
         });
 
         // Send notification email to admin
-        await transporter.sendMail({
+        await sendMailAndLog({
           from: process.env.SMTP_USER,
           to: adminEmail,
           subject: 'Expired Booking Confirmed - Admin Notification',
@@ -881,7 +913,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
           `
         });
       } catch (emailError) {
-        console.log('Email sending skipped:', emailError.message);
+        console.log('Email sending skipped:', emailError && emailError.stack ? emailError.stack : emailError);
       }
 
       res.json({ success: true, message: 'Expired booking confirmed' });
@@ -933,7 +965,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
         : '';
 
       // Send email to customer
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
         subject: 'Booking Confirmed - CasaClean',
@@ -958,7 +990,7 @@ app.post('/api/admin/bookings/:id/confirm', async (req, res) => {
       });
 
       // Send notification email to admin
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: adminEmail,
         subject: 'Booking Confirmed - Admin Notification',
@@ -1052,7 +1084,7 @@ app.post('/api/admin/bookings/:id/reject', async (req, res) => {
         ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
         : '';
 
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
         subject: 'Booking Rejected - CasaClean',
@@ -1076,8 +1108,8 @@ app.post('/api/admin/bookings/:id/reject', async (req, res) => {
           <p>Best regards,<br>CasaClean Team</p>
         `
       });
-    } catch (emailError) {
-      console.log('Email sending skipped:', emailError.message);
+      } catch (emailError) {
+      console.log('Email sending skipped:', emailError && emailError.stack ? emailError.stack : emailError);
     }
 
     res.json({ success: true, message: 'Booking rejected' });
@@ -1123,7 +1155,7 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
         ? `<li>Supplies Provided: ${booking.supplies.join(', ')}</li>`
         : '';
 
-      await transporter.sendMail({
+      await sendMailAndLog({
         from: process.env.SMTP_USER,
         to: booking.customer_email,
         subject: 'Booking Confirmed - CasaClean',
@@ -1147,7 +1179,7 @@ app.post('/api/admin/bookings/:id/manual-pay', async (req, res) => {
         `
       });
     } catch (emailError) {
-      console.log('Email sending skipped:', emailError.message);
+      console.log('Email sending skipped:', emailError && emailError.stack ? emailError.stack : emailError);
     }
 
     res.json({ success: true, message: 'Booking manually confirmed and marked as paid' });
