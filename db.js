@@ -7,13 +7,23 @@ let enabled = false;
 async function initDb(databaseUrl) {
   if (!databaseUrl) return false;
   // Configure timeouts and SSL; do not mark enabled until we verify connectivity
-  pool = new Pool({
-    connectionString: databaseUrl,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000,
-    max: 10
-  });
+  try {
+    const sslDisabled = (process.env.PGSSLMODE === 'disable' || process.env.PGSSLMODE === 'no-ssl');
+    const sslRejectUnauthorized = process.env.PG_SSL_REJECT_UNAUTHORIZED !== 'false';
+    const sslOption = sslDisabled ? false : { rejectUnauthorized: sslRejectUnauthorized };
+    pool = new Pool({
+      connectionString: databaseUrl,
+      ssl: sslOption,
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+      max: 10
+    });
+  } catch (err) {
+    console.error('Failed to create Postgres pool:', err && err.stack ? err.stack : err);
+    pool = null;
+    enabled = false;
+    return false;
+  }
 
   // Log any unexpected pool errors
   pool.on('error', (err) => {
@@ -35,10 +45,16 @@ async function initDb(databaseUrl) {
         continue;
       }
       console.error('initDb: all attempts to initialize Postgres failed');
-      try { await pool.end(); } catch (_) {}
+      try {
+        // attempt graceful shutdown of pool
+        if (pool && typeof pool.end === 'function') await pool.end();
+      } catch (endErr) {
+        console.error('Error closing Postgres pool after failed init:', endErr && endErr.stack ? endErr.stack : endErr);
+      }
       pool = null;
       enabled = false;
-      throw err;
+      // don't throw — return false so caller can continue running without crashing
+      return false;
     }
   }
 }
