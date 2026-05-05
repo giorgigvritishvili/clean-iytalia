@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const Stripe = require('stripe');
 const nodemailer = require('nodemailer');
 const path = require('path');
@@ -10,6 +12,21 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 const app = express();
+
+// Security: hide framework signature and enable helmet
+app.disable('x-powered-by');
+app.use(helmet());
+
+// Trust proxy (set via env if behind proxy/load balancer)
+if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
+// Basic rate limiter (tunable via env)
+const rateWindowMs = process.env.RATE_WINDOW_MS ? parseInt(process.env.RATE_WINDOW_MS, 10) : 60 * 1000; // 1 minute
+const rateMax = process.env.RATE_MAX ? parseInt(process.env.RATE_MAX, 10) : 60; // 60 requests per window per IP
+const limiter = rateLimit({ windowMs: rateWindowMs, max: rateMax });
+app.use(limiter);
 
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
@@ -116,10 +133,24 @@ async function sendMailAndLog(mailOptions) {
   }
 }
 
-app.use(cors({ credentials: true }));
+// CORS: use allowed origins list from ALLOWED_ORIGINS (comma-separated). If not set, disallow cross-origin requests by default.
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : null;
+const corsOptions = { credentials: true };
+if (allowedOrigins) {
+  corsOptions.origin = function(origin, cb) {
+    // allow non-browser (curl, postman) requests with no origin
+    if (!origin) return cb(null, true);
+    return cb(null, allowedOrigins.includes(origin));
+  };
+} else {
+  corsOptions.origin = false;
+}
+app.use(cors(corsOptions));
 // Capture raw body buffer on incoming JSON requests so webhook signature
 // verification can use the original payload (Stripe requires the raw body).
-app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf } }));
+// Limit request body size to mitigate large payload attacks and capture raw body for Stripe webhooks
+app.use(express.json({ limit: process.env.JSON_LIMIT || '100kb', verify: (req, res, buf) => { req.rawBody = buf } }));
+app.use(express.urlencoded({ extended: false, limit: process.env.JSON_LIMIT || '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 let adminTokens = {}; // token -> adminId
@@ -222,11 +253,8 @@ function loadData() {
   } catch (err) {
     console.error('Failed to load admins:', err);
   }
-
-  // Force correct admin credentials
-  const hashedPassword = bcrypt.hashSync('CasaClean2026', 10);
-  admins = [{ id: 1, username: 'CasaClean', password_hash: hashedPassword }];
-  saveData(admins, adminsFilePath);
+  // Note: do NOT overwrite admin credentials on startup. Use ADMIN_PASSWORD env var
+  // if you need to initialize a password the first time. Overwriting here was a security risk and removed.
 
   if (services.length === 0) {
     services = [

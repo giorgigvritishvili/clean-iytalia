@@ -46,7 +46,7 @@ async function initDb(databaseUrl) {
 async function createTables() {
   const sql = `
     CREATE TABLE IF NOT EXISTS bookings (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       service_id INTEGER,
       city_id INTEGER,
       customer_name TEXT,
@@ -72,7 +72,7 @@ async function createTables() {
     );
 
     CREATE TABLE IF NOT EXISTS services (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       name_it TEXT,
       name_ka TEXT,
@@ -86,7 +86,7 @@ async function createTables() {
     );
 
     CREATE TABLE IF NOT EXISTS cities (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       name_it TEXT,
       name_ka TEXT,
@@ -98,7 +98,7 @@ async function createTables() {
     );
 
     CREATE TABLE IF NOT EXISTS workers (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       email TEXT,
       phone TEXT,
@@ -110,7 +110,7 @@ async function createTables() {
     );
 
     CREATE TABLE IF NOT EXISTS blocked_slots (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       city_id INTEGER,
       blocked_date DATE,
       blocked_time TEXT,
@@ -118,12 +118,29 @@ async function createTables() {
     );
 
     CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       username TEXT,
       password_hash TEXT
     );
   `;
   await pool.query(sql);
+}
+
+// Helper: insert a row into `table` using `client` (can be pool or client).
+// `data` is an object mapping column -> value. Columns with undefined are omitted.
+async function runInsert(client, table, data) {
+  const cols = [];
+  const params = [];
+  for (const k of Object.keys(data)) {
+    const v = data[k];
+    if (v === undefined) continue; // omit
+    cols.push(k);
+    params.push(v);
+  }
+  if (cols.length === 0) return null;
+  const placeholders = params.map((_, i) => `$${i+1}`);
+  const sql = `INSERT INTO ${table}(${cols.join(',')}) VALUES(${placeholders.join(',')})`;
+  return client.query(sql, params);
 }
 
 async function getBookings() {
@@ -163,38 +180,31 @@ async function replaceBookings(bookings) {
     await client.query('BEGIN');
     await client.query('TRUNCATE bookings');
     for (const b of bookings) {
-      const query = `INSERT INTO bookings(
-        id, service_id, city_id, customer_name, customer_email, customer_phone,
-        street_name, house_number, property_size, doorbell_name, booking_date, booking_time,
-        hours, cleaners, total_amount, payment_intent_id, notes, additional_services, supplies,
-        status, stripe_status, created_at, updated_at
-      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`;
-      const params = [
-        b.id || null,
-        b.service_id || null,
-        b.city_id || null,
-        b.customer_name || null,
-        b.customer_email || null,
-        b.customer_phone || null,
-        b.street_name || null,
-        b.house_number || null,
-        b.property_size || null,
-        b.doorbell_name || null,
-        b.booking_date || null,
-        b.booking_time || null,
-        b.hours || null,
-        b.cleaners || null,
-        b.total_amount || null,
-        b.payment_intent_id || null,
-        b.notes || null,
-        JSON.stringify(b.additional_services || []),
-        JSON.stringify(b.supplies || []),
-        b.status || null,
-        b.stripe_status || null,
-        b.created_at || null,
-        b.updated_at || null
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (b.id != null) data.id = b.id;
+      data.service_id = b.service_id != null ? b.service_id : null;
+      data.city_id = b.city_id != null ? b.city_id : null;
+      data.customer_name = b.customer_name || null;
+      data.customer_email = b.customer_email || null;
+      data.customer_phone = b.customer_phone || null;
+      data.street_name = b.street_name || null;
+      data.house_number = b.house_number || null;
+      data.property_size = b.property_size || null;
+      data.doorbell_name = b.doorbell_name || null;
+      data.booking_date = b.booking_date || null;
+      data.booking_time = b.booking_time || null;
+      data.hours = b.hours != null ? b.hours : null;
+      data.cleaners = b.cleaners != null ? b.cleaners : null;
+      data.total_amount = b.total_amount != null ? b.total_amount : null;
+      data.payment_intent_id = b.payment_intent_id || null;
+      data.notes = b.notes || null;
+      data.additional_services = JSON.stringify(b.additional_services || []);
+      data.supplies = JSON.stringify(b.supplies || []);
+      data.status = b.status || null;
+      data.stripe_status = b.stripe_status || null;
+      data.created_at = b.created_at || null;
+      data.updated_at = b.updated_at || null;
+      await runInsert(client, 'bookings', data);
     }
     await client.query('COMMIT');
     return true;
@@ -209,39 +219,32 @@ async function replaceBookings(bookings) {
 
 async function insertBooking(b) {
   if (!enabled) return false;
-  const query = `INSERT INTO bookings(
-    id, service_id, city_id, customer_name, customer_email, customer_phone,
-    street_name, house_number, property_size, doorbell_name, booking_date, booking_time,
-    hours, cleaners, total_amount, payment_intent_id, notes, additional_services, supplies,
-    status, stripe_status, created_at, updated_at
-  ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`;
-  const params = [
-    b.id || null,
-    b.service_id || null,
-    b.city_id || null,
-    b.customer_name || null,
-    b.customer_email || null,
-    b.customer_phone || null,
-    b.street_name || null,
-    b.house_number || null,
-    b.property_size || null,
-    b.doorbell_name || null,
-    b.booking_date || null,
-    b.booking_time || null,
-    b.hours || null,
-    b.cleaners || null,
-    b.total_amount || null,
-    b.payment_intent_id || null,
-    b.notes || null,
-    JSON.stringify(b.additional_services || []),
-    JSON.stringify(b.supplies || []),
-    b.status || null,
-    b.stripe_status || null,
-    b.created_at || null,
-    b.updated_at || null
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (b.id != null) data.id = b.id;
+    data.service_id = b.service_id != null ? b.service_id : null;
+    data.city_id = b.city_id != null ? b.city_id : null;
+    data.customer_name = b.customer_name || null;
+    data.customer_email = b.customer_email || null;
+    data.customer_phone = b.customer_phone || null;
+    data.street_name = b.street_name || null;
+    data.house_number = b.house_number || null;
+    data.property_size = b.property_size || null;
+    data.doorbell_name = b.doorbell_name || null;
+    data.booking_date = b.booking_date || null;
+    data.booking_time = b.booking_time || null;
+    data.hours = b.hours != null ? b.hours : null;
+    data.cleaners = b.cleaners != null ? b.cleaners : null;
+    data.total_amount = b.total_amount != null ? b.total_amount : null;
+    data.payment_intent_id = b.payment_intent_id || null;
+    data.notes = b.notes || null;
+    data.additional_services = JSON.stringify(b.additional_services || []);
+    data.supplies = JSON.stringify(b.supplies || []);
+    data.status = b.status || null;
+    data.stripe_status = b.stripe_status || null;
+    data.created_at = b.created_at || null;
+    data.updated_at = b.updated_at || null;
+    await runInsert(pool, 'bookings', data);
     return true;
   } catch (err) {
     console.error('insertBooking error:', err && err.message ? err.message : err);
@@ -319,23 +322,19 @@ async function replaceServices(services) {
     await client.query('BEGIN');
     await client.query('TRUNCATE services');
     for (const s of services) {
-      const query = `INSERT INTO services(
-        id, name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled
-      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`;
-      const params = [
-        s.id || null,
-        s.name || null,
-        s.name_it || null,
-        s.name_ka || null,
-        s.name_ru || null,
-        s.description || null,
-        s.description_it || null,
-        s.description_ka || null,
-        s.description_ru || null,
-        s.price_per_hour || null,
-        s.enabled !== undefined ? s.enabled : true
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (s.id != null) data.id = s.id;
+      data.name = s.name || null;
+      data.name_it = s.name_it || null;
+      data.name_ka = s.name_ka || null;
+      data.name_ru = s.name_ru || null;
+      data.description = s.description || null;
+      data.description_it = s.description_it || null;
+      data.description_ka = s.description_ka || null;
+      data.description_ru = s.description_ru || null;
+      data.price_per_hour = s.price_per_hour != null ? s.price_per_hour : null;
+      data.enabled = s.enabled !== undefined ? s.enabled : true;
+      await runInsert(client, 'services', data);
     }
     await client.query('COMMIT');
     return true;
@@ -350,24 +349,20 @@ async function replaceServices(services) {
 
 async function insertService(s) {
   if (!enabled) return false;
-  const query = `INSERT INTO services(
-    id, name, name_it, name_ka, name_ru, description, description_it, description_ka, description_ru, price_per_hour, enabled
-  ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`;
-  const params = [
-    s.id || null,
-    s.name || null,
-    s.name_it || null,
-    s.name_ka || null,
-    s.name_ru || null,
-    s.description || null,
-    s.description_it || null,
-    s.description_ka || null,
-    s.description_ru || null,
-    s.price_per_hour || null,
-    s.enabled !== undefined ? s.enabled : true
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (s.id != null) data.id = s.id;
+    data.name = s.name || null;
+    data.name_it = s.name_it || null;
+    data.name_ka = s.name_ka || null;
+    data.name_ru = s.name_ru || null;
+    data.description = s.description || null;
+    data.description_it = s.description_it || null;
+    data.description_ka = s.description_ka || null;
+    data.description_ru = s.description_ru || null;
+    data.price_per_hour = s.price_per_hour != null ? s.price_per_hour : null;
+    data.enabled = s.enabled !== undefined ? s.enabled : true;
+    await runInsert(pool, 'services', data);
     return true;
   } catch (err) {
     console.error('insertService error:', err && err.message ? err.message : err);
@@ -432,21 +427,17 @@ async function replaceCities(cities) {
     await client.query('BEGIN');
     await client.query('TRUNCATE cities');
     for (const c of cities) {
-      const query = `INSERT INTO cities(
-        id, name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end
-      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`;
-      const params = [
-        c.id || null,
-        c.name || null,
-        c.name_it || null,
-        c.name_ka || null,
-        c.name_ru || null,
-        c.enabled !== undefined ? c.enabled : true,
-        c.working_days || null,
-        c.working_hours_start || null,
-        c.working_hours_end || null
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (c.id != null) data.id = c.id;
+      data.name = c.name || null;
+      data.name_it = c.name_it || null;
+      data.name_ka = c.name_ka || null;
+      data.name_ru = c.name_ru || null;
+      data.enabled = c.enabled !== undefined ? c.enabled : true;
+      data.working_days = c.working_days || null;
+      data.working_hours_start = c.working_hours_start || null;
+      data.working_hours_end = c.working_hours_end || null;
+      await runInsert(client, 'cities', data);
     }
     await client.query('COMMIT');
     return true;
@@ -461,22 +452,18 @@ async function replaceCities(cities) {
 
 async function insertCity(c) {
   if (!enabled) return false;
-  const query = `INSERT INTO cities(
-    id, name, name_it, name_ka, name_ru, enabled, working_days, working_hours_start, working_hours_end
-  ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`;
-  const params = [
-    c.id || null,
-    c.name || null,
-    c.name_it || null,
-    c.name_ka || null,
-    c.name_ru || null,
-    c.enabled !== undefined ? c.enabled : true,
-    c.working_days || null,
-    c.working_hours_start || null,
-    c.working_hours_end || null
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (c.id != null) data.id = c.id;
+    data.name = c.name || null;
+    data.name_it = c.name_it || null;
+    data.name_ka = c.name_ka || null;
+    data.name_ru = c.name_ru || null;
+    data.enabled = c.enabled !== undefined ? c.enabled : true;
+    data.working_days = c.working_days || null;
+    data.working_hours_start = c.working_hours_start || null;
+    data.working_hours_end = c.working_hours_end || null;
+    await runInsert(pool, 'cities', data);
     return true;
   } catch (err) {
     console.error('insertCity error:', err && err.message ? err.message : err);
@@ -541,21 +528,17 @@ async function replaceWorkers(workers) {
     await client.query('BEGIN');
     await client.query('TRUNCATE workers');
     for (const w of workers) {
-      const query = `INSERT INTO workers(
-        id, name, email, phone, specialties, rating, completed_jobs, active, created_at
-      ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`;
-      const params = [
-        w.id || null,
-        w.name || null,
-        w.email || null,
-        w.phone || null,
-        JSON.stringify(w.specialties || []),
-        w.rating || null,
-        w.completed_jobs || null,
-        w.active !== undefined ? w.active : true,
-        w.created_at || null
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (w.id != null) data.id = w.id;
+      data.name = w.name || null;
+      data.email = w.email || null;
+      data.phone = w.phone || null;
+      data.specialties = JSON.stringify(w.specialties || []);
+      data.rating = w.rating != null ? w.rating : null;
+      data.completed_jobs = w.completed_jobs != null ? w.completed_jobs : null;
+      data.active = w.active !== undefined ? w.active : true;
+      data.created_at = w.created_at || null;
+      await runInsert(client, 'workers', data);
     }
     await client.query('COMMIT');
     return true;
@@ -570,22 +553,18 @@ async function replaceWorkers(workers) {
 
 async function insertWorker(w) {
   if (!enabled) return false;
-  const query = `INSERT INTO workers(
-    id, name, email, phone, specialties, rating, completed_jobs, active, created_at
-  ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`;
-  const params = [
-    w.id || null,
-    w.name || null,
-    w.email || null,
-    w.phone || null,
-    JSON.stringify(w.specialties || []),
-    w.rating || null,
-    w.completed_jobs || null,
-    w.active !== undefined ? w.active : true,
-    w.created_at || null
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (w.id != null) data.id = w.id;
+    data.name = w.name || null;
+    data.email = w.email || null;
+    data.phone = w.phone || null;
+    data.specialties = JSON.stringify(w.specialties || []);
+    data.rating = w.rating != null ? w.rating : null;
+    data.completed_jobs = w.completed_jobs != null ? w.completed_jobs : null;
+    data.active = w.active !== undefined ? w.active : true;
+    data.created_at = w.created_at || null;
+    await runInsert(pool, 'workers', data);
     return true;
   } catch (err) {
     console.error('insertWorker error:', err && err.message ? err.message : err);
@@ -646,17 +625,13 @@ async function replaceBlockedSlots(slots) {
     await client.query('BEGIN');
     await client.query('TRUNCATE blocked_slots');
     for (const s of slots) {
-      const query = `INSERT INTO blocked_slots(
-        id, city_id, blocked_date, blocked_time, reason
-      ) VALUES($1,$2,$3,$4,$5)`;
-      const params = [
-        s.id || null,
-        s.city_id || null,
-        s.blocked_date || null,
-        s.blocked_time || null,
-        s.reason || null
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (s.id != null) data.id = s.id;
+      data.city_id = s.city_id != null ? s.city_id : null;
+      data.blocked_date = s.blocked_date || null;
+      data.blocked_time = s.blocked_time || null;
+      data.reason = s.reason || null;
+      await runInsert(client, 'blocked_slots', data);
     }
     await client.query('COMMIT');
     return true;
@@ -671,18 +646,14 @@ async function replaceBlockedSlots(slots) {
 
 async function insertBlockedSlot(s) {
   if (!enabled) return false;
-  const query = `INSERT INTO blocked_slots(
-    id, city_id, blocked_date, blocked_time, reason
-  ) VALUES($1,$2,$3,$4,$5)`;
-  const params = [
-    s.id || null,
-    s.city_id || null,
-    s.blocked_date || null,
-    s.blocked_time || null,
-    s.reason || null
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (s.id != null) data.id = s.id;
+    data.city_id = s.city_id != null ? s.city_id : null;
+    data.blocked_date = s.blocked_date || null;
+    data.blocked_time = s.blocked_time || null;
+    data.reason = s.reason || null;
+    await runInsert(pool, 'blocked_slots', data);
     return true;
   } catch (err) {
     console.error('insertBlockedSlot error:', err && err.message ? err.message : err);
@@ -719,15 +690,11 @@ async function replaceAdmins(admins) {
     await client.query('BEGIN');
     await client.query('TRUNCATE admins');
     for (const a of admins) {
-      const query = `INSERT INTO admins(
-        id, username, password_hash
-      ) VALUES($1,$2,$3)`;
-      const params = [
-        a.id || null,
-        a.username || null,
-        a.password_hash || null
-      ];
-      await client.query(query, params);
+      const data = {};
+      if (a.id != null) data.id = a.id;
+      data.username = a.username || null;
+      data.password_hash = a.password_hash || null;
+      await runInsert(client, 'admins', data);
     }
     await client.query('COMMIT');
     return true;
@@ -742,16 +709,12 @@ async function replaceAdmins(admins) {
 
 async function insertAdmin(a) {
   if (!enabled) return false;
-  const query = `INSERT INTO admins(
-    id, username, password_hash
-  ) VALUES($1,$2,$3)`;
-  const params = [
-    a.id || null,
-    a.username || null,
-    a.password_hash || null
-  ];
   try {
-    await pool.query(query, params);
+    const data = {};
+    if (a.id != null) data.id = a.id;
+    data.username = a.username || null;
+    data.password_hash = a.password_hash || null;
+    await runInsert(pool, 'admins', data);
     return true;
   } catch (err) {
     console.error('insertAdmin error:', err && err.message ? err.message : err);
