@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CasaClean - Professional Cleaning Services  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="cl.png" type="image/png" sizes="128x128">
+  <script src="https://js.stripe.com/v3/"></script>
+
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      
+      <div class="nav-brand">
+        
+        <span class="brand-name">CasaClean</span>
+      </div>
+      
+      <div class="nav-links">
+        <a href="#services" data-i18n="nav.services">Services</a>
+        <a href="#booking" data-i18n="nav.book">Book Now</a>
+        <a href="#faq" data-i18n="nav.faq">FAQ</a>
+        <a href="#contact" data-i18n="nav.contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <div class="lang-dropdown">
+          <button class="lang-switch" onclick="toggleLanguageDropdown()">
+            <span id="current-lang">EN</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="lang-options" id="lang-options">
+            <div class="lang-option" data-lang="en" onclick="setLanguage('en')">EN</div>
+            <div class="lang-option" data-lang="it" onclick="setLanguage('it')">IT</div>
+            <div class="lang-option" data-lang="ka" onclick="setLanguage('ka')">KA</div>
+            <div class="lang-option" data-lang="ru" onclick="setLanguage('ru')">RU</div>
+          </div>
+        </div>
+        <a href="/admin" class="admin-link">
+          <i class="fas fa-user-shield"></i>
+        </a>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#services" data-i18n="nav.services" onclick="toggleMobileMenu()">Services</a>
+    <a href="#booking" data-i18n="nav.book" onclick="toggleMobileMenu()">Book Now</a>
+    <a href="#faq" data-i18n="nav.faq" onclick="toggleMobileMenu()">FAQ</a>
+    <a href="#contact" data-i18n="nav.contact" onclick="toggleMobileMenu()">Contact</a>
+    <button class="mobile-lang-switch" onclick="toggleMobileLangDropdown()">
+      <span id="mobile-current-lang">EN</span>
+      <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="mobile-lang-options" id="mobile-lang-options">
+      <div class="lang-option" data-lang="en" onclick="setLanguage('en'); toggleMobileLangDropdown()">EN</div>
+      <div class="lang-option" data-lang="it" onclick="setLanguage('it'); toggleMobileLangDropdown()">IT</div>
+      <div class="lang-option" data-lang="ka" onclick="setLanguage('ka'); toggleMobileLangDropdown()">KA</div>
+      <div class="lang-option" data-lang="ru" onclick="setLanguage('ru'); toggleMobileLangDropdown()">RU</div>
+    </div>
+    <a href="/admin" onclick="toggleMobileMenu()">
+      <i class="fas fa-user-shield"></i>
+      Admin
+    </a>
+  </div>
+
+  <section class="hero">
+    <img src="clear.png" alt="Cleaning Services" style="width: 100%; height: auto; display: block;">
+    <div class="container">
+      <div class="hero-content">
+        <h1>
+          <span data-i18n="hero.title">Professional Cleaning Services in Italy</span>
+        </h1>
+        <p data-i18n="hero.subtitle">Trusted, reliable cleaning for your home or business. Serving Rome and Milan.</p>
+        <a href="#booking" class="btn btn-primary btn-lg">
+          <i class="fas fa-calendar-check"></i>
+          <span data-i18n="hero.cta">Book Now</span>
+        </a>
+      </div>
+      <div class="hero-features">
+        <div class="feature-item">
+          <i class="fas fa-shield-check"></i>
+          <span data-i18n="hero.feature1">Trusted Professionals</span>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-clock"></i>
+          <span data-i18n="hero.feature2">Flexible Scheduling</span>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-credit-card"></i>
+          <span data-i18n="hero.feature3">Secure Payment</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" class="services">
+    <div class="container">
+      <h2 class="section-title" data-i18n="services.title">Our Services</h2>
+      <p class="section-subtitle" data-i18n="services.subtitle">Choose the perfect cleaning service for your needs</p>
+      <div class="services-grid" id="services-grid">
+      </div>
+    </div>
+  </section>
+
+  <section id="booking" class="booking">
+    <div class="container">
+      <h2 class="section-title" data-i18n="booking.title">Book Your Cleaning</h2>
+      <p class="section-subtitle" data-i18n="booking.subtitle">Fill in the details below to schedule your service</p>
+      
+      <div class="booking-form-container">
+        <form id="booking-form" class="booking-form">
+          <div class="form-step active" id="step-1">
+            <h3 class="step-title">
+              <span class="step-number">1</span>
+              <span data-i18n="booking.step1">Select Service & Location</span>
+            </h3>
+            
+            <div class="form-group">
+              <label data-i18n="booking.service">Service Type</label>
+              <select id="service-select" required>
+                <option value="" data-i18n="booking.selectService">Select a service</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="booking.city">City</label>
+              <select id="city-select" required>
+                <option value="" data-i18n="booking.selectCity">Select a city</option>
+              </select>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="booking.hours">Hours</label>
+                <select id="hours-select" required>
+                  <option value="2" data-i18n="booking.hoursOptions.2">2 hours</option>
+                  <option value="3" data-i18n="booking.hoursOptions.3">3 hours</option>
+                  <option value="4" selected data-i18n="booking.hoursOptions.4">4 hours</option>
+                  <option value="5" data-i18n="booking.hoursOptions.5">5 hours</option>
+                  <option value="6" data-i18n="booking.hoursOptions.6">6 hours</option>
+                  <option value="8" data-i18n="booking.hoursOptions.8">8 hours</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label data-i18n="booking.cleaners">Cleaners</label>
+                <select id="cleaners-select" required>
+                  <option value="1" data-i18n="booking.cleanersOptions.1">1 cleaner</option>
+                  <option value="2" data-i18n="booking.cleanersOptions.2">2 cleaners</option>
+                  <option value="3" data-i18n="booking.cleanersOptions.3">3 cleaners</option>
+                  <option value="4" data-i18n="booking.cleanersOptions.4">4 cleaners</option>
+                  <option value="5" data-i18n="booking.cleanersOptions.5">5 cleaners</option>
+                  <option value="6" data-i18n="booking.cleanersOptions.6">6 cleaners</option>
+                  <option value="7" data-i18n="booking.cleanersOptions.7">7 cleaners</option>
+                  <option value="8" data-i18n="booking.cleanersOptions.8">8 cleaners</option>
+                  <option value="9" data-i18n="booking.cleanersOptions.9">9 cleaners</option>
+                </select>
+              </div>
+            </div>
+            
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)" data-i18n="booking.next">Next</button>
+          </div>
+          
+          <div class="form-step" id="step-2">
+            <h3 class="step-title">
+              <span class="step-number">2</span>
+              <span data-i18n="booking.step2">Select Date & Time</span>
+            </h3>
+            
+            <div class="form-group">
+              <label data-i18n="booking.date">Date</label>
+              <input type="date" id="date-input" required min="">
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="booking.time">Time</label>
+              <select id="time-select" required>
+                <option value="" data-i18n="booking.selectDate">Select a date first</option>
+              </select>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" onclick="prevStep(1)" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(3)" data-i18n="booking.next">Next</button>
+            </div>
+          </div>
+          
+          <div class="form-step" id="step-3">
+            <h3 class="step-title">
+              <span class="step-number">3</span>
+              <span data-i18n="booking.step3">Your Details</span>
+            </h3>
+            
+            <div class="form-group">
+              <label data-i18n="booking.name">Full Name</label>
+              <input type="text" id="name-input" required data-i18n-placeholder="booking.placeholders.name" placeholder="John Doe">
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="booking.email">Email</label>
+              <input type="email" id="email-input" required data-i18n-placeholder="booking.placeholders.email" placeholder="john@example.com">
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="booking.phone">Phone</label>
+              <input type="tel" id="phone-input" required data-i18n-placeholder="booking.placeholders.phone" placeholder="+39 123 456 7890">
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="booking.placeholders.street">Street Name</label>
+                <input type="text" id="street-name-input" required data-i18n-placeholder="booking.placeholders.street" placeholder="Via Roma">
+              </div>
+              <div class="form-group">
+                <label data-i18n="booking.placeholders.houseNumber">House Number</label>
+                <input type="text" id="house-number-input" required data-i18n-placeholder="booking.placeholders.houseNumber" placeholder="123">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="booking.propertySize">Property Size (sqm)</label>
+                <input type="number" id="property-size-input" required data-i18n-placeholder="booking.placeholders.propertySize" placeholder="100" min="1">
+              </div>
+              <div class="form-group">
+                <label data-i18n="booking.doorbell">Name on Doorbell</label>
+                <input type="text" id="doorbell-name-input" data-i18n-placeholder="booking.placeholders.doorbell" placeholder="Doe Family">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Additional Services (Optional)</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="fridge-cleaning">
+                  <span data-i18n="booking.addons.fridge">Fridge Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="limescale-removal">
+                  <span data-i18n="booking.addons.limescale">Limescale Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="dishwashing">
+                  <span data-i18n="booking.addons.dishwashing">Dishwashing</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="ironing">
+                  <span data-i18n="booking.addons.ironing">Ironing</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="balcony-cleaning">
+                  <span data-i18n="booking.addons.balcony">Balcony / Patio Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="window-cleaning">
+                  <span data-i18n="booking.addons.window">Window Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="laundry-service">
+                  <span data-i18n="booking.addons.laundry">Laundry Service</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="gardening">
+                  <span data-i18n="booking.addons.gardening">Gardening</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="carpet-cleaning">
+                  <span data-i18n="booking.addons.carpet">Carpet Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="oven-cleaning">
+                  <span data-i18n="booking.addons.oven">Oven Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="mold-removal">
+                  <span data-i18n="booking.addons.mold">Mold Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="steam-cleaning">
+                  <span data-i18n="booking.addons.steam">Steam Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="wall-stain-removal">
+                  <span data-i18n="booking.addons.wall">Wall Stain Removal</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="sofa-cleaning">
+                  <span data-i18n="booking.addons.sofa">Sofa Cleaning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="mattress-cleaning">
+                  <span data-i18n="booking.addons.mattress">Mattress Cleaning</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Supplies Provided by Cleaning Team</label>
+              <p class="form-note">Cleaning solvents, mop, and a vacuum cleaner are required to perform the cleaning service. If you don't have them at home and would like to have them provided by the cleaning team, please check the boxes below.</p>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-solvents">
+                  <span data-i18n="booking.supplies.solvents">Cleaning Solvents</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-mop">
+                  <span data-i18n="booking.supplies.mop">Mop</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="provide-vacuum">
+                  <span data-i18n="booking.supplies.vacuum">Vacuum Cleaner</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="booking.notes">Special Instructions (Optional)</label>
+              <textarea id="notes-input" data-i18n-placeholder="booking.placeholders.notes" placeholder="Any special requests or access instructions"></textarea>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" onclick="prevStep(2)" data-i18n="booking.back">Back</button>
+              <button type="button" class="btn btn-primary" onclick="nextStep(4)" data-i18n="booking.next">Next</button>
+            </div>
+          </div>
+          
+          <div class="form-step" id="step-4">
+            <h3 class="step-title">
+              <span class="step-number">4</span>
+              <span data-i18n="booking.step4">Review & Pay</span>
+            </h3>
+            
+            <div class="booking-summary" id="booking-summary">
+            </div>
+            
+            <div class="price-display">
+              <span data-i18n="booking.total">Total:</span>
+              <span class="price" id="total-price">€0.00</span>
+            </div>
+            
+            <div class="payment-notice">
+              <i class="fas fa-info-circle"></i>
+              <p data-i18n="booking.paymentNotice">Your card will be authorized but not charged until your booking is confirmed by our team.</p>
+            </div>
+            
+            <div id="stripe-card-element" class="stripe-element"></div>
+            <div id="card-errors" class="card-errors"></div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" onclick="prevStep(3)" data-i18n="booking.back">Back</button>
+              <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                <i class="fas fa-lock"></i>
+                <span data-i18n="booking.confirm">Confirm Booking</span>
+              </button>
+            </div>
+          </div>
+        </form>
+        
+        <div class="booking-success" id="booking-success" style="display: none;">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3 data-i18n="success.title">Booking Submitted!</h3>
+          <p data-i18n="success.message">Your booking is pending confirmation. We will notify you via email once it's confirmed.</p>
+          <p data-i18n="success.payment">Your payment has been authorized and will only be charged upon confirmation.</p>
+          <button class="btn btn-primary" onclick="resetBooking()" data-i18n="success.newBooking">Make Another Booking</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <div class="container">
+      <h2 class="section-title" data-i18n="faq.title">Frequently Asked Questions</h2>
+      
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span data-i18n="faq.q1">How does the booking process work?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq.a1">Simply select your service, choose a date and time, enter your details, and complete the payment authorization. Your card will only be charged once we confirm your booking.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span data-i18n="faq.q2">What areas do you serve?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq.a2">We currently serve Rome and Milan. More cities coming soon!</p>
+          </div>
+        </div>
+        
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span data-i18n="faq.q3">What payment methods do you accept?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq.a3">We accept all major credit and debit cards through our secure Stripe payment system.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span data-i18n="faq.q4">Can I cancel my booking?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="faq-answer">
+            <p data-i18n="faq.a4">If your booking hasn't been confirmed yet, no charge will be made. For confirmed bookings, please contact us at least 24 hours in advance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <div class="container">
+      <h2 class="section-title" data-i18n="contact.title">Contact Us</h2>
+      <p class="section-subtitle" data-i18n="contact.subtitle">Have questions? We're here to help!</p>
+      
+      <div class="contact-methods">
+        <a href="mailto:Vacanzeromane2024@libero.it" class="contact-card" id="email-link">
+          <i class="fas fa-envelope"></i>
+          <h4 data-i18n="contact.email">Email</h4>
+          <p id="email-text">Vacanzeromane2024@libero.it</p>
+        </a>
+
+        <a href="tel:+3891496149" class="contact-card" id="phone-link">
+          <i class="fas fa-phone"></i>
+          <h4 data-i18n="contact.phone">Phone</h4>
+          <p id="phone-text">+389 14 96 149</p>
+        </a>
+
+        <a href="https://wa.me/3891496149" class="contact-card" target="_blank" id="whatsapp-link" data-i18n-title="contact.whatsapp">
+          <i class="fab fa-whatsapp"></i>
+          <h4 id="whatsapp-text">+39 389 149 6 149</h4>
+          <p data-i18n="contact.whatsapp">WhatsApp</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <i class="fas fa-sparkles"></i>
+          <span>CasaClean</span>
+        </div>
+        <div class="footer-links">
+          <a href="#" data-i18n="footer.privacy">Privacy Policy</a>
+          <a href="#" data-i18n="footer.terms">Terms of Service</a>
+          <a href="#" data-i18n="footer.cookies">Cookie Policy</a>
+        </div>
+        <p class="footer-copy">&copy; 2026 CasaClean. Vacanze Romane S.r.l.s..</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="cookie-banner" id="cookie-banner">
+    <div class="cookie-content">
+      <p data-i18n="cookies.message">We use cookies to improve your experience. By continuing to use this site, you agree to our use of cookies.</p>
+      <div class="cookie-actions">
+        <button class="btn btn-secondary btn-sm" onclick="declineCookies()" data-i18n="cookies.decline">Decline</button>
+        <button class="btn btn-primary btn-sm" onclick="acceptCookies()" data-i18n="cookies.accept">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <a href="https://api.whatsapp.com/send/?phone=393891496149&text&type=phone_number&app_absent=0&wame_ctl=1" class="whatsapp-float" target="_blank" data-i18n-title="contact.whatsapp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <script src="translations.js"></script>
+  <script src="contact.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
