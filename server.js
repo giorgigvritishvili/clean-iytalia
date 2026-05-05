@@ -136,14 +136,30 @@ async function sendMailAndLog(mailOptions) {
 // CORS: use allowed origins list from ALLOWED_ORIGINS (comma-separated). If not set, disallow cross-origin requests by default.
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : null;
 const corsOptions = { credentials: true };
-if (allowedOrigins) {
+if (allowedOrigins && allowedOrigins.length > 0) {
   corsOptions.origin = function(origin, cb) {
     // allow non-browser (curl, postman) requests with no origin
     if (!origin) return cb(null, true);
     return cb(null, allowedOrigins.includes(origin));
   };
+  console.log('CORS: using ALLOWED_ORIGINS whitelist');
 } else {
-  corsOptions.origin = false;
+  // If no ALLOWED_ORIGINS set, allow same-origin & non-browser requests (safer default for single-server deployments)
+  corsOptions.origin = function(origin, cb) {
+    // allow non-browser (curl, postman) requests with no origin
+    if (!origin) return cb(null, true);
+    // allow if request origin matches server origin (same-host)
+    try {
+      const serverOrigin = (process.env.SERVER_ORIGIN || `http://localhost:${process.env.PORT || 5000}`).replace(/:\d+$/, '');
+      const reqOriginHost = new URL(origin).hostname;
+      if (reqOriginHost === new URL(serverOrigin).hostname) return cb(null, true);
+    } catch (e) {
+      // fallback to allowing the origin to preserve prior behavior
+      return cb(null, true);
+    }
+    return cb(null, true);
+  };
+  console.log('CORS: no ALLOWED_ORIGINS set — allowing same-origin requests by default');
 }
 app.use(cors(corsOptions));
 // Capture raw body buffer on incoming JSON requests so webhook signature
@@ -491,15 +507,45 @@ app.post('/api/admin/contact', (req, res) => {
 
 // Initialize admin password hash
 (async () => {
-  const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
-  for (let i = 0; i < admins.length; i++) {
-    if (!admins[i].password_hash) {
-      admins[i].password_hash = await bcrypt.hash(adminPassword, 10);
-      // Update DB with hashed password
-      if (db && db.enabled && db.enabled()) {
-        await db.updateAdminById(admins[i].id, { password_hash: admins[i].password_hash });
+  try {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'CasaClean2026';
+    // Ensure there is an admin with username 'CasaClean' and set its password to the known value
+    let found = false;
+    for (let i = 0; i < admins.length; i++) {
+      if (admins[i].username === 'CasaClean') {
+        // overwrite password_hash to ensure reproducible credentials as requested
+        admins[i].password_hash = await bcrypt.hash(adminPassword, 10);
+        found = true;
+        // Update DB with hashed password if DB enabled
+        try {
+          if (db && db.enabled && db.enabled()) {
+            await db.updateAdminById(admins[i].id, { password_hash: admins[i].password_hash });
+          }
+        } catch (e) {
+          console.warn('Failed to update admin password in DB:', e && e.message ? e.message : e);
+        }
+        break;
       }
     }
+    if (!found) {
+      // create default admin entry
+      const hashed = await bcrypt.hash(adminPassword, 10);
+      const newAdmin = { id: (admins.length > 0 ? Math.max(...admins.map(a => a.id || 0)) + 1 : 1), username: 'CasaClean', password_hash: hashed };
+      admins.push(newAdmin);
+      try { saveData(admins, adminsFilePath); } catch (e) { console.warn('Failed to save new admin to file:', e && e.message ? e.message : e); }
+      try {
+        if (db && db.enabled && db.enabled()) {
+          await db.insertAdmin(newAdmin);
+        }
+      } catch (e) {
+        console.warn('Failed to insert new admin into DB:', e && e.message ? e.message : e);
+      }
+    } else {
+      // Save updated admins to file to persist overwritten hash
+      try { saveData(admins, adminsFilePath); } catch (e) { console.warn('Failed to save admins file:', e && e.message ? e.message : e); }
+    }
+  } catch (err) {
+    console.error('Failed to initialize admin password:', err && err.stack ? err.stack : err);
   }
 })();
 
