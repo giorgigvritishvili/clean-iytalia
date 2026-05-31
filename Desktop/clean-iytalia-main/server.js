@@ -58,17 +58,23 @@ let blockedSlots = [];
 let admins = [];
 let workers = [];
 
-const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
+// SMTP defaults and safe fallback behavior
+const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
 const smtpSecure = (process.env.SMTP_SECURE === 'true') || smtpPort === 465;
+const smtpHost = process.env.SMTP_HOST;
+const smtpMode = process.env.SMTP_MODE;
 
 let transporter;
-if (process.env.SMTP_MODE === 'console') {
-  // Test mode: print emails to stdout instead of sending (safe for local testing)
+let smtpVerified = false;
+
+if (smtpMode === 'console' || !smtpHost) {
+  // Test or missing host: print emails to stdout instead of sending
   transporter = nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true });
-  console.log('SMTP running in console test mode (emails will be printed, not sent)');
+  console.log('SMTP: running in console mode (emails will be printed, not sent)');
+  if (!smtpHost && smtpMode !== 'console') console.log('SMTP: no SMTP_HOST configured, using console fallback');
 } else {
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host: smtpHost,
     port: smtpPort,
     secure: smtpSecure,
     auth: {
@@ -77,10 +83,17 @@ if (process.env.SMTP_MODE === 'console') {
     }
   });
 
-  // Verify transporter at startup to surface auth/connection issues early
+  // Verify transporter and fall back to console transport if verification fails
   transporter.verify()
-    .then(() => console.log('SMTP transporter verified'))
-    .catch(err => console.error('SMTP transporter verification failed:', err && err.stack ? err.stack : err));
+    .then(() => {
+      smtpVerified = true;
+      console.log('SMTP transporter verified');
+    })
+    .catch(err => {
+      console.error('SMTP transporter verification failed:', err && err.stack ? err.stack : err);
+      console.log('SMTP: falling back to console transport to avoid runtime send errors');
+      transporter = nodemailer.createTransport({ streamTransport: true, newline: 'unix', buffer: true });
+    });
 }
 
 const adminEmail = process.env.ADMIN_EMAIL || 'casaclean2026@gmail.com';

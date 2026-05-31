@@ -6,10 +6,41 @@ let enabled = false;
 
 async function initDb(databaseUrl) {
   if (!databaseUrl) return false;
-  pool = new Pool({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } });
-  enabled = true;
-  await createTables();
-  return true;
+  // Configure timeouts and SSL; do not mark enabled until we verify connectivity
+  pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 30000,
+    max: 10
+  });
+
+  // Log any unexpected pool errors
+  pool.on('error', (err) => {
+    console.error('Postgres pool error:', err && err.stack ? err.stack : err);
+  });
+
+  // Try creating tables with a small retry loop for transient connection errors
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await createTables();
+      enabled = true;
+      return true;
+    } catch (err) {
+      console.error(`initDb: attempt ${attempt} failed:`, err && err.stack ? err.stack : err);
+      if (attempt < maxAttempts) {
+        const waitMs = 500 * attempt;
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      console.error('initDb: all attempts to initialize Postgres failed');
+      try { await pool.end(); } catch (_) {}
+      pool = null;
+      enabled = false;
+      throw err;
+    }
+  }
 }
 
 async function createTables() {
